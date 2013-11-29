@@ -3,6 +3,8 @@ with Resources; use Resources;
 with Parser;
 
 package Host_Properties is
+
+   Unsupported_Error, Other_Error : exception;
    type Set_Of_Properties is private;
    type Fixed is delta 0.01 digits 5 range 0.0 .. 100.0;
 

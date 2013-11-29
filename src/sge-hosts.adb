@@ -1,63 +1,14 @@
-with Ada.Text_IO;
 with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with HTML;
 with Resources; use Resources;
-with Lightsout;
-with Ada.Strings.Fixed;
 with Ada.Strings.Bounded; use Ada.Strings.Bounded;
-with Debug;
-with Hosts;
 with Calendar.Conversions;
 with Interfaces.C;
 
-package body Hosts is
+package body SGE.Hosts is
 
    use Host_Lists;
    use Job_Lists;
    use Queue_Maps;
-
-   procedure Put_All is
-   begin
-      HTML.Put_Heading (Title => "Hosts " & HTML.Help_Icon (Topic => "Host List"),
-                        Level => 2);
-      HTML.Begin_Div (Class => "host_list");
-      Ada.Text_IO.Put_Line ("<table><tr>");
-      HTML.Put_Header_Cell (Data     => "Name");
-      HTML.Put_Header_Cell (Data     => "Interconnect");
-      HTML.Put_Cell (Data     => "CPU" & HTML.Help_Icon (Topic => "CPU Families"),
-                    Tag => "th");
-      HTML.Put_Header_Cell (Data     => "Cores");
-      HTML.Put_Header_Cell (Data     => "Free");
-      HTML.Put_Header_Cell (Data     => "RAM");
-      HTML.Put_Header_Cell (Data     => "Load",
-                           Acronym => "per core");
-      HTML.Put_Header_Cell (Data => "Mem",
-                            Acronym => "% used");
-      HTML.Put_Header_Cell (Data => "Swap",
-                            Acronym => "% used");
-      HTML.Put_Header_Cell (Data     => "Queues",
-                            Sortable => False);
-      Ada.Text_IO.Put ("</tr>");
-      Lightsout.Clear;
-      Lightsout.Read;
-      Host_List.Iterate (Hosts.Put'Access);
-      --  Table Footer
-      Ada.Text_IO.Put_Line ("</table>");
-      HTML.End_Div (Class => "host_list");
-
-   end Put_All;
-
-   procedure Put_Selected (Selector : not null access function (H : Host) return Boolean) is
-      Position : Host_Lists.Cursor := Host_List.First;
-   begin
-      while Position /= Host_Lists.No_Element loop
-         if Selector (Element (Position)) then
-            Put_For_Maintenance (Position);
-         end if;
-         Next (Position);
-      end loop;
-   end Put_Selected;
 
    ----------------------
    -- Precedes_By_Free --
@@ -165,7 +116,7 @@ package body Hosts is
       elsif Field = "Swap" then
          By_Swap.Sort (Host_List);
       else
-         HTML.Error ("Sorting by " & Field & " unimplemented");
+         raise Constraint_Error with "Sorting by " & Field & " unimplemented";
       end if;
       if Direction = "dec" then
          Host_List.Reverse_Elements;
@@ -231,9 +182,6 @@ package body Hosts is
       end loop;
       Job_Lists.Move (Target => List,
                       Source => Short_List);
-   exception
-      when E : others =>
-         HTML.Error ("Unable to sort job list: " & Exception_Message (E));
    end Compactify;
 
 
@@ -256,10 +204,10 @@ package body Hosts is
       end loop;
    exception
       when E : others =>
-         HTML.Error ("Unable to count slots for host "
-                     & To_String (H.Name)
-                     & ": " & Exception_Message (E));
          H.Slots_Used := 0;
+         raise Other_Error with "Unable to count slots for host "
+                     & To_String (H.Name)
+                     & ": " & Exception_Message (E);
    end Update_Used_Slots;
 
    -----------------------
@@ -366,16 +314,14 @@ package body Hosts is
                Compactify (H.Jobs);
                Update_Used_Slots (H);
                Host_List.Append (H);
-               Debug.Log (Message  => "Appended " & To_String (H.Name),
-                          Severity => 2, Where => Debug.Default);
             end if;
          end;
       end loop Hosts;
    exception
       when E :
-         others => HTML.Error ("Unable to parse hosts: " & Exception_Message (E));
-         HTML.Error ("Node " & Name (V) & ":" & Value (V));
-         HTML.Error ("Host " & Name (A) & ":" & Value (A));
+         others => raise Other_Error with Exception_Message (E)
+          & "Node " & Name (V) & ":" & Value (V)
+          & "Host " & Name (A) & ":" & Value (A);
    end Append_List;
 
    ----------------
@@ -389,18 +335,12 @@ package body Hosts is
       Pos       : Host_Lists.Cursor := Host_List.First;
       H         : Host;
    begin
-      Debug.Trace (Entering => "Prune_List", Params => To_String (Requirements) & ", Queue_Name =>" & Queue_Name);
       loop
          exit when Pos = Host_Lists.No_Element;
          H := Host_Lists.Element (Pos);
          if H.Properties = Requirements and then
            H.Queues.Contains (To_Unbounded_String (Queue_Name)) then
             Temp.Append (H);
-         else
-            Debug.Log (Message  => To_String (H.Name) & " has " & Get_Mismatch (H.Properties, Requirements)
-                       & " required",
-                       Where    => Debug.Default,
-                       Severity => 1);
          end if;
          Next (Pos);
       end loop;
@@ -443,11 +383,6 @@ package body Hosts is
             end if;
          end if;
       end loop Queue_Values;
-
-
-   exception
-      when E : others =>
-         HTML.Error ("Unable to read queue: " & Exception_Message (E));
    end Parse_Queue;
 
 
@@ -492,8 +427,8 @@ package body Hosts is
       end if;
    exception
       when E : others =>
-         HTML.Error ("Could not parse host value: " & Exception_Message (E));
-         HTML.Error (To_String (H.Name) & " at " & Value (A));
+         raise Other_Error with Exception_Message (E)
+          & To_String (H.Name) & " at " & Value (A);
    end Parse_Hostvalue;
 
    ---------------
@@ -528,111 +463,8 @@ package body Hosts is
          end if;
       end loop Job_Attributes;
       H.Jobs.Append (J);
-
-   exception
-      when E : others =>
-         HTML.Error ("Unable to parse job: " & Exception_Message (E));
    end Parse_Job;
 
-   ---------
-   -- Put --
-   --  Purpose : Output one Host as an HTML <tr>,
-   --    adding one <tr> for every Job on the Host
-   --  Parameter Pos : Cursor pointing to the Job record to output
-   ---------
-
-   ---------
-   -- Put --
-   ---------
-
-   procedure Put (Cursor : Host_Lists.Cursor) is
-      H : Host := Host_Lists.Element (Cursor);
-   begin
-      Ada.Text_IO.Put ("<tr>");
-      HTML.Put_Cell (Data => H.Name);
-      HTML.Put_Cell (Data => Get_Network (H.Properties)'Img);
-      HTML.Put_Cell (Data => Get_Model (H.Properties)'Img);
-      HTML.Put_Cell (Data => Get_Cores (H.Properties)'Img, Class => "right");
-      HTML.Put_Cell (Data => Get_Free_Slots (H)'Img, Class => "right");
-      HTML.Put_Cell (Data => Get_Memory (H.Properties)'Img, Class => "right");
-      HTML.Put_Cell (Data  => Load_Per_Core (H)'Img,
-                     Class => "right " & Color_Class (Load_Per_Core (H)));
-      HTML.Put_Cell (Data  => Mem_Percentage (H)'Img,
-                     Class => "right " & Color_Class (Mem_Percentage (H)));
-      HTML.Put_Cell (Data  => Swap_Percentage (H)'Img,
-                     Class => "right " & Color_Class (Swap_Percentage (H)));
-      H.Queues.Iterate (Put_Queue'Access);
-      HTML.Put_Cell (Data => Lightsout.Get_Maintenance (Get_Name (H)));
-      HTML.Put_Cell (Data => Lightsout.Get_Bug (Get_Name (H)), Class => "right");
-      Ada.Text_IO.Put ("</tr>");
-      H.Jobs.Iterate (Put_Jobs'Access);
-   exception
-      when E : others =>
-         HTML.Error ("Error while putting host "& To_String (H.Name) & ": "
-                     & Exception_Message (E));
-         Ada.Text_IO.Put ("</tr>");
-   end Put;
-
-   procedure Put_For_Maintenance (Cursor : Host_Lists.Cursor) is
-      H : Host := Host_Lists.Element (Cursor);
-   begin
-      Ada.Text_IO.Put ("<tr>");
-      HTML.Put_Cell (Data => H.Name);
-      HTML.Put_Cell (Data => Get_Cores (H.Properties)'Img, Class => "right");
-      HTML.Put_Cell (Data => Get_Used_Slots (H)'Img, Class => "right");
-      HTML.Put_Cell (Data => Get_Load (H)'Img, Class      => "right");
-      HTML.Put_Cell (Data  => Load_Per_Core (H)'Img,
-                     Class => "right " & Color_Class (Load_Per_Core (H)));
-      HTML.Put_Cell (Data  => Swap_Percentage (H)'Img,
-                     Class => "right " & Color_Class (Swap_Percentage (H)));
-      HTML.Put_Cell (Data => Lightsout.Get_Maintenance (Get_Name (H)));
-      HTML.Put_Cell (Data => Lightsout.Get_Bug (Get_Name (H)), Class => "right");
-      Ada.Text_IO.Put ("</tr>");
-      H.Jobs.Iterate (Put_Jobs'Access);
-   exception
-      when E : others =>
-         HTML.Error ("Error while putting host "& To_String (H.Name) & ": "
-                     & Exception_Message (E));
-         Ada.Text_IO.Put ("</tr>");
-   end Put_For_Maintenance;
-
-   --------------
-   -- Put_Jobs --
-   --------------
-
-   procedure Put_Jobs (Cursor : Job_Lists.Cursor) is
-      J : Job := Job_Lists.Element (Cursor);
-   begin
-      Ada.Text_IO.Put ("<tr>");
-      HTML.Put_Cell (Data => ""); -- H.Name
-      if J.Master then
-         if J.Slaves > 0 then -- master
-            HTML.Put_Cell (Data => "<img src=""/icons/master.png"" />" & J.Slaves'Img,
-                           Class => "right");
-         else -- serial
-            HTML.Put_Cell (Data => "<img src=""/icons/serial.png"" />" & "1",
-                           Class => "right");
-         end if;
-      else
-         HTML.Put_Cell (Data => J.Slaves'Img, Class => "right");
-      end if;
-      HTML.Put_Cell (Data => Ada.Strings.Fixed.Trim (J.ID'Img, Ada.Strings.Left),
-                    Link_Param => "job_id");
-      HTML.Put_Duration_Cell (Ada.Calendar.Clock - J.Start_Time);
-      Ada.Text_IO.Put ("</tr>");
-   end Put_Jobs;
-
-   ----------------
-   -- Put_Status --
-   ----------------
-
-   procedure Put_Queue (Cursor : Queue_Maps.Cursor) is
-      S : String := Queue_States.To_String (Queue_Maps.Element (Cursor).State);
-   begin
-      HTML.Put_Cell (Data => Queue_Maps.Key (Cursor) & ':'
-                     & Queue_Maps.Element (Cursor).Slots'Img);
-      HTML.Put_Img_Cell (Image => S);
-   end Put_Queue;
 
    -------------------
    -- Load_Per_Core --
@@ -793,4 +625,4 @@ package body Hosts is
    end Color_Class;
 
 
-end Hosts;
+end SGE.Hosts;

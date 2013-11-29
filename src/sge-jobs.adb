@@ -1,28 +1,22 @@
 with Ada.Text_IO;
-with Ada.Strings.Fixed;
 with Ada.Calendar;   use Ada.Calendar;
 with GNAT.Calendar.Time_IO;
 with Ada.Calendar.Conversions;
 with Resources;      use Resources; use Resources.Resource_Lists;
 with Ranges;          use Ranges; use Ranges.Range_Lists;
 with Utils;          use Utils; use Utils.String_Lists; use Utils.String_Pairs;
-with Jobs;
-with HTML;
 with Parser;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Real_Time;
 with Interfaces.C;
 with Ada.Containers; use Ada.Containers;
-with Ada.Calendar.Formatting;
 
-package body Jobs is
+package body SGE.Jobs is
    use Job_Lists;
    use Job_Maps;
 
 
    procedure Parse_JAT_Message_List (Message_List : Node; J : in out Job);
-   procedure Put_State (State : Job_State);
-   procedure Put_Core_Header;
 
    procedure Parse_JAT_Task_List
      (J             : in out Job;
@@ -169,63 +163,6 @@ package body Jobs is
       List.Iterate (Process => Count'Access);
    end Get_Summary;
 
-   procedure Put_Summary is
-      Task_Summary, Slot_Summary : State_Count;
-   begin
-      Jobs.Get_Summary (Tasks => Task_Summary,
-                        Slots => Slot_Summary);
-      HTML.Begin_Div (ID => "job_summary");
-      Ada.Text_IO.Put ("<ul>");
-      for State in Task_Summary'Range loop
-         if State /= unknown then
-            Ada.Text_IO.Put ("<li>");
-            Ada.Text_IO.Put (Task_Summary (State)'Img);
-            if Slot_Summary (State) > 0 then
-               Ada.Text_IO.Put ("(" & Ada.Strings.Fixed.Trim (Slot_Summary (State)'Img, Ada.Strings.Left) & ")");
-            end if;
-            Ada.Text_IO.Put (" ");
-            Put_State (State => State);
-            Ada.Text_IO.Put_Line ("</li>");
-         end if;
-      end loop;
-
-      Ada.Text_IO.Put ("</ul>");
-      HTML.End_Div (ID => "job_summary");
-   end Put_Summary;
-
-   procedure Put_State (State : Job_State) is
-      S : String := To_String (State);
-   begin
-      Ada.Text_IO.Put ("<img src=""/icons/" & S & ".png"" ");
-      Ada.Text_IO.Put ("alt=""" & S & """ title=""" & S & ": ");
-      case State is
-         when r =>
-            Ada.Text_IO.Put ("running");
-         when Rr =>
-            Ada.Text_IO.Put ("restarted");
-         when t =>
-            Ada.Text_IO.Put ("in transit");
-         when Rq =>
-            Ada.Text_IO.Put ("requeued");
-         when Eqw =>
-            Ada.Text_IO.Put ("error");
-         when hqw =>
-            Ada.Text_IO.Put ("on hold");
-         when qw =>
-            Ada.Text_IO.Put ("waiting");
-         when dr =>
-            Ada.Text_IO.Put ("running, deletion pending");
-         when dt =>
-            Ada.Text_IO.Put ("in transit, deletion pending");
-         when ERq =>
-            Ada.Text_IO.Put ("requeued, with error");
-         when hr =>
-            Ada.Text_IO.Put ("on hold/running");
-         when unknown =>
-            null;
-      end case;
-      Ada.Text_IO.Put (""" />");
-   end Put_State;
 
    ---------------------
    -- State_As_String --
@@ -375,9 +312,6 @@ package body Jobs is
             List.Append (New_Job (Child_Nodes (N)));
          end if;
       end loop;
-   exception
-      when E : others
-         => HTML.Error ("Unable to read job info (Append_List): " & Exception_Message (E));
    end Append_List;
 
    -----------------
@@ -393,17 +327,10 @@ package body Jobs is
       Rewind;
       J := Current;
       loop
-         if J.PE /= PE then
-            HTML.Comment (J.Number'Img & ":" & J.PE & " /= " & PE);
-         elsif J.Queue /= Queue then
-            HTML.Comment (J.Number'Img & ":" & J.Queue & " /= " & Queue);
-         elsif J.Hard.Hash /= Hard_Requests then
-            HTML.Comment (J.Number'Img & ":" & J.Hard.To_String & "(" & J.Hard.Hash & ")"
-                          & " /= " & Hard_Requests);
-         elsif J.Soft.Hash /= Soft_Requests then
-            HTML.Comment (J.Number'Img & ":" & J.Soft.To_String & "(" & J.Soft.Hash & ")"
-                          & " /= " & Soft_Requests);
-         else -- all equal
+         if J.PE = PE and then
+ J.Queue = Queue and then
+         J.Hard.Hash = Hard_Requests and then
+         J.Soft.Hash = Soft_Requests then
             Update_Job_From_Overlay (J);
             if Slot_Ranges = Null_Unbounded_String or else -- Bug #1610
               Hash_Type'Value (To_String (Slot_Ranges)) = 0 then
@@ -411,16 +338,10 @@ package body Jobs is
                --  since any change in leading blanks would break this code
                if J.Slot_Number = Slot_Number then
                   Pruned_List.Append (J);
-               else
-                  HTML.Comment (J.Number'Img & ":" & J.Slot_Number & " /= "
-                                  & Slot_Number);
                end if;
             else
                if Hash (J.Slot_List) = Slot_Ranges then
                   Pruned_List.Append (J);
-               else
-                  HTML.Comment (J.Number'Img & ":" & Hash (J.Slot_List) & " /= "
-                                  & Slot_Ranges);
                end if;
             end if;
          end if;
@@ -429,10 +350,6 @@ package body Jobs is
       end loop;
       List.Clear;
       List.Splice (Source => Pruned_List, Before => List.First);
-   exception
-      when E : others
-         => HTML.Error ("Unable to read job info (Append_List [limited]" & J.Number'Img & "): "
-                        & Exception_Message (E));
    end Prune_List;
 
    -------------------
@@ -480,12 +397,6 @@ package body Jobs is
             exit Jobs;
          end if;
       end loop Jobs;
-
-      Parser.Free;
-   exception
-      when E : others
-         => HTML.Error ("Unable to read job status (" & J.Number'Img & "):"
-                        & Exception_Message (E));
 
       Parser.Free;
    end Update_Status;
@@ -538,10 +449,7 @@ package body Jobs is
                if Name (Value_Node) = "jobvalue" then
                   A := Get_Attr (Value_Node, "name");
                   if Value (A) = "qinstance_name" then
-                     HTML.Comment ("Detected " & The_Queue);
                      The_Queue := To_Unbounded_String (Value (First_Child (Value_Node)));
-                  elsif Value (A) = "taskid" then
-                     HTML.Comment ("taskid " & Value (First_Child (Value_Node)));
                   end if;
                end if;
             end loop;
@@ -549,10 +457,6 @@ package body Jobs is
                                  Process  => Record_Queue'Access);
          end if;
       end loop;
-      Parser.Free;
-   exception
-      when E : others => HTML.Error ("Error while searching for queues: "
-                                       & Exception_Message (E));
       Parser.Free;
    end Search_Queues;
 
@@ -765,16 +669,13 @@ package body Jobs is
                Ada.Text_IO.Put_Line ("Unknown Field: " & Name (C));
             end if;
          exception
-            when E : Parser_Error =>
-               HTML.Error ("Job" & J.Number'Img & " information incomplete: "
-                             & Exception_Message (E));
-            when E : others =>
-               HTML.Comment ("While parsing job:" & J.Number'Img);
-               HTML.Comment (Exception_Message (E));
-               HTML.Comment ("Node type: """ & Name (C)
+               when E : Parser_Error =>
+                  Record_Error (J, "information incomplete: " & Exception_Message (E));
+               when E : others =>
+                  Record_Error (J, "While parsing job: " & Exception_Message (E)
+                                    & "Node type: """ & Name (C)
                              & """ Value: """ & Value (First_Child (C)) & """");
          end;
-
       end loop;
 
       if J.Queue = "" then
@@ -783,9 +684,9 @@ package body Jobs is
 
    exception
       when E : others =>
-         HTML.Error ("Failed to parse job: " & Exception_Message (E));
-         HTML.Error ("Node type: """ & Name (C)
-                     & """ Value: """ & Value (First_Child (C)) & """");
+         raise Other_Error with Exception_Message (E)
+          & "Node type: """ & Name (C)
+                     & """ Value: """ & Value (First_Child (C)) & """";
 
    end Update_Job;
 
@@ -869,10 +770,8 @@ package body Jobs is
       Sub_Elements : Node_List;
    begin
       for I in 1 .. Length (Arg_Nodes) loop
-         HTML.Comment ("Arg " & I'Img);
          N := Item (Arg_Nodes, I - 1);
          if Name (N) = "element" then
-            HTML.Comment ("element");
             Sub_Elements := Child_Nodes (N);
             if Length (Sub_Elements) < 2 then
                raise Assumption_Error with "too few sub-elements";
@@ -882,7 +781,6 @@ package body Jobs is
                raise Assumption_Error with "Expected ""ST_name"" but found """
                  & Name (ST) & """ instead";
             else
-               HTML.Comment ("ST_name");
                J.Args.Append (New_Item => To_Unbounded_String (Value (First_Child (ST))));
             end if;
          end if;
@@ -1017,14 +915,12 @@ package body Jobs is
                      then
                         null; -- Bug #1752
                      else
-                        HTML.Comment ("Unable to parse usage (QF => """
+                        raise Constraint_Error with "Unable to parse usage (QF => """
                         & Quantity & """): "
-                                      & Exception_Message (E));
-                        raise;
+                                      & Exception_Message (E);
                      end if;
                   end;
             end;
-
          end if;
       end loop Over_Usage_Entries;
    end Parse_Usage;
@@ -1046,13 +942,10 @@ package body Jobs is
          raise Assumption_Error;
       end if;
       JG_Nodes := Child_Nodes (Element_Node);
-      HTML.Comment (Length (JG_Nodes)'Img);
       Over_JG_Nodes :
       for M in 1 .. Length (JG_Nodes) loop
          JG_Entry := Item (JG_Nodes, M - 1);
-         HTML.Comment (Name (JG_Entry));
          if Name (JG_Entry) = "JG_qname" then
-            HTML.Comment (Length (Child_Nodes (JG_Entry))'Img);
             J.Task_List.Append (To_Unbounded_String (Value (First_Child (JG_Entry))));
          end if;
       end loop Over_JG_Nodes;
@@ -1139,10 +1032,6 @@ package body Jobs is
             end loop Task_Entries;
          end if;
       end loop Over_Task_Nodes;
-   exception
-      when E : others =>
-         HTML.Error ("Failed to parse job (" & J.Number'Img & ") tasks: "
-                     & Exception_Message (E));
    end Extract_Tasks;
 
    -------------------
@@ -1213,15 +1102,9 @@ package body Jobs is
          J := Job_Lists.Element (Pos);
          if Hash (J.Slot_List) = Slots then
             Temp.Append (J);
-         else
-            HTML.Comment (J.Number'Img);
-            if Hash (J.Slot_List) /= Slots then
-               HTML.Comment (J.Number'Img & ": " & Hash (J.Slot_List) & " /= " & Slots);
-            end if;
          end if;
          Next (Pos);
       end loop;
-      HTML.Comment (Temp.Length'Img);
       List := Temp;
    end Prune_List_By_Slots;
 
@@ -1273,7 +1156,7 @@ package body Jobs is
         Field = "Ends At" then
          Sorting_By_End.Sort (List);
       else
-         HTML.Error ("Sorting by " & Field & " unimplemented");
+         raise Constraint_Error with "Sorting by " & Field & " unimplemented";
       end if;
       if Direction = "dec" then
          List.Reverse_Elements;
@@ -1598,602 +1481,6 @@ package body Jobs is
    end Same;
 
 
-   ---------------------
-   -- Put_Predecessor --
-   ---------------------
-
-   procedure Put_Predecessor (Position : Utils.ID_Lists.Cursor) is
-      ID : String := Ada.Strings.Fixed.Trim (Source => Utils.ID_Lists.Element (Position)'Img,
-                                             Side   => Ada.Strings.Left);
-   begin
-      HTML.Put_Job_ID (Label    => "Predecessor",
-                          ID    => ID);
-   end Put_Predecessor;
-
-   ---------------------
-   -- Put_Successor --
-   ---------------------
-
-   procedure Put_Successor (Position : Utils.ID_Lists.Cursor) is
-      ID : String := Ada.Strings.Fixed.Trim (Source => Utils.ID_Lists.Element (Position)'Img,
-                                             Side   => Ada.Strings.Left);
-   begin
-      HTML.Put_Job_ID (Label => "Successor",
-                       ID    => ID);
-   end Put_Successor;
-
-   -----------------
-   -- Put_Request --
-   -----------------
-
-   procedure Put_Request (Position : Utils.String_Lists.Cursor) is
-      Verbatim : String := To_String (Utils.String_Lists.Element (Position));
-   begin
-      HTML.Put_Paragraph (Label    => "requested",
-                          Contents => Verbatim);
-   end Put_Request;
-
-
-   --------------
-   -- Put_List --
-   --------------
-
-   procedure Put_List (Show_Resources : Boolean) is
-      Span : Positive := 7;
-   begin
-      if not Show_Resources then
-         Span := Span + 1;
-      end if;
-      HTML.Begin_Div (Class => "job_list");
-      Ada.Text_IO.Put ("<table><tr>");
-      HTML.Put_Cell (Data       => "",
-                     Tag        => "th",
-                     Colspan => Span,
-                     Class => "delimited");
-      if Show_Resources then
-         HTML.Put_Cell (Data => "Resource Usage",
-                        Tag => "th",
-                        Colspan => 3,
-                        Class   => "delimited");
-      end if;
-      HTML.Put_Cell (Data => "Priority" & HTML.Help_Icon (Topic => "Job_priority"),
-                     Tag => "th",
-                     Colspan => 8,
-                     Class => "delimited");
-      Ada.Text_IO.Put ("</tr><tr>");
-      Put_Core_Header;
-      HTML.Put_Header_Cell (Data => "Submitted");
-      HTML.Put_Header_Cell (Data => "Slots");
-      HTML.Put_Header_Cell (Data => "State");
-      if Show_Resources then
-         HTML.Put_Header_Cell (Data => "CPU");
-         HTML.Put_Header_Cell (Data => "Memory",
-                            Acronym => "Gigabyte-hours");
-         HTML.Put_Header_Cell (Data => "IO",
-                            Acronym => "Gigabytes");
-      else
-         HTML.Put_Header_Cell (Data => "Res");
-      end if;
-      HTML.Put_Header_Cell (Data => "Priority");
-      HTML.Put_Header_Cell (Data => "O",
-                            Acronym => "Override");
-      HTML.Put_Header_Cell (Data => "S",
-                            Acronym => "Share");
-      HTML.Put_Header_Cell (Data => "F",
-                            Acronym => "Functional");
-      HTML.Put_Header_Cell (Data => "Urgency");
-      HTML.Put_Header_Cell (Data => "Resource");
-      HTML.Put_Header_Cell (Data => "Waiting");
-      HTML.Put_Header_Cell (Data => "Custom");
-      Ada.Text_IO.Put ("</tr>");
-      if Show_Resources then
-         List.Iterate (Jobs.Put_Res_Line'Access);
-      else
-         List.Iterate (Jobs.Put_Prio_Line'Access);
-      end if;
-   end Put_List;
-
-   -------------------
-   -- Put_Time_List --
-   -------------------
-
-   procedure Put_Time_List is
-   begin
-      HTML.Begin_Div (Class => "job_list");
-      Ada.Text_IO.Put ("<table><tr>");
-      Put_Core_Header;
-      HTML.Put_Header_Cell (Data => "Slots");
-      HTML.Put_Header_Cell (Data => "Ends In");
-      HTML.Put_Header_Cell (Data => "Ends At");
-      HTML.Put_Header_Cell (Data => "State");
-      Ada.Text_IO.Put ("</tr>");
-      List.Iterate (Jobs.Put_Time_Line'Access);
-         --  Table Footer
-      Ada.Text_IO.Put_Line ("</table>");
-      HTML.End_Div (Class => "job_list");
-   end Put_Time_List;
-
-   --------------------
-   -- Put_Bunch_List --
-   --------------------
-
-   procedure Put_Bunch_List is
-   begin
-      HTML.Put_Heading (Title => "Jobs",
-                        Level => 2);
-      HTML.Begin_Div (Class => "job_list");
-      Ada.Text_IO.Put_Line ("<table><tr>");
-      Put_Core_Header;
-      HTML.Put_Header_Cell (Data     => "PE");
-      HTML.Put_Header_Cell (Data     => "Slots");
-      HTML.Put_Header_Cell (Data     => "Hard");
-      HTML.Put_Header_Cell (Data     => "Soft");
-      HTML.Put_Header_Cell (Data     => "State");
-      Ada.Text_IO.Put ("</tr>");
-      List.Iterate (Jobs.Put_Bunch_Line'Access);
-
-      --  Table Footer
-      Ada.Text_IO.Put_Line ("</table>");
-      HTML.End_Div (Class => "job_list");
-   end Put_Bunch_List;
-
-
-   -----------------
-   -- Put_Details --
-   -----------------
-
-   procedure Put_Details is
-   begin
-      List.Iterate (Jobs.Put'Access);
-   end Put_Details;
-
-   ---------
-   -- Put --
-   ---------
-
-   procedure Put  (Cursor : Job_Lists.Cursor) is
-      Res         : Resource_Lists.Cursor;
-      Slot_Range  : Range_Lists.Cursor;
-      Q, Msg : String_Lists.Cursor;
-      J           : Job := Job_Lists.Element (Cursor);
-
-      procedure Put_Name is
-      begin
-         HTML.Begin_Div (Class => "job_name");
-         HTML.Put_Paragraph ("Name", J.Name);
-         Msg := J.Message_List.First;
-         loop
-            exit when Msg = String_Lists.No_Element;
-            Ada.Text_IO.Put_Line ("<p class=""message"">"
-                               & To_String (String_Lists.Element (Msg))
-                               & "</p>");
-            Msg := Next (Msg);
-         end loop;
-         HTML.End_Div (Class => "job_name");
-      end Put_Name;
-
-      procedure Put_Meta is
-      begin
-         HTML.Begin_Div (Class => "job_meta");
-         HTML.Put_Paragraph ("ID", J.Number'Img);
-         HTML.Put_Paragraph ("Owner", J.Owner);
-         HTML.Put_Paragraph ("Group", J.Group);
-         HTML.Put_Paragraph ("Account", J.Account);
-         HTML.Put_Paragraph (Label    => "Submitted",
-                             Contents => J.Submission_Time);
-         J.Predecessors.Iterate (Process => Put_Predecessor'Access);
-         J.Predecessor_Request.Iterate (Process => Put_Request'Access);
-         J.Successors.Iterate (Process => Put_Successor'Access);
-         HTML.Put_Paragraph ("Advance Reservation", J.Job_Advance_Reservation);
-         Ada.Text_IO.Put ("<p>Reserve: ");
-         HTML.Put (J.Reserve);
-         Ada.Text_IO.Put_Line ("</p>");
-         Ada.Text_IO.Put ("<p>State: ");
-         Put_State (J.State);
-         Ada.Text_IO.Put_Line ("</p>");
-         HTML.Put_Clearer;
-         HTML.End_Div (Class => "job_meta");
-      end Put_Meta;
-
-      procedure Put_Queues is
-      begin
-         HTML.Begin_Div (Class => "job_queue");
-         HTML.Put_Heading (Title => "Requested",
-                            Level => 3);
-         Q := J.Queue_List.First;
-         loop
-            exit when Q = String_Lists.No_Element;
-            HTML.Put_Paragraph (Label    => "Queue",
-                             Contents => String_Lists.Element (Q));
-            Next (Q);
-         end loop;
-
-         HTML.Put_Paragraph ("PE", J.PE);
-         Slot_Range := J.Slot_List.First;
-         loop
-            exit when Slot_Range = Ranges.Range_Lists.No_Element;
-            Ranges.Put (Ranges.Range_Lists.Element (Slot_Range));
-            Next (Slot_Range);
-         end loop;
-
-         HTML.Put_Heading (Title => "Assigned",
-                           Level => 3);
-         HTML.Put_List (J.Task_List);
-
-         HTML.Put_Heading (Title => "Detected",
-                           Level => 3);
-         HTML.Put_List (J.Detected_Queues);
-
-         HTML.Put_Clearer;
-         HTML.End_Div (Class => "job_queue");
-      end Put_Queues;
-
-      procedure Put_Resources is
-      begin
-         HTML.Begin_Div (Class => "job_resources");
-         HTML.Put_Heading (Title => "Hard",
-                           Level => 3);
-         Res := J.Hard.First;
-         while Res /= Resources.Resource_Lists.No_Element loop
-            Resources.Put (Res);
-            Next (Res);
-         end loop;
-
-         HTML.Put_Heading (Title => "Soft",
-                           Level => 3);
-         Res := J.Soft.First;
-         while Res /= Resources.Resource_Lists.No_Element loop
-            Resources.Put (Res);
-            Next (Res);
-         end loop;
-         HTML.End_Div (Class => "job_resources");
-      end Put_Resources;
-
-      procedure Put_Usage is
-      begin
-         HTML.Begin_Div (Class => "job_usage");
-         HTML.Put_Heading (Title => "JAT",
-                           Level => 3);
-         for T in J.JAT_Usage'Range loop
-            Put_Usage (T, J.JAT_Usage (T));
-         end loop;
-         HTML.Put_Heading (Title => "PET",
-                           Level => 3);
-         for T in J.PET_Usage'Range loop
-            Put_Usage (T, J.PET_Usage (T));
-         end loop;
-         HTML.End_Div (Class => "job_usage");
-      end Put_Usage;
-
-      procedure Put_Files is
-      begin
-         HTML.Begin_Div (Class => "job_files");
-         HTML.Put_Paragraph ("Directory", J.Directory);
-         HTML.Put_Paragraph ("Script", J.Script_File);
-         HTML.Put_Heading (Title => "Job Args",
-                           Level => 3);
-         HTML.Put_List (J.Args);
-
-         HTML.Put_Paragraph ("Executable", J.Exec_File);
-         Ada.Text_IO.Put ("<p>Merge StdErr: ");
-         HTML.Put (J.Merge_Std_Err);
-         Ada.Text_IO.Put_Line ("</p>");
-         HTML.Put_Heading (Title => "StdOut",
-                           Level => 3);
-         HTML.Put_List (J.Std_Out_Paths);
-
-         HTML.Put_Heading (Title => "StdErr",
-                           Level => 3);
-         HTML.Put_List (J.Std_Err_Paths);
-         Ada.Text_IO.Put ("<p>Notify: ");
-         HTML.Put (J.Notify);
-         Ada.Text_IO.Put_Line ("</p>");
-         HTML.End_Div (Class => "job_files");
-      end Put_Files;
-
-      procedure Put_Context is
-         Item : Utils.String_Pairs.Cursor;
-      begin
-         HTML.Begin_Div (Class => "job_context");
-         HTML.Put_Heading (Title => "Balancer",
-                           Level => 3);
-         Item := J.Context.Find (To_Unbounded_String ("SLOTSCPU"));
-         if Item /= Utils.String_Pairs.No_Element then
-            HTML.Put_Paragraph (Label => "Cores without GPU",
-                                Contents => Element (Item));
-         end if;
-         Item := J.Context.Find (To_Unbounded_String ("SLOTSGPU"));
-         if Item /= Utils.String_Pairs.No_Element then
-            HTML.Put_Paragraph (Label => "Cores with GPU",
-                                Contents => Element (Item));
-         end if;
-         Item := J.Context.Find (To_Unbounded_String ("LASTMIG"));
-         if Item /= Utils.String_Pairs.No_Element then
-            HTML.Put_Paragraph (Label => "Last migration",
-                                Contents => Ada.Calendar.Conversions.To_Ada_Time
-                                      (Interfaces.C.long'Value (To_String (Element (Item)))));
-         else
-            HTML.Put_Paragraph (Label => "Last migration",
-                                Contents => "None");
-         end if;
-
-         HTML.Put_Heading (Title => "Other context",
-                           Level => 3);
-         HTML.Put_List (J.Context);
-         HTML.End_Div (Class => "job_context");
-      end Put_Context;
-
-   begin
-      HTML.Begin_Div (Class => "job_info");
-
-      Put_Name;
-      Put_Meta;
-      Put_Queues;
-      HTML.Begin_Div (Class => "res_and_context");
-      Put_Resources;
-      Put_Context;
-      HTML.End_Div (Class => "res_and_context");
-      Put_Usage;
-      Put_Files;
-
-      HTML.Put_Clearer;
-      HTML.End_Div (Class => "job_info");
-      HTML.Put_Clearer;
-   end Put;
-
-   -------------------
-   -- Put_Core_Line --
-   --  Purpose: Output standard data for one job as a number of table cells (td).
-   --  This included ID, name, and owner
-   -------------------
-
-   procedure Put_Core_Header is
-   begin
-      HTML.Put_Header_Cell (Data => "Number");
-      HTML.Put_Header_Cell (Data => ""); -- Balancer support
-      HTML.Put_Header_Cell (Data => "Owner");
-      HTML.Put_Header_Cell (Data => "Name");
-   end Put_Core_Header;
-
-   procedure Put_Core_Line (J : Job) is
-   begin
-      if Is_Empty (J.Task_IDs) or else not Is_Collapsed (J.Task_IDs) then
-         HTML.Put_Cell (Data       => Ada.Strings.Fixed.Trim (J.Number'Img, Ada.Strings.Left),
-                        Link_Param => "job_id");
-      else
-         HTML.Put_Cell (Data       => Ada.Strings.Fixed.Trim (J.Number'Img, Ada.Strings.Left)
-                                      & "-" & Ada.Strings.Fixed.Trim (Min (J.Task_IDs)'Img, Ada.Strings.Left),
-                        Link_Param => "job_id");
-      end if;
-      if Supports_Balancer (J) then
-         HTML.Put_Img_Cell ("balance");
-      else
-         HTML.Put_Cell (Data => "");
-      end if;
-      HTML.Put_Cell (Data => J.Owner, Link_Param => "user");
-      if J.Name_Truncated then
-         HTML.Put_Cell (Data => "<acronym title=""" & J.Full_Name & """>"
-                        & J.Name & "</acronym>");
-      else
-         HTML.Put_Cell (Data => J.Name);
-      end if;
-   end Put_Core_Line;
-
-   -------------------
-   -- Put_Prio_Core --
-   -------------------
-
-   procedure Put_Prio_Core (J : Job) is
-   begin
-      HTML.Put_Cell (Data => J.Priority'Img);
-      HTML.Put_Cell (Data => J.Override_Tickets'Img, Class => "right");
-      HTML.Put_Cell (Data => J.Share_Tickets'Img, Class => "right");
-      HTML.Put_Cell (Data => J.Functional_Tickets'Img, Class => "right");
-      HTML.Put_Cell (Data => J.Urgency'Img, Class => "right");
-      HTML.Put_Cell (Data => J.Resource_Contrib'Img, Class => "right");
-      HTML.Put_Cell (Data => J.Waiting_Contrib'Img, Class => "right");
-      HTML.Put_Cell (Data => J.Posix_Priority'Img, Class => "right");
-   end Put_Prio_Core;
-
-
-   -------------------
-   -- Put_Time_Line --
-   --  Purpose: Output one Job, including prospective end time, as a table row (tr).
-   -------------------
-
-   procedure Put_Time_Line (Pos : Job_Lists.Cursor) is
-      J : Job := Jobs.Job_Lists.Element (Pos);
-   begin
-      Ada.Text_IO.Put ("<tr>");
-      Put_Core_Line (J);
-
-      HTML.Put_Cell (Data => J.Slot_Number, Tag => "td class=""right""");
-      begin
-         HTML.Put_Duration_Cell (Remaining_Time (J));
-      exception
-         when Resource_Error =>
-            HTML.Put_Cell (Data => "<i>unknown</i>", Class => "right");
-      end;
-      begin
-         HTML.Put_Time_Cell (End_Time (J));
-      exception
-         when Resource_Error =>
-            HTML.Put_Cell (Data => "<i>unknown</i>");
-      end;
-      HTML.Put_Img_Cell (State_As_String (J));
-      Ada.Text_IO.Put ("</tr>");
-   exception
-      when E :
-         others => HTML.Error (Message => "Error while outputting job: "
-                                     & Exception_Message (E));
-         Ada.Text_IO.Put ("</tr>");
-   end Put_Time_Line;
-
-   -------------------
-   -- Put_Bunch_Line --
-   --  Purpose: Output one Job
-   -------------------
-
-   procedure Put_Bunch_Line (Pos : Job_Lists.Cursor) is
-      J : Job := Jobs.Job_Lists.Element (Pos);
-   begin
-      Ada.Text_IO.Put ("<tr>");
-      Put_Core_Line (J);
-      HTML.Put_Cell (Data => J.PE);
-      Ranges.Put_Cell (Data => J.Slot_List, Class => "right");
-      HTML.Put_Cell (Data       => To_Unbounded_String (J.Hard));
-      HTML.Put_Cell (Data       => To_Unbounded_String (J.Soft));
-      HTML.Put_Img_Cell (State_As_String (J));
-      Ada.Text_IO.Put ("</tr>");
-   exception
-      when E :
-         others => HTML.Error (Message => "Error while outputting job: "
-                                     & Exception_Message (E));
-         Ada.Text_IO.Put ("</tr>");
-   end Put_Bunch_Line;
-
-
-   ------------------
-   -- Put_Res_Line --
-   --  Purpose: Output one Job, including resource usage, as a table row (tr)
-   ------------------
-
-   procedure Put_Res_Line (Pos : Job_Lists.Cursor) is
-      J : Job := Jobs.Job_Lists.Element (Pos);
-   begin
-      Ada.Text_IO.Put ("<tr>");
-      Put_Core_Line (J);
-
-      HTML.Put_Time_Cell (J.Submission_Time);
-      HTML.Put_Cell (Data => J.Slot_Number, Tag => "td class=""right""");
-      HTML.Put_Img_Cell (State_As_String (J));
-      if J.CPU > 0.1 then
-         HTML.Put_Duration_Cell (Integer (J.CPU));
-      else
-         HTML.Put_Cell ("");
-      end if;
-      if J.Mem > 3_600.0 then
-         HTML.Put_Cell (Data  => Integer'Image (Integer (J.Mem / 3_600.0)),
-                        Class => "right");
-      elsif J.Mem > 1.0 then
-         HTML.Put_Cell (Data  => HTML.Encode ("<1"),
-                        Class => "right");
-      else
-         HTML.Put_Cell ("");
-      end if;
-      if J.IO > 1.0 then
-         HTML.Put_Cell (Data  => Integer'Image (Integer (J.IO)),
-                        Class => "right");
-      elsif J.IO > 0.01 then
-         HTML.Put_Cell (Data  => "<1",
-                        Class => "right");
-      else
-         HTML.Put_Cell ("");
-      end if;
-      Put_Prio_Core (J);
-      Ada.Text_IO.Put ("</tr>");
-   exception
-      when E : others => HTML.Error (Message => "Error while outputting job: "
-                                     & Exception_Message (E));
-      Ada.Text_IO.Put ("</tr>");
-   end Put_Res_Line;
-
-   procedure Put_Prio_Line (Pos : Job_Lists.Cursor) is
-      J : Job := Jobs.Job_Lists.Element (Pos);
-   begin
-      Ada.Text_IO.Put ("<tr>");
-      Put_Core_Line (J);
-
-      HTML.Put_Time_Cell (J.Submission_Time);
-      HTML.Put_Cell (Data => J.Slot_Number, Tag => "td class=""right""");
-      HTML.Put_Img_Cell (State_As_String (J));
-      Ada.Text_IO.Put ("<td>");
-      HTML.Put (J.Reserve);
-      Ada.Text_IO.Put ("</td>");
-      Put_Prio_Core (J);
-      Ada.Text_IO.Put ("</tr>");
-   exception
-      when E : others => HTML.Error (Message => "Error while outputting job: "
-                                     & Exception_Message (E));
-      Ada.Text_IO.Put ("</tr>");
-   end Put_Prio_Line;
-
-
-   procedure Put_Usage (Kind : Usage_Type; Amount : Usage_Number) is
-   begin
-      case Kind is
-         when cpu =>
-            declare
-               Days : Natural;
-               Dur  : Duration;
-            begin
-               Days := Natural (Amount / 86400.0);
-               Dur  := Ada.Real_Time.To_Duration
-                       (Ada.Real_Time.Seconds (Natural (Amount - Days * 86_400.0)));
-               if Days > 0 then
-                  HTML.Put_Paragraph
-                  (Contents  => Days'Img & "d " & Ada.Calendar.Formatting.Image (Dur),
-                   Label => Kind'Img);
-               elsif Amount >= 1.0 then
-                  HTML.Put_Paragraph (Contents  => Ada.Calendar.Formatting.Image (Dur),
-                                 Label     => Kind'Img);
-               elsif Amount > 0.0 then
-                  HTML.Put_Paragraph (Label => "CPU", Contents => "< 1s");
-               else
-                  HTML.Put_Paragraph (Label    => "CPU",
-                                 Contents => "0");
-               end if;
-            exception
-               when Constraint_Error =>
-                  HTML.Put_Paragraph (Label    => Kind'Img,
-                                 Contents => "<i>out of range</i>");
-            end;
-         when mem =>
-            HTML.Put_Paragraph (Label    => "Memory",
-                           Contents => Natural (Amount)'Img & " "
-                           & HTML.Acronym (Short => "GBs",
-                                            Long => "Gigabytes times seconds"));
-         when io =>
-            HTML.Put_Paragraph (Label    => "I/O",
-                           Contents => Amount'Img);
-         when vmem =>
-            HTML.Put_Paragraph (Label    => "vMem",
-                           Contents => To_Memory (Usage_Integer (Amount)));
-         when maxvmem =>
-            HTML.Put_Paragraph (Label    => "Maximum vMem",
-                           Contents => To_Memory (Usage_Integer (Amount)));
-         when iow =>
-            null; -- iow is suppressed in qstat -j without -xml as well
-         when submission_time =>
-            null; -- ignore for now; note that this is also treated as cumulative
-                  --  in Jobs.Extract_Tasks, although it represents a point in time
-         when start_time =>
-            null; -- likewise
-         when end_time =>
-            null; -- likewise
-         when priority =>
-            null;
-            --  ignore for now. It is unclear how one can "use" priority
-            --  Put_Paragraph (Label => "Priority",
-            --               Contents => Amount'Img);
-         when exit_status =>
-            null;
-            --  ignore as well
-         when signal =>
-            null;
-            --  ignore
-         when ru_wallclock =>
-            null; -- Bug #1752
-         when ru_utime =>
-            null; -- likewise
-         when ru_stime =>
-            null; -- likewise
-         when ru_maxrss =>
-            null; -- likewise
-         when ru_ixrss =>
-            null; -- likewise
-      end case;
-   end Put_Usage;
 
    --------------
    -- Overlays --
@@ -2211,9 +1498,6 @@ package body Jobs is
                             Key      => J.Number);
          end if;
       end loop;
-   exception
-      when E : others
-         => HTML.Error ("Unable to read job info (Create_Overlay): " & Exception_Message (E));
    end Create_Overlay;
 
    procedure Update_Job_From_Overlay (J : in out Job) is
@@ -2222,9 +1506,6 @@ package body Jobs is
       J.Reserve := Update.Reserve;
       J.Slot_List := Update.Slot_List;
       J.Context := Update.Context;
-   exception
-      when E : others =>
-         HTML.Error ("When updating Job: " & Exception_Message (E));
    end Update_Job_From_Overlay;
 
    procedure Apply_Overlay_Entry (Position : Job_Lists.Cursor) is
@@ -2238,5 +1519,9 @@ package body Jobs is
       List.Iterate (Apply_Overlay_Entry'Access);
    end Apply_Overlay;
 
+   procedure Record_Error (J : in out Job; Message : String) is
+   begin
+      J.Error_Log.Append (To_Unbounded_String (Message));
+   end Record_Error;
 
-end Jobs;
+end SGE.Jobs;

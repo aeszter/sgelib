@@ -8,6 +8,7 @@ with Ranges;
 with Utils; use Utils;
 
 package Jobs is
+   Other_Error : exception;
 
    type Job_State is (unknown, dt, dr, Eqw, t, r, Rr, Rq, qw, hqw, ERq, hr);
    type State_Count is array (Job_State) of Natural;
@@ -110,11 +111,6 @@ package Jobs is
    procedure Prune_List_By_Slots (Slots : String);
    --  outdated. move functionality to Append_List. Does GPS notice this?
 
-   procedure Put_Summary;
-   procedure Put_List (Show_Resources : Boolean);
-   procedure Put_Time_List;
-   procedure Put_Bunch_List;
-
    procedure Sort_By (Field : String; Direction : String);
    function Precedes_By_Name (Left, Right : Job) return Boolean;
    function Precedes_By_Number (Left, Right : Job) return Boolean;
@@ -143,8 +139,6 @@ package Jobs is
    --  Purpose: Update all jobs' status
    procedure Search_Queues;
    --  Look for slots occupied by a job
-
-   procedure Put_Details;
 
    procedure Sort;
    --  Sort the job list by resources
@@ -229,6 +223,8 @@ private
 
       Std_Out_Paths    : String_Lists.List;
       Std_Err_Paths    : String_Lists.List;
+
+      Error_Log        : Utils.String_List;
    end record;
 
    package Job_Lists is
@@ -256,12 +252,6 @@ private
      new Job_Lists.Generic_Sorting
        ("<" => Precedes_By_Name);
 
-
-   procedure Put (Cursor : Job_Lists.Cursor);
-   procedure Put_Time_Line (Pos : Job_Lists.Cursor);
-   procedure Put_Res_Line (Pos : Job_Lists.Cursor);
-   procedure Put_Prio_Line (Pos : Job_Lists.Cursor);
-   procedure Put_Bunch_Line (Pos : Job_Lists.Cursor);
 
    package Sorting_By_Number is
      new Job_Lists.Generic_Sorting ("<" => Precedes_By_Number);
@@ -309,16 +299,8 @@ private
    procedure Update_Status (J : in out Job);
    --  Purpose: Read the job's status from an appropriate source
    --  (such as a qstat -u call)
-   procedure Put_Predecessor (Position : Utils.ID_Lists.Cursor);
-   --  Output the job ID of a predecessor job as a link to the job, together with
-   --  a suitable title
-   procedure Put_Successor (Position : Utils.ID_Lists.Cursor);
-   --  Output the job ID of a successor job as a link to the job, together with
-   --  a suitable title
-   procedure Put_Request (Position : Utils.String_Lists.Cursor);
-   --  Output the name (or ID) of a successor or predecessor job, together with
-   --  a suitable title
-   procedure Put_Usage (Kind : Usage_Type; Amount : Usage_Number);
-   --  Output one item in a list of used resources, with type (name) and a number
 
+   procedure Record_Error (J : in out Job; Message : String);
+   --  Purpose: store an error message for retrieval by the calling application
+   --  without raising an exception (so we can resume Library oprations)
 end Jobs;

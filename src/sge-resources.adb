@@ -1,8 +1,6 @@
-with HTML;
 with Ada.Calendar; use Ada.Calendar;
 with Ada.Calendar.Formatting; use Ada.Calendar.Formatting;
 with Ada.Real_Time;
-with Ada.Text_IO;
 with Ada.Strings; use Ada.Strings;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Unbounded.Hash;
@@ -12,7 +10,7 @@ with Utils; use Utils; use Utils.Hash_Strings;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps.Constants;
 
-package body Resources is
+package body SGE.Resources is
 
    ------------------
    -- New_Resource --
@@ -80,30 +78,6 @@ package body Resources is
       return Hash (R.Value);
    end Hash;
 
-
-   -----------------------
-   -- Put               --
-   --  Purpose: Output one resource as a paragraph
-   --  Parameter R: the resource to print
-   -----------------------
-
-   procedure Put (Pos : Resource_Lists.Cursor) is
-      Label : Unbounded_String := Key (Pos);
-      Res   : Resource := Element (Pos);
-      Value : Unbounded_String := Res.Value;
-
-   begin
-      if Label = "h_rt" then
-         HTML.Put_Paragraph (Label    => "<acronym title=""hard runtime limit"">h_rt</acronym>",
-                             Contents => Value);
-      elsif Res.Boolean_Valued then
-         Ada.Text_IO.Put ("<p>" & To_String (Label) & ": ");
-         HTML.Put (Res.State);
-         Ada.Text_IO.Put ("</p>");
-      else
-         HTML.Put_Paragraph (Label, Value);
-      end if;
-   end Put;
 
    -------------------------
    -- To_Unbounded_String --
@@ -289,10 +263,6 @@ package body Resources is
          xor Hash (New_Item);
          Container.Hash_String := To_Hash_String (Container.Hash_Value'Img);
       end if;
-   exception
-      when Constraint_Error => HTML.Error (Container.Hash_Value'Img'First'Img
-                                          & " .." & Container.Hash_Value'Img'Last'Img);
-         raise;
    end Insert;
 
    ------------
@@ -391,4 +361,4 @@ package body Resources is
    end Rehash;
 
 
-end Resources;
+end SGE.Resources;

@@ -2,7 +2,7 @@ with Ada.Strings;
 with Ada.Strings.Fixed;
 with Utils; use Utils.String_Lists;
 
-package body Utils is
+package body SGE.Utils is
 
    ------------------
    -- To_Tri_State --
@@ -58,4 +58,4 @@ package body Utils is
    end To_String_List;
 
 
-end Utils;
+end SGE.Utils;

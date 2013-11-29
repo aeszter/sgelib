@@ -5,6 +5,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Bounded;
 with Queues; use Queues;
 with Host_Properties; use Host_Properties;
+with Utils;
 
 package Partitions is
 
@@ -38,6 +39,7 @@ package Partitions is
       Offline_Slots   : Countable_Map;
       Name            : Unbounded_String;
       Properties      : Set_Of_Properties;
+      Error_Log       : Utils.String_List;
    end record;
    type State is (total, available, used, reserved, disabled, offline);
    type State_Count is array (State) of Countable_Map;
@@ -58,9 +60,6 @@ package Partitions is
 
    procedure Build_List;
    function New_Partition (Q : Queue) return Partition;
-   procedure Put (Partition : Partitions.Partition_Lists.Cursor);
-   procedure Put_List;
-   procedure Put_Summary;
 
    function "=" (Left : Partition; Right : Queue) return Boolean;
    function "=" (Left : Queue; Right : Partition) return Boolean;
@@ -68,4 +67,8 @@ private
    List : Summarized_List;
 
    function To_String (Source : State) return String;
+   procedure Record_Error (P : in out Partition; Message : String);
+   --  Purpose: store an error message for retrieval by the calling application
+   --  without raising an exception (so we can resume Library oprations)
+
 end Partitions;

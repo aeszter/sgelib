@@ -1,19 +1,22 @@
+with Unicode;
 with POSIX.Process_Primitives; use POSIX.Process_Primitives;
+with POSIX.Process_Identification; use POSIX.Process_Identification;
+with POSIX; use POSIX;
+with Ada.Strings.Fixed;
 with POSIX.Process_Environment; use POSIX.Process_Environment;
 with Ada.IO_Exceptions;
-with Ada.Strings.Fixed;
 with Utils;
 
-package body Plain_Pipe_Streams is
+package body SGE.Pipe_Streams is
+
 
    ---------------
    -- Next_Char --
    ---------------
 
-   procedure Next_Char
-     (From : in out Plain_Pipe_Stream;
-      C    : out Character)
-   is
+   overriding procedure Next_Char
+     (From : in out Pipe_Stream;
+      C    : out Unicode.Unicode_Char) is
    begin
       if From.Position >= Integer (From.Last_Read) then
          POSIX.IO.Read (File           => From.Pipe,
@@ -22,11 +25,11 @@ package body Plain_Pipe_Streams is
          From.Position := 0;
       end if;
       From.Position := From.Position + 1;
-      C := Standard.Character (From.Buffer (From.Position));
+      C := Unicode.To_Unicode (Standard.Character (From.Buffer (From.Position)));
    exception
       when Ada.IO_Exceptions.End_Error =>
          From.Eof_Reached := True;
-         C := Standard.Character (LF);
+         C := Unicode.To_Unicode (Standard.Character (LF));
       when others =>
          raise;
    end Next_Char;
@@ -35,7 +38,7 @@ package body Plain_Pipe_Streams is
    -- Eof --
    ---------
 
-   function Eof (From : Plain_Pipe_Stream) return Boolean is
+   overriding function Eof (From : Pipe_Stream) return Boolean is
    begin
       return From.Eof_Reached;
    end Eof;
@@ -44,10 +47,11 @@ package body Plain_Pipe_Streams is
    -- Close --
    -----------
 
-   procedure Close (Input : in out Plain_Pipe_Stream) is
+   overriding procedure Close (Input : in out Pipe_Stream) is
       Status : Termination_Status;
    begin
       Wait_For_Child_Process (Status => Status, Child => Input.PID);
+      Input_Sources.Close (Input_Source (Input));
       case Exit_Status_Of (Status) is
          when Normal_Exit => return;
          when Failed_Creation_Exit => raise Failed_Creation_Error;
@@ -56,15 +60,16 @@ package body Plain_Pipe_Streams is
       end case;
    end Close;
 
+
+
    -------------
-   -- Execute --
+   -- execute --
    -------------
 
-   procedure Execute
-     (P : in out Plain_Pipe_Stream;
-      Command : in String;
-      Arguments : String;
-      Environment : in String)
+   procedure Execute (P           : in out Pipe_Stream;
+                      Command     : in String;
+                      Arguments   : String;
+                      Environment : in String)
    is
       To_QView : POSIX.IO.File_Descriptor;
       Template : Process_Template;
@@ -96,4 +101,4 @@ package body Plain_Pipe_Streams is
       Close (File => To_QView);
    end Execute;
 
-end Plain_Pipe_Streams;
+end SGE.Pipe_Streams;

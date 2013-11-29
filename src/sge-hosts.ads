@@ -13,9 +13,6 @@ package Hosts is
    type Host is private;
 
 
-   procedure Put_All;
-   procedure Put_Selected (Selector : not null access function (H : Host) return Boolean);
-
    procedure Append_List (Host_Nodes : Node_List);
    procedure Prune_List (Requirements : Set_Of_Properties; Queue_Name : String);
 
@@ -111,13 +108,6 @@ private
                            State : String := "";
                            Slots : Natural := 0);
 
-   ----------------
-   -- Put_Queue --
-   --  Purpose: Output one queue name and status
-   --  Parameter Cursor: Map Cursor pointing to the queue to output
-   ----------------
-   procedure Put_Queue (Cursor : Queue_Maps.Cursor);
-
 
    type Host is record
       Name       : Unbounded_String;
@@ -137,9 +127,6 @@ private
 
    Host_List : Host_Lists.List;
 
-   procedure Put (Cursor : Host_Lists.Cursor);
-   procedure Put_Jobs (Cursor : Job_Lists.Cursor);
-   procedure Put_For_Maintenance (Cursor : Host_Lists.Cursor);
    procedure Compactify (List : in out Job_List);
 
    ------------------------------------

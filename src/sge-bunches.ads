@@ -6,10 +6,11 @@ with Ranges; use Ranges;
 
 package Bunches is
 
+   Other_Error : exception;
+
    type Bunch is private;
 
    procedure Build_List;
-   procedure Put_List;
 
    function New_Bunch (J : Job) return Bunch;
 
@@ -30,8 +31,6 @@ private
 
    package Bunch_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Bunch);
-
-   procedure Put (Pos : Bunch_Lists.Cursor);
 
    List : Bunch_Lists.List;
 end Bunches;

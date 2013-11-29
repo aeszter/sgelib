@@ -1,9 +1,8 @@
 with Parser; use Parser;
-with HTML;
 with Ada.Exceptions; use Ada.Exceptions;
 
 
-package body Host_Properties is
+package body SGE.Host_Properties is
 
 
    function Has_SSD (Props : Set_Of_Properties) return Boolean is
@@ -64,11 +63,6 @@ package body Host_Properties is
 
    procedure Set_Cores (Props : in out Set_Of_Properties; Cores : Positive) is
    begin
-      if Props.Cores /= 0 and then Props.Cores /= Cores then
-         HTML.Comment ("Cores changed from" & Props.Cores'Img
-                       & " to" & Cores'Img);
-         HTML.Comment ("See Bug #1499");
-      end if;
       Props.Cores := Cores;
    end Set_Cores;
 
@@ -261,13 +255,13 @@ package body Host_Properties is
       elsif Value (A) = "ssd" then
          Props.SSD := True;
       else
-         HTML.Error ("Unknown Resource encountered while parsing host");
-         HTML.Put_Paragraph (Value (A), Value (First_Child (N)));
+         raise Unsupported_Error with Value (A) & " -> " & Value (First_Child (N));
       end if;
    exception
+      when Unsupported_Error => raise;
       when E : others =>
-         HTML.Error ("Unable to read resource: "
-                     & Value (A) & " " & Exception_Message (E));
+         raise Other_Error with "Unable to read resource: "
+                     & Value (A) & " " & Exception_Message (E);
    end Parse_Resource;
 
    function To_String (Props : Set_Of_Properties) return String is
@@ -280,4 +274,4 @@ package body Host_Properties is
       &")";
    end To_String;
 
-end Host_Properties;
+end SGE.Host_Properties;

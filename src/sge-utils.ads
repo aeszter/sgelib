@@ -6,7 +6,7 @@ with Ada.Containers.Ordered_Sets;
 with POSIX; use POSIX;
 
 package Utils is
-   Version : String := "v1.7"; -- Update Bugzilla when you change this
+   Version : String := "v0.1";
    type Tri_State is (False, True, Undecided);
    Assumption_Error : exception;
 

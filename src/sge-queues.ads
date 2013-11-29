@@ -61,8 +61,6 @@ package Queues is
    function Is_Interactive (Q : Queue) return Boolean;
    function Is_Parallel (Q : Queue) return Boolean;
 
-   procedure Put_Selected (Selector : not null access function (Q : Queue) return Boolean);
-
 private
 
    type State_Flag is (alarm, disabled, error, unreachable, old, suspended);
@@ -82,8 +80,6 @@ private
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Queue);
    package Sorting_By_Resources is
      new Queue_Lists.Generic_Sorting ("<" => Precedes_By_Resources);
-
-   procedure Put_For_Maintenance (Cursor : Queue_Lists.Cursor);
 
    List : Queue_Lists.List;
    List_Cursor : Queue_Lists.Cursor := Queue_Lists.No_Element;

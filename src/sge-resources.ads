@@ -66,7 +66,6 @@ package Resources is
       Key       : Unbounded_String;
       New_Item  : Resource);
 
-   procedure Put (Pos : Resource_Lists.Cursor);
    function "<" (Left, Right : Resource) return Boolean;
 
 

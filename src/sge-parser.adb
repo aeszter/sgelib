@@ -1,5 +1,4 @@
 with DOM.Readers;
-with HTML;
 with Sax.Readers;
 with DOM.Core; use DOM.Core;
 with DOM.Core.Nodes; use DOM.Core.Nodes;
@@ -7,7 +6,7 @@ with Pipe_Streams; use Pipe_Streams;
 with Ada.Exceptions; use Ada.Exceptions;
 with Plain_Pipe_Streams; use Plain_Pipe_Streams;
 
-package body Parser is
+package body SGE.Parser is
 
    Reader : DOM.Readers.Tree_Reader;
    Table  : Spread_Sheets.Spread_Sheet;
@@ -19,7 +18,6 @@ package body Parser is
       SGE_Command : Pipe_Stream;
    begin
       SGE_Command.Set_Public_Id (Command);
-      HTML.Comment (Command & " " & Selector);
       SGE_Command.Execute (Command => sgeroot & "/bin/linux-x64/" & Command,
                            Arguments => Selector & " -xml",
                            Environment => "SGE_ROOT=" & sgeroot);
@@ -46,7 +44,6 @@ package body Parser is
                           Selector : String) return Spread_Sheets.Spread_Sheet is
       SGE_Command : Plain_Pipe_Stream;
    begin
-      HTML.Comment (Command & " " & Selector);
       SGE_Command.Execute (Command => sgeroot & "/utilbin/linux-x64/" & Command,
                            Arguments => Selector,
                            Environment => "SGE_ROOT=" & sgeroot);
@@ -102,4 +99,4 @@ package body Parser is
    begin
       return Get_Named_Item (Attributes (N), Name);
    end Get_Attr;
-end Parser;
+end SGE.Parser;

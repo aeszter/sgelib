@@ -1,6 +1,6 @@
 with Ada.Characters.Latin_1; use Ada.Characters;
 
-package body Spread_Sheets is
+package body SGE.Spread_Sheets is
    use Cell_Lists;
 
    function New_Cell (Text : Unbounded_String) return Cell is
@@ -68,4 +68,4 @@ package body Spread_Sheets is
       end loop;
    end Parse;
 
-end Spread_Sheets;
+end SGE.Spread_Sheets;

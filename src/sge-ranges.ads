@@ -23,13 +23,6 @@ package Ranges is
    function Is_Collapsed (What : Step_Range) return Boolean;
    --  return True if the range collapses to a single number
 
-   ---------
-   -- Put --
-   --  Purpose: Output one slot range as a paragraph
-   --  Parameter S: The slot range to print
-   ---------
-   procedure Put (S : Step_Range);
-
    package Range_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Step_Range);
 
@@ -59,13 +52,6 @@ package Ranges is
    --  Degenerate cases are not handled correctly: multiple identical entries,
    --  or multiple entries, all but one being empty, are not recognized as collapsed.
 
-   --------------
-   -- Put_Cell --
-   --  Purpose: Output a list of slot ranges as a table cell
-   --  Parameter Data: The list to print
-   --  Parameter Class: The CSS class to attach to the cell
-   ---------
-   procedure Put_Cell (Data : Step_Range_List; Class : String);
 
    ---------------
    -- To_String --

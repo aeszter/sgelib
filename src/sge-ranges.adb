@@ -1,11 +1,10 @@
-with HTML;
 with Ranges; use Ranges.Range_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Utils; use Utils; use Utils.Hash_Strings;
 
-package body Ranges is
+package body SGE.Ranges is
 
    ---------------
    -- New_Range --
@@ -175,36 +174,6 @@ package body Ranges is
          return False;
       end if;
    end Is_Collapsed;
-
-   ---------
-   -- Put --
-   ---------
-
-   procedure Put (S : Step_Range) is
-   begin
-      HTML.Put_Paragraph (Label  => "Slots",
-                          Contents => To_String (What => S, Short => True));
-
-   end Put;
-
-   --------------
-   -- Put_Cell --
-   --------------
-
-   procedure Put_Cell (Data : Step_Range_List; Class : String) is
-      Pos : Range_Lists.Cursor := Data.First;
-      S : Unbounded_String;
-   begin
-      while Pos /= Range_Lists.No_Element loop
-         S := S & To_String (What => Element (Pos), Short => True);
-         Next (Pos);
-         if Pos /= Range_Lists.No_Element then
-            S := S & ",";
-         end if;
-      end loop;
-      HTML.Put_Cell (Data => S, Class => Class);
-   end Put_Cell;
-
    ---------------
    -- To_String --
    ---------------
@@ -243,7 +212,6 @@ package body Ranges is
    function Hash (S : Step_Range) return Hash_Type is
       Str : Unbounded_String := To_Unbounded_String (What => S, Short => False);
    begin
-      HTML.Comment (To_String ("Hash (" & Str & ") =>" & Hash (Str)'Img));
       return Hash (Str);
    end Hash;
 
@@ -285,4 +253,4 @@ package body Ranges is
 
 
 
-end Ranges;
+end SGE.Ranges;
