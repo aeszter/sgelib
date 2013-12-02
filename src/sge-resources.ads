@@ -1,9 +1,9 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Utils; use Utils;
+with SGE.Utils; use SGE.Utils;
 with Ada.Containers; use Ada.Containers;
 with Ada.Containers.Ordered_Maps;
 
-package Resources is
+package SGE.Resources is
 
    type Resource is record
       Value          : Unbounded_String;
@@ -89,4 +89,4 @@ private
    --  Purpose: unconditionally compute the List's hash value
    procedure Rehash (List : in out Hashed_List);
 
-end Resources;
+end SGE.Resources;

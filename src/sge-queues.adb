@@ -1,5 +1,5 @@
-with Resources; use Resources;
-with Parser; use Parser;
+with SGE.Resources; use SGE.Resources;
+with SGE.Parser; use SGE.Parser;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body SGE.Queues is

@@ -5,7 +5,7 @@ with POSIX; use POSIX;
 with Ada.Strings.Fixed;
 with POSIX.Process_Environment; use POSIX.Process_Environment;
 with Ada.IO_Exceptions;
-with Utils;
+with SGE.Utils;
 
 package body SGE.Pipe_Streams is
 

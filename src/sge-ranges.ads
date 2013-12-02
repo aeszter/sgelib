@@ -1,9 +1,9 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers; use Ada.Containers;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Utils;
+with SGE.Utils;
 
-package Ranges is
+package SGE.Ranges is
 
    type Step_Range is record
       Min, Step, Max : Natural := 0;
@@ -89,4 +89,4 @@ private
    --  Purpose: unconditionally compute the List's hash value
    procedure Rehash (List : in out Step_Range_List);
 
-end Ranges;
+end SGE.Ranges;

@@ -1,5 +1,5 @@
 with Ada.Exceptions; use Ada.Exceptions;
-with Resources; use Resources;
+with SGE.Resources; use SGE.Resources;
 with Ada.Strings.Bounded; use Ada.Strings.Bounded;
 with Calendar.Conversions;
 with Interfaces.C;

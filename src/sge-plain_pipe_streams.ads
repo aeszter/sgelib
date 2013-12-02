@@ -2,7 +2,7 @@ with POSIX.IO; use POSIX.IO;
 with POSIX.Process_Identification;
 with POSIX; use POSIX;
 
-package Plain_Pipe_Streams is
+package SGE.Plain_Pipe_Streams is
 --  Stream read from a pipe, inspired by xmlADA,
 --  but for plain latin_1 characters without any prolog
 
@@ -32,4 +32,4 @@ private
       Eof_Reached : Boolean := False;
       PID         : Process_Identification.Process_ID;
    end record;
-end Plain_Pipe_Streams;
+end SGE.Plain_Pipe_Streams;

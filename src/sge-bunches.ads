@@ -1,10 +1,10 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Jobs; use Jobs;
-with Resources;
-with Ranges; use Ranges;
+with SGE.Jobs; use SGE.Jobs;
+with SGE.Resources;
+with SGE.Ranges; use SGE.Ranges;
 
-package Bunches is
+package SGE.Bunches is
 
    Other_Error : exception;
 
@@ -33,4 +33,4 @@ private
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Bunch);
 
    List : Bunch_Lists.List;
-end Bunches;
+end SGE.Bunches;

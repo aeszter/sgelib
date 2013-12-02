@@ -5,7 +5,7 @@ with POSIX.IO; use POSIX.IO;
 with POSIX.Process_Identification;
 with POSIX; use POSIX;
 
-package Pipe_Streams is
+package SGE.Pipe_Streams is
 --  Stream read from a pipe, used to interface with xmlADA
 
    type Pipe_Stream is new Input_Source with private;
@@ -34,4 +34,4 @@ private
       Eof_Reached : Boolean := False;
       PID         : Process_Identification.Process_ID;
    end record;
-end Pipe_Streams;
+end SGE.Pipe_Streams;

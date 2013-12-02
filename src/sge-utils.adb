@@ -1,6 +1,6 @@
 with Ada.Strings;
 with Ada.Strings.Fixed;
-with Utils; use Utils.String_Lists;
+with SGE.Utils; use SGE.Utils.String_Lists;
 
 package body SGE.Utils is
 

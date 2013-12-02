@@ -1,8 +1,8 @@
-with Ranges; use Ranges.Range_Lists;
+with SGE.Ranges; use SGE.Ranges.Range_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Utils; use Utils; use Utils.Hash_Strings;
+with SGE.Utils; use SGE.Utils; use SGE.Utils.Hash_Strings;
 
 package body SGE.Ranges is
 

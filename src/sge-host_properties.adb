@@ -1,4 +1,4 @@
-with Parser; use Parser;
+with SGE.Parser; use SGE.Parser;
 with Ada.Exceptions; use Ada.Exceptions;
 
 

@@ -1,8 +1,8 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Plain_Pipe_Streams; use Plain_Pipe_Streams;
+with SGE.Plain_Pipe_Streams; use SGE.Plain_Pipe_Streams;
 
-package Spread_Sheets is
+package SGE.Spread_Sheets is
    type Cell is
       record
          Contents : Unbounded_String := Null_Unbounded_String;
@@ -37,4 +37,4 @@ private
    function New_Cell (Text : Unbounded_String) return Cell;
 
 
-end Spread_Sheets;
+end SGE.Spread_Sheets;

@@ -5,7 +5,7 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with POSIX; use POSIX;
 
-package Utils is
+package SGE.Utils is
    Version : String := "v0.1";
    type Tri_State is (False, True, Undecided);
    Assumption_Error : exception;
@@ -46,4 +46,4 @@ package Utils is
 
    procedure To_String_List (Source  : String; Dest : out POSIX_String_List);
 
-end Utils;
+end SGE.Utils;

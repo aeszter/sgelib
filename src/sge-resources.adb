@@ -5,8 +5,8 @@ with Ada.Strings; use Ada.Strings;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Containers; use Ada.Containers;
-with Resources; use Resources.Resource_Lists;
-with Utils; use Utils; use Utils.Hash_Strings;
+with SGE.Resources; use SGE.Resources.Resource_Lists;
+with SGE.Utils; use SGE.Utils; use SGE.Utils.Hash_Strings;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps.Constants;
 

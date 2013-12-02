@@ -1,8 +1,8 @@
 with Ada.Containers.Doubly_Linked_Lists;
-with Jobs; use Jobs;
-with Ranges; use Ranges; use Ranges.Range_Lists;
+with SGE.Jobs; use SGE.Jobs;
+with SGE.Ranges; use SGE.Ranges; use SGE.Ranges.Range_Lists;
 with Ada.Text_IO;
-with Resources; use Resources; use Resources.Resource_Lists;
+with SGE.Resources; use SGE.Resources; use SGE.Resources.Resource_Lists;
 with Ada.Exceptions;
 
 package body SGE.Bunches is

@@ -1,13 +1,13 @@
 with Ada.Containers.Doubly_Linked_Lists;
-with Host_Properties; use Host_Properties;
+with SGE.Host_Properties; use SGE.Host_Properties;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Ordered_Maps;
 with Ada.Strings.Bounded; use Ada.Strings.Bounded;
-with Resources;
-with Parser; use Parser;
+with SGE.Resources;
+with SGE.Parser; use SGE.Parser;
 with Ada.Calendar; use Ada.Calendar;
 
-package Hosts is
+package SGE.Hosts is
 
    type Job is private;
    type Host is private;
@@ -179,4 +179,4 @@ private
    procedure Parse_Hostvalue (H : in out Host; N : Node);
    procedure Parse_Job (H : in out Host; N : Node);
 
-end Hosts;
+end SGE.Hosts;

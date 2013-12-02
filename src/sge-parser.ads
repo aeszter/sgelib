@@ -1,9 +1,9 @@
 with DOM.Core; with DOM.Core.Documents;
 with DOM.Core.Nodes;
-with Spread_Sheets;
+with SGE.Spread_Sheets;
 
 
-package Parser is
+package SGE.Parser is
    subtype Tree is DOM.Core.Document;
    subtype Attr is DOM.Core.Attr;
    subtype Node is DOM.Core.Node;
@@ -40,4 +40,4 @@ package Parser is
 private
    sgeroot : constant String := "/cm/shared/apps/sge/current";
 
-end Parser;
+end SGE.Parser;

@@ -2,12 +2,12 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Maps;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Calendar; use Ada.Calendar;
-with Resources;
-with Parser; use Parser;
-with Ranges;
-with Utils; use Utils;
+with SGE.Resources;
+with SGE.Parser; use SGE.Parser;
+with SGE.Ranges;
+with SGE.Utils; use SGE.Utils;
 
-package Jobs is
+package SGE.Jobs is
    Other_Error : exception;
 
    type Job_State is (unknown, dt, dr, Eqw, t, r, Rr, Rq, qw, hqw, ERq, hr);
@@ -303,4 +303,4 @@ private
    procedure Record_Error (J : in out Job; Message : String);
    --  Purpose: store an error message for retrieval by the calling application
    --  without raising an exception (so we can resume Library oprations)
-end Jobs;
+end SGE.Jobs;

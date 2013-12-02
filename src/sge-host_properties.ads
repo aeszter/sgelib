@@ -1,8 +1,8 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Resources; use Resources;
-with Parser;
+with SGE.Resources; use SGE.Resources;
+with SGE.Parser;
 
-package Host_Properties is
+package SGE.Host_Properties is
 
    Unsupported_Error, Other_Error : exception;
    type Set_Of_Properties is private;
@@ -56,4 +56,4 @@ private
       SSD, GPU              : Boolean := False;
       Load_One, Load_Five   : Fixed := 0.0;
    end record;
-end Host_Properties;
+end SGE.Host_Properties;

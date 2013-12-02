@@ -1,10 +1,10 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Resources;
-with Host_Properties; use Host_Properties;
-with Parser; use Parser;
+with SGE.Resources;
+with SGE.Host_Properties; use SGE.Host_Properties;
+with SGE.Parser; use SGE.Parser;
 
-package Queues is
+package SGE.Queues is
 
    type Queue is private;
 
@@ -84,4 +84,4 @@ private
    List : Queue_Lists.List;
    List_Cursor : Queue_Lists.Cursor := Queue_Lists.No_Element;
 
-end Queues;
+end SGE.Queues;

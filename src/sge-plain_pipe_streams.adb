@@ -2,7 +2,7 @@ with POSIX.Process_Primitives; use POSIX.Process_Primitives;
 with POSIX.Process_Environment; use POSIX.Process_Environment;
 with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;
-with Utils;
+with SGE.Utils;
 
 package body SGE.Plain_Pipe_Streams is
 

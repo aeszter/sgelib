@@ -3,11 +3,11 @@ with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Bounded;
-with Queues; use Queues;
-with Host_Properties; use Host_Properties;
-with Utils;
+with SGE.Queues; use SGE.Queues;
+with SGE.Host_Properties; use SGE.Host_Properties;
+with SGE.Utils;
 
-package Partitions is
+package SGE.Partitions is
 
    package Host_Names is new Ada.Strings.Bounded.Generic_Bounded_Length (Max => 12);
    subtype Host_Name is Host_Names.Bounded_String;
@@ -71,4 +71,4 @@ private
    --  Purpose: store an error message for retrieval by the calling application
    --  without raising an exception (so we can resume Library oprations)
 
-end Partitions;
+end SGE.Partitions;

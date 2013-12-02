@@ -2,9 +2,9 @@ with DOM.Readers;
 with Sax.Readers;
 with DOM.Core; use DOM.Core;
 with DOM.Core.Nodes; use DOM.Core.Nodes;
-with Pipe_Streams; use Pipe_Streams;
+with SGE.Pipe_Streams; use SGE.Pipe_Streams;
 with Ada.Exceptions; use Ada.Exceptions;
-with Plain_Pipe_Streams; use Plain_Pipe_Streams;
+with SGE.Plain_Pipe_Streams; use SGE.Plain_Pipe_Streams;
 
 package body SGE.Parser is
 
