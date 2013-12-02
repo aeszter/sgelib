@@ -47,7 +47,7 @@ project SGElib is
 
          when "static" =>
             for Default_Switches ("ada") use ("-g", "-lc");
-            for Linker_Options use ("-lSGE");
+            for Linker_Options use ();
 
          when "relocatable" =>
             for Default_Switches ("ada") use ("-g", "-fprofile-generate");
