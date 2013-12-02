@@ -252,5 +252,18 @@ package body SGE.Ranges is
    end Append;
 
 
+   function To_String (What : Step_Range_List; Short : Boolean) return String is
+      Pos : Range_Lists.Cursor := What.First;
+      S   : Unbounded_String;
+   begin
+      while Pos /= Range_Lists.No_Element loop
+         S := S & To_String (What => Element (Pos), Short => Short);
+         Next (Pos);
+         if Pos /= Range_Lists.No_Element then
+            S := S & ",";
+         end if;
+      end loop;
+      return To_String (S);
+   end To_String;
 
 end SGE.Ranges;

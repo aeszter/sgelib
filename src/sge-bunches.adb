@@ -101,4 +101,100 @@ package body SGE.Bunches is
                    Left.Soft = Get_Soft_Resources (Right) and then
                    Left.Queue = Get_Queue (Right));
    end "=";
+
+   procedure Iterate (Process : access procedure (B : Bunch)) is
+      procedure Wrapper (Pos : Bunch_Lists.Cursor) is
+      begin
+         Process (Bunch_Lists.Element (Pos));
+      end Wrapper;
+   begin
+      Bunch_Lists.Iterate (List, Wrapper'Access);
+   end Iterate;
+
+   function Has_Error (B : Bunch) return Boolean is
+   begin
+      return B.Error > 0;
+   end Has_Error;
+
+   function Has_Waiting (B : Bunch) return Boolean is
+   begin
+      return B.Waiting > 0;
+   end Has_Waiting;
+
+   function Get_PE (B : Bunch) return String is
+   begin
+      return To_String (B.PE);
+   end Get_PE;
+
+   function Get_Slot_Numbers (B : Bunch) return String is
+   begin
+      if B.Slot_List.Is_Empty then
+         return To_String (B.Slot_Number);
+      else
+         return To_String (B.Slot_List, Short => True);
+      end if;
+   end Get_Slot_Numbers;
+
+   function Get_Slot_Number (B : Bunch) return String is
+   begin
+      return To_String (B.Slot_Number);
+   end Get_Slot_Number;
+
+   function Get_Queue (B : Bunch) return String is
+   begin
+      return To_String (B.Queue);
+   end Get_Queue;
+
+   function Get_Total_Jobs (B : Bunch) return Natural is
+   begin
+      return B.Total;
+   end Get_Total_Jobs;
+
+   function Get_Waiting_Jobs (B : Bunch) return Natural is
+   begin
+      return B.Waiting;
+   end Get_Waiting_Jobs;
+
+   function Get_Errors (B : Bunch) return Natural is
+   begin
+      return B.Error;
+   end Get_Errors;
+
+   function Get_Jobs_On_Hold (B : Bunch) return Natural is
+   begin
+      return B.On_Hold;
+   end Get_Jobs_On_Hold;
+
+   function Has_Balancer (B : Bunch) return Boolean is
+   begin
+      return B.Balancer;
+   end Has_Balancer;
+
+   function Get_Hard_Resources (B : Bunch) return String is
+   begin
+      return To_String (B.Hard);
+   end Get_Hard_Resources;
+
+   function Get_Soft_Resources (B : Bunch) return String is
+   begin
+      return To_String (B.Soft);
+   end Get_Soft_Resources;
+
+   function Get_Slot_Hash (B : Bunch) return String is
+   begin
+      return Hash (B.Slot_List);
+   end Get_Slot_Hash;
+
+   function Get_Hard_Hash (B : Bunch) return String is
+   begin
+      return Hash (B.Hard);
+   end Get_Hard_Hash;
+
+   function Get_Soft_Hash (B : Bunch) return String is
+   begin
+      return Hash (B.Soft);
+   end Get_Soft_Hash;
+
+
+
 end SGE.Bunches;

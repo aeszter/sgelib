@@ -18,6 +18,25 @@ package SGE.Bunches is
    function "=" (Left : Job; Right : Bunch) return Boolean;
    --  return True if a given Job belongs to a certain Bunch
 
+   procedure Iterate (Process : access procedure (B : Bunch));
+
+   function Has_Error (B : Bunch) return Boolean;
+   function Has_Waiting (B : Bunch) return Boolean;
+   function Get_PE (B : Bunch) return String;
+   function Get_Slot_Number (B : Bunch) return String;
+   function Get_Slot_Numbers (B : Bunch) return String;
+   function Get_Queue (B : Bunch) return String;
+   function Get_Total_Jobs (B : Bunch) return Natural;
+   function Get_Waiting_Jobs (B : Bunch) return Natural;
+   function Get_Errors (B : Bunch) return Natural;
+   function Get_Jobs_On_Hold (B : Bunch) return Natural;
+   function Has_Balancer (B : Bunch) return Boolean;
+   function Get_Hard_Resources (B : Bunch) return String;
+   function Get_Soft_Resources (B : Bunch) return String;
+   function Get_Slot_Hash (B : Bunch) return String;
+   function Get_Hard_Hash (B : Bunch) return String;
+   function Get_Soft_Hash (B : Bunch) return String;
+
 private
    type Bunch is record
       PE, Queue      : Unbounded_String;

@@ -62,6 +62,7 @@ package SGE.Ranges is
    ---------------
 
    function To_String (What : Step_Range; Short : Boolean) return String;
+   function To_String (What : Step_Range_List; Short : Boolean) return String;
 
    ---------------
    -- To_Unbounded_String --
