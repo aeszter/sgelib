@@ -29,6 +29,61 @@ package body SGE.Hosts is
       return To_String (H.Name);
    end Get_Name;
 
+   function Get_Network (H : Host) return String is
+   begin
+      return Get_Network (H.Properties)'Img;
+   end Get_Network;
+
+   function Get_Model (H : Host) return String is
+   begin
+      return Get_Model (H.Properties)'Img;
+   end Get_Model;
+
+   function Get_Cores (H : Host) return Positive is
+   begin
+      return Get_Cores (H.Properties);
+   end Get_Cores;
+
+   function Is_Master (J : Job) return Boolean is
+   begin
+      return J.Master;
+   end Is_Master;
+
+   function Has_Slaves (J : Job) return Boolean is
+   begin
+      return J.Slaves > 0;
+   end Has_Slaves;
+
+   function Get_Slaves (J : Job) return Natural is
+   begin
+      return J.Slaves;
+   end Get_Slaves;
+
+   function Get_ID (J  : Job) return Positive is
+   begin
+      return J.ID;
+   end Get_ID;
+
+   function Get_Start_Time (J  : Job) return Ada.Calendar.Time is
+   begin
+      return J.Start_Time;
+   end Get_Start_Time;
+
+   function Get_State (Q : Queue_Pointer) return String is
+   begin
+      return Queue_States.To_String (Element (Q).State);
+   end Get_State;
+
+   function Get_Slots (Q : Queue_Pointer) return Natural is
+   begin
+      return Element (Q).Slots;
+   end Get_Slots;
+
+   function Get_Name (Q : Queue_Pointer) return String is
+   begin
+      return To_String (Key (Q));
+   end Get_Name;
+
 
    ----------------------
    -- Precedes_By_Swap --
@@ -600,6 +655,11 @@ package body SGE.Hosts is
       end if;
    end Color_Class;
 
+   function Get_Memory (H : Host) return String is
+   begin
+      return Get_Memory (H.Properties)'Img;
+   end Get_Memory;
+
    -----------------
    -- Color_Class --
    --  Purpose: translate a load value to a string suitable
@@ -623,6 +683,51 @@ package body SGE.Hosts is
          return "load_extreme";
       end if;
    end Color_Class;
+
+   procedure Iterate (Process : access procedure (H : Host)) is
+      procedure Wrapper (Pos : Host_Lists.Cursor) is
+      begin
+         Process (Element (Pos));
+      end Wrapper;
+
+   begin
+      Host_List.Iterate (Wrapper'Access);
+   end Iterate;
+
+   procedure Iterate (Process : access procedure (H : Host);
+                      Selector : access function (H : Host) return Boolean) is
+      Pos : Host_Lists.Cursor := Host_List.First;
+      H : Host;
+   begin
+      while Pos /= Host_Lists.No_Element loop
+         H := Element (Pos);
+         if Selector (H) then
+            Process (H);
+         end if;
+         Next (Pos);
+      end loop;
+   end Iterate;
+
+
+   procedure Iterate_Jobs (H : Host; Process : not null access procedure (J : Job)) is
+      procedure Wrapper (Position : Job_Lists.Cursor) is
+      begin
+         Process (Element (Position));
+      end Wrapper;
+
+   begin
+      H.Jobs.Iterate (Wrapper'Access);
+   end Iterate_Jobs;
+
+   procedure Iterate_Queues (H : Host; Process : not null access procedure (Q : Queue_Pointer)) is
+      procedure Wrapper (Position : Queue_Maps.Cursor) is
+      begin
+         Process (Queue_Pointer (Position));
+      end Wrapper;
+
+   begin
+      H.Queues.Iterate (Wrapper'Access);
+   end Iterate_Queues;
 
 
 end SGE.Hosts;

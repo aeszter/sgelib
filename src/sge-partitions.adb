@@ -1,6 +1,7 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with SGE.Queues;
 with Ada.Exceptions; use Ada.Exceptions;
+with SGE.Resources; use SGE.Resources;
 
 package body SGE.Partitions is
 
@@ -176,5 +177,81 @@ package body SGE.Partitions is
    begin
       P.Error_Log.Append (To_Unbounded_String (Message));
    end Record_Error;
+
+   procedure Iterate (Process : not null access procedure (P : Partition)) is
+      procedure Wrapper (Position : Partition_Lists.Cursor) is
+      begin
+         Process (Partition_Lists.Element (Position));
+      end Wrapper;
+
+   begin
+      List.Iterate (Wrapper'Access);
+   end Iterate;
+
+   function Get_Available_Hosts (P : Partition) return Natural is
+   begin
+      return Natural (Countable_Sets.Length (P.Available_Hosts));
+   end Get_Available_Hosts;
+
+   function Get_Available_Slots (P : Partition) return Natural is
+   begin
+      return Sum (P.Available_Slots);
+   end Get_Available_Slots;
+
+   function Get_Offline_Slots (P : Partition) return Natural is
+   begin
+      return Sum (P.Offline_Slots);
+   end Get_Offline_Slots;
+
+   function Get_Total_Slots (P : Partition) return Natural is
+   begin
+      return Sum (P.Total_Slots);
+   end Get_Total_Slots;
+
+   function Get_Network (P : Partition) return String is
+   begin
+      return Get_Network (P.Properties)'Img;
+   end Get_Network;
+
+   function Get_Model (P : Partition) return String is
+   begin
+      return Get_Model (P.Properties)'Img;
+   end Get_Model;
+
+   function Get_Memory (P : Partition) return String is
+   begin
+      return SGE.Resources.To_String (Get_Memory (P.Properties));
+   end Get_Memory;
+
+   function Has_GPU (P : Partition) return Boolean is
+   begin
+      return Has_GPU (P.Properties);
+   end Has_GPU;
+
+   function Has_SSD (P : Partition) return Boolean is
+   begin
+      return Has_SSD (P.Properties);
+   end Has_SSD;
+
+   function Get_Runtime (P : Partition) return String is
+   begin
+      return Get_Runtime (P.Properties);
+   end Get_Runtime;
+
+   function Get_Cores (P : Partition) return Natural is
+   begin
+      return Get_Cores (P.Properties);
+   end Get_Cores;
+
+   procedure Iterate_Summary (Process : not null access procedure (Item : State)) is
+   begin
+      null;
+   end Iterate_Summary;
+
+   function Get_Summary (From : State) return Natural is
+   begin
+      return Sum (List.Summary (From));
+   end Get_Summary;
+
 
 end SGE.Partitions;

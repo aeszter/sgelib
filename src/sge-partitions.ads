@@ -41,8 +41,26 @@ package SGE.Partitions is
       Properties      : Set_Of_Properties;
       Error_Log       : Utils.String_List;
    end record;
+
+   function Get_Available_Hosts (P : Partition) return Natural;
+   function Get_Available_Slots (P : Partition) return Natural;
+   function Get_Offline_Slots (P : Partition) return Natural;
+   function Get_Total_Slots (P : Partition) return Natural;
+   function Get_Network (P : Partition) return String;
+   function Get_Runtime (P : Partition) return String;
+   function Get_Cores (P : Partition) return Natural;
+   function Get_Model (P : Partition) return String;
+   function Get_Memory (P : Partition) return String;
+   function Has_GPU (P : Partition) return Boolean;
+   function Has_SSD (P : Partition) return Boolean;
+
+
    type State is (total, available, used, reserved, disabled, offline);
    type State_Count is array (State) of Countable_Map;
+
+   procedure Iterate_Summary (Process : not null access procedure (Item : State));
+   function Get_Summary (From : State) return Natural;
+
 
    overriding procedure Include
      (Container : in out Countable_Map;
@@ -57,8 +75,10 @@ package SGE.Partitions is
    record
      Summary : State_Count;
    end record;
+   function To_String (Source : State) return String;
 
    procedure Build_List;
+   procedure Iterate (Process : not null access procedure (P : Partition));
    function New_Partition (Q : Queue) return Partition;
 
    function "=" (Left : Partition; Right : Queue) return Boolean;
@@ -66,7 +86,6 @@ package SGE.Partitions is
 private
    List : Summarized_List;
 
-   function To_String (Source : State) return String;
    procedure Record_Error (P : in out Partition; Message : String);
    --  Purpose: store an error message for retrieval by the calling application
    --  without raising an exception (so we can resume Library oprations)

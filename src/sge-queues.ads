@@ -23,6 +23,10 @@ package SGE.Queues is
    function Current return Queue;
    --  retrieve the current queue without changing the memory pointer
    procedure Append_List (Input_Nodes : Node_List);
+   procedure Iterate (Process : not null access procedure (Q : Queue));
+   procedure Iterate (Process : not null access procedure (Q : Queue);
+                      Selector : not null access function (Q : Queue) return Boolean);
+
    function New_Queue (Used, Reserved, Total : Natural;
       State, Q_Type         : String;
       Memory                : String;
@@ -52,6 +56,7 @@ package SGE.Queues is
    function Is_Offline (Q : Queue) return Boolean;
    function Is_Disabled (Q : Queue) return Boolean;
    function Is_Suspended (Q : Queue) return Boolean;
+   function Get_Type (Q : Queue) return String;
 
    function Has_Error (Q : Queue) return Boolean;
    function Has_Disabled (Q : Queue) return Boolean;

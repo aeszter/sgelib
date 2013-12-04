@@ -11,10 +11,19 @@ package SGE.Hosts is
 
    type Job is private;
    type Host is private;
+   type Queue is private;
+   type Queue_Name is private;
+   type Queue_Pointer is private;
 
 
    procedure Append_List (Host_Nodes : Node_List);
    procedure Prune_List (Requirements : Set_Of_Properties; Queue_Name : String);
+
+   procedure Iterate (Process : access procedure (H : Host));
+   procedure Iterate (Process : access procedure (H : Host);
+                      Selector : access function (H : Host) return Boolean);
+   procedure Iterate_Queues (H : Host; Process : not null access procedure (Q : Queue_Pointer));
+   procedure Iterate_Jobs (H : Host; Process : not null access procedure (J : Job));
 
    procedure Update_Used_Slots (H : in out Host);
 
@@ -45,7 +54,20 @@ package SGE.Hosts is
    function Get_Used_Slots (H : Host) return Natural;
    function Get_Name (H : Host) return String;
    function Has_Unreachable_Queue (H : Host) return Boolean;
+   function Get_Network (H : Host) return String;
+   function Get_Model (H : Host) return String;
+   function Get_Cores (H : Host) return Positive;
+   function Get_Memory (H : Host) return String;
 
+   function Is_Master (J : Job) return Boolean;
+   function Has_Slaves (J : Job) return Boolean;
+   function Get_Slaves (J : Job) return Natural;
+   function Get_ID (J  : Job) return Positive;
+   function Get_Start_Time (J  : Job) return Ada.Calendar.Time;
+
+   function Get_State (Q : Queue_Pointer) return String;
+   function Get_Slots (Q : Queue_Pointer) return Natural;
+   function Get_Name (Q : Queue_Pointer) return String;
 
 private
 
@@ -90,6 +112,8 @@ private
      new Ada.Containers.Ordered_Maps (Key_Type => Unbounded_String,
                                       Element_Type => Queue);
    subtype Queue_Map is Queue_Maps.Map;
+   type Queue_Name is new Unbounded_String;
+   type Queue_Pointer is new Queue_Maps.Cursor;
 
    ------------------
    -- Append_Queue --

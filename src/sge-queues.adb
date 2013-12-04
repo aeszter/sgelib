@@ -40,6 +40,30 @@ package body SGE.Queues is
       return Queue_Lists.Element (List_Cursor);
    end Current;
 
+   procedure Iterate (Process : not null access procedure (Q : Queue)) is
+      procedure Wrapper (Position : Queue_Lists.Cursor) is
+      begin
+         Process (Element (Position));
+      end Wrapper;
+
+   begin
+      List.Iterate (Wrapper'Access);
+   end Iterate;
+
+   procedure Iterate (Process : not null access procedure (Q : Queue);
+                      Selector : not null access function (Q : Queue) return Boolean) is
+      procedure Wrapper (Position : Queue_Lists.Cursor) is
+         Q : Queue := Element (Position);
+      begin
+         if Selector (Q) then
+            Process (Q);
+         end if;
+      end Wrapper;
+
+   begin
+      List.Iterate (Wrapper'Access);
+   end Iterate;
+
    procedure Append_List (Input_Nodes : Node_List) is
    begin
       for Index in 1 .. Length (Input_Nodes) loop
@@ -308,5 +332,22 @@ package body SGE.Queues is
    begin
       return Q.Q_Type (P);
    end Is_Parallel;
+
+   function Get_Type (Q : Queue) return String is
+      Type_String : String := "   ";
+   begin
+      if Q.Q_Type (B) then
+         Type_String (1) := 'B';
+      end if;
+      if Q.Q_Type (I) then
+         Type_String (2) := 'I';
+      end if;
+      if Q.Q_Type (P) then
+         Type_String (3) := 'P';
+      end if;
+      return Type_String;
+   end Get_Type;
+
+
 
 end SGE.Queues;
