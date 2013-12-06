@@ -72,6 +72,16 @@ package body SGE.Jobs is
       return J.Hard;
    end Get_Hard_Resources;
 
+   function Get_Hard_Resources (J : Job) return String is
+   begin
+      return To_String (J.Hard);
+   end Get_Hard_Resources;
+
+   function Get_Soft_Resources (J : Job) return String is
+   begin
+      return To_String (J.Soft);
+   end Get_Soft_Resources;
+
    function Get_Soft_Resources (J : Job) return Resources.Hashed_List is
    begin
       return J.Soft;
@@ -86,6 +96,190 @@ package body SGE.Jobs is
          return False;
       end if;
    end Supports_Balancer;
+
+   function Get_Name (J : Job) return String is
+   begin
+      return To_String (J.Name);
+   end Get_Name;
+
+   function Get_Full_Name (J : Job) return String is
+   begin
+      return To_String (J.Full_Name);
+   end Get_Full_Name;
+
+   function Is_Name_Truncated (J : Job) return Boolean is
+   begin
+      return J.Name_Truncated;
+   end Is_Name_Truncated;
+
+   function Get_Owner (J : Job) return String is
+   begin
+      return To_String (J.Owner);
+   end Get_Owner;
+
+   function Get_Group (J : Job) return String is
+   begin
+      return To_String (J.Group);
+   end Get_Group;
+
+   function Get_Account (J : Job) return String is
+   begin
+      return To_String (J.Account);
+   end Get_Account;
+
+   function Get_Submission_Time (J : Job) return Ada.Calendar.Time is
+   begin
+      return J.Submission_Time;
+   end Get_Submission_Time;
+
+   function Get_Advance_Reservation (J : Job) return String is
+   begin
+      return To_String (J.Job_Advance_Reservation);
+   end Get_Advance_Reservation;
+
+   function Has_Reserve (J : Job) return Tri_State is
+   begin
+      return J.Reserve;
+   end Has_Reserve;
+
+   function Get_State (J : Job) return Job_State is
+   begin
+      return J.State;
+   end Get_State;
+
+   function Get_Directory (J : Job) return String is
+   begin
+      return To_String (J.Directory);
+   end Get_Directory;
+
+   function Get_Script_File (J : Job) return String is
+   begin
+      return To_String (J.Script_File);
+   end Get_Script_File;
+
+   function Get_Args (J : Job) return String_List is
+   begin
+      return J.Args;
+   end Get_Args;
+
+   function Get_Exec_File (J : Job) return String is
+   begin
+      return To_String (J.Exec_File);
+   end Get_Exec_File;
+
+   function Get_Std_Out_Paths (J : Job) return String_List is
+   begin
+      return J.Std_Out_Paths;
+   end Get_Std_Out_Paths;
+
+   function Get_Std_Err_Paths (J : Job) return String_List is
+   begin
+      return J.Std_Err_Paths;
+   end Get_Std_Err_Paths;
+
+   function Is_Merge_Std_Err (J : Job) return Tri_State is
+   begin
+      return J.Merge_Std_Err;
+   end Is_Merge_Std_Err;
+
+   function Has_Notify (J : Job) return Tri_State is
+   begin
+      return J.Notify;
+   end Has_Notify;
+
+   function Get_Task_List (J : Job) return String_Lists.List is
+   begin
+      return J.Task_List;
+   end Get_Task_List;
+
+   function Get_Detected_Queues (J : Job) return String_Sets.Set is
+   begin
+      return J.Detected_Queues;
+   end Get_Detected_Queues;
+
+   function Get_Context (J : Job) return Utils.String_Pairs.Map is
+   begin
+      return J.Context;
+   end Get_Context;
+
+   function Get_Priority (J : Job) return Utils.Fixed is
+   begin
+      return J.Priority;
+   end Get_Priority;
+
+   function Get_Override_Tickets (J : Job) return Natural is
+   begin
+      return J.Override_Tickets;
+   end Get_Override_Tickets;
+
+   function Get_Share_Tickets (J : Job) return Natural is
+   begin
+      return J.Share_Tickets;
+   end Get_Share_Tickets;
+
+   function Get_Functional_Tickets (J : Job) return Natural is
+   begin
+      return J.Functional_Tickets;
+   end Get_Functional_Tickets;
+
+   function Get_Urgency (J : Job) return Fixed is
+   begin
+      return J.Urgency;
+   end Get_Urgency;
+
+   function Get_Resource_Contrib (J : Job) return Natural is
+   begin
+      return J.Resource_Contrib;
+   end Get_Resource_Contrib;
+
+   function Get_Waiting_Contrib (J : Job) return Natural is
+   begin
+      return J.Waiting_Contrib;
+   end Get_Waiting_Contrib;
+
+   function Get_Posix_Priority (J : Job) return Posix_Priority_Type is
+   begin
+      return J.Posix_Priority;
+   end Get_Posix_Priority;
+
+   function Get_JAT_Usage  (J : Job) return Usage is
+   begin
+      return J.JAT_Usage;
+   end Get_JAT_Usage;
+
+   function Get_PET_Usage  (J : Job) return Usage is
+   begin
+      return J.PET_Usage;
+   end Get_PET_Usage;
+
+   function Get_CPU (J : Job) return Float is
+   begin
+      return J.CPU;
+   end Get_CPU;
+
+   function Get_Mem (J : Job) return Float is
+   begin
+      return J.Mem;
+   end Get_Mem;
+
+   function Get_IO (J : Job) return Float is
+   begin
+      return J.IO;
+   end Get_IO;
+
+   function Get_Context (J : Job; Key : String) return String is
+   begin
+      if J.Context.Contains (To_Unbounded_String (Key)) then
+         return To_String (J.Context.Element (To_Unbounded_String (Key)));
+      else
+         return "";
+      end if;
+   end Get_Context;
+
+   function Get_Task_IDs (J : Job) return Ranges.Step_Range_List is
+   begin
+      return J.Task_IDs;
+   end Get_Task_IDs;
 
    ----------------
    --  list-related
@@ -163,6 +357,16 @@ package body SGE.Jobs is
       List.Iterate (Process => Count'Access);
    end Get_Summary;
 
+   function Get_Last_Migration (J : Job) return Time is
+      Last_Mig : constant Unbounded_String := To_Unbounded_String ("LASTMIG");
+   begin
+      if J.Context.Contains (Last_Mig) then
+         return Ada.Calendar.Conversions.To_Ada_Time
+           (Interfaces.C.long'Value (To_String (J.Context.Element (Last_Mig))));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Last_Migration;
 
    ---------------------
    -- State_As_String --
@@ -259,21 +463,6 @@ package body SGE.Jobs is
          when others => return False;
       end case;
    end Has_Error;
-
-   ------------------
-   -- Name_As_HTML --
-   ------------------
-
-   function Name_As_HTML (J : Job) return String is
-   begin
-      if J.Name_Truncated then
-         return To_String ("<acronym title=""" & J.Full_Name & """>"
-                           & J.Name & "</acronym>");
-      else
-         return To_String (J.Name);
-      end if;
-
-   end Name_As_HTML;
 
    --------------
    -- End_Time --
@@ -1523,5 +1712,82 @@ package body SGE.Jobs is
    begin
       J.Error_Log.Append (To_Unbounded_String (Message));
    end Record_Error;
+
+   procedure Iterate (Process : not null access procedure (J : Job)) is
+      procedure Wrapper (Position : Job_Lists.Cursor) is
+      begin
+         Process (Element (Position));
+      end Wrapper;
+
+   begin
+      List.Iterate (Wrapper'Access);
+   end Iterate;
+
+   procedure Iterate_Predecessors (J       : Job;
+                                   Process : not null access procedure (ID : Natural)) is
+      procedure Wrapper (Position : Utils.ID_Lists.Cursor) is
+      begin
+         Process (Utils.ID_Lists.Element (Position));
+      end Wrapper;
+
+   begin
+      J.Predecessors.Iterate (Wrapper'Access);
+   end Iterate_Predecessors;
+
+   procedure Iterate_Predecessor_Requests (J       : Job;
+                                           Process : not null access procedure (S : String)) is
+      procedure Wrapper (Position : Utils.String_Lists.Cursor) is
+      begin
+         Process (To_String (Element (Position)));
+      end Wrapper;
+
+   begin
+      J.Predecessor_Request.Iterate (Wrapper'Access);
+   end Iterate_Predecessor_Requests;
+
+   procedure Iterate_Successors (J       : Job;
+                                 Process : not null access procedure (ID : Natural)) is
+      procedure Wrapper (Position : Utils.ID_Lists.Cursor) is
+      begin
+         Process (Utils.ID_Lists.Element (Position));
+      end Wrapper;
+
+   begin
+      J.Successors.Iterate (Wrapper'Access);
+   end Iterate_Successors;
+
+   procedure Iterate_Messages (J : Job;
+                               Process : not null access procedure (Message : String))
+   is
+      procedure Wrapper (Position : Utils.String_Lists.Cursor) is
+      begin
+         Process (To_String (Element (Position)));
+      end Wrapper;
+
+   begin
+      J.Message_List.Iterate (Wrapper'Access);
+   end Iterate_Messages;
+
+   procedure Iterate_Queues (J : Job;
+                             Process : not null access procedure (Queue : String)) is
+      procedure Wrapper (Position : Utils.String_Lists.Cursor) is
+      begin
+         Process (To_String (Element (Position)));
+      end Wrapper;
+
+   begin
+      J.Queue_List.Iterate (Wrapper'Access);
+   end Iterate_Queues;
+
+   procedure Iterate_Slots (J : Job;
+                            Process : not null access procedure (R : Step_Range)) is
+      procedure Wrapper (Position : Range_Lists.Cursor) is
+      begin
+         Process (Element (Position));
+      end Wrapper;
+
+   begin
+      J.Slot_List.Iterate (Wrapper'Access);
+   end Iterate_Slots;
 
 end SGE.Jobs;

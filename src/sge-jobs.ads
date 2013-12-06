@@ -4,7 +4,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Calendar; use Ada.Calendar;
 with SGE.Resources;
 with SGE.Parser; use SGE.Parser;
-with SGE.Ranges;
+with SGE.Ranges; use SGE.Ranges;
 with SGE.Utils; use SGE.Utils;
 
 package SGE.Jobs is
@@ -29,13 +29,13 @@ package SGE.Jobs is
    --  Returns: A string of the form xx MB, where xx is a number not exceeding
    --           five digits, and MB is a unit (actually kB, MB, or GB)
 
-   function Name_As_HTML (J : Job) return String;
    function On_Hold (J : Job) return Boolean;
    function Has_Error (J : Job) return Boolean;
 
    function End_Time (J : Job) return Time;
    function Remaining_Time (J : Job) return Duration;
    function Get_Task_Count (J : Job) return Natural;
+   function Get_Task_IDs (J : Job) return Ranges.Step_Range_List;
    function Get_ID (J : Job) return String;
    function Get_PE (J : Job) return Unbounded_String;
    function Get_Slot_List (J : Job) return Ranges.Step_Range_List;
@@ -43,7 +43,52 @@ package SGE.Jobs is
    function Get_Queue (J : Job) return Unbounded_String;
    function Get_Hard_Resources (J : Job) return Resources.Hashed_List;
    function Get_Soft_Resources (J : Job) return Resources.Hashed_List;
+   function Get_Hard_Resources (J : Job) return String;
+   function Get_Soft_Resources (J : Job) return String;
    function Supports_Balancer (J : Job) return Boolean;
+   function Get_Name (J : Job) return String;
+   function Get_Full_Name (J : Job) return String;
+   function Is_Name_Truncated (J : Job) return Boolean;
+   function Get_Owner (J : Job) return String;
+   function Get_Group (J : Job) return String;
+   function Get_Account (J : Job) return String;
+   function Get_Submission_Time (J : Job) return Ada.Calendar.Time;
+   function Get_Advance_Reservation (J : Job) return String;
+   function Has_Reserve (J : Job) return Tri_State;
+   function Get_State (J : Job) return Job_State;
+   function Get_Directory (J : Job) return String;
+   function Get_Script_File (J : Job) return String;
+   function Get_Args (J : Job) return String_List;
+   function Get_Exec_File (J : Job) return String;
+   function Get_Std_Out_Paths (J : Job) return String_List;
+   function Get_Std_Err_Paths (J : Job) return String_List;
+   function Is_Merge_Std_Err (J : Job) return Tri_State;
+   function Has_Notify (J : Job) return Tri_State;
+   function Get_Task_List (J : Job) return String_Lists.List;
+   function Get_Detected_Queues (J : Job) return String_Sets.Set;
+   function Get_Context (J : Job) return Utils.String_Pairs.Map;
+   function Get_Context (J : Job; Key : String) return String;
+   function Get_Last_Migration (J : Job) return Time;
+   function Get_Priority (J : Job) return Utils.Fixed;
+   function Get_Override_Tickets (J : Job) return Natural;
+   function Get_Share_Tickets (J : Job) return Natural;
+   function Get_Functional_Tickets (J : Job) return Natural;
+   function Get_Urgency (J : Job) return Fixed;
+   function Get_Resource_Contrib (J : Job) return Natural;
+   function Get_Waiting_Contrib (J : Job) return Natural;
+   function Get_Posix_Priority (J : Job) return Posix_Priority_Type;
+   function Get_JAT_Usage  (J : Job) return Usage;
+   function Get_PET_Usage  (J : Job) return Usage;
+   function Get_CPU (J : Job) return Float;
+   function Get_Mem (J : Job) return Float;
+   function Get_IO (J : Job) return Float;
+
+   -----------------
+   -- Get_Summary --
+   --  Purpose: Count the number of jobs per state from the List
+   -----------------
+   procedure Get_Summary (Tasks, Slots : out State_Count);
+
 
    -------------
    -- New_Job --
@@ -155,6 +200,18 @@ package SGE.Jobs is
    function Current return Job;
    --  retrieve the current job without changing the memory pointer
 
+   procedure Iterate (Process : not null access procedure (J : Job));
+   procedure Iterate_Predecessors (J       : Job;
+                                   Process : not null access procedure (ID : Natural));
+   procedure Iterate_Predecessor_Requests (J : Job; Process : not null access procedure (S : String));
+   procedure Iterate_Successors (J       : Job;
+                                 Process : not null access procedure (ID : Natural));
+   procedure Iterate_Messages (J : Job;
+                               Process : not null access procedure (Message : String));
+   procedure Iterate_Queues (J : Job;
+                             Process : not null access procedure (Queue : String));
+   procedure Iterate_Slots (J : Job;
+                            Process : not null access procedure (R : Step_Range));
 
    Max_Name_Length : constant Positive := 25;
 
@@ -182,7 +239,7 @@ private
       JAT_Usage, PET_Usage : Usage := (others => 0.0);
       Predecessors         : Utils.ID_List;
       Successors           : Utils.ID_List;
-      Predecessor_Request                : Utils.String_List;
+      Predecessor_Request  : Utils.String_List;
       Context              : Utils.String_Pairs.Map;
 
 
@@ -242,11 +299,6 @@ private
    --  otherwise, return No_Element
 
 
-   -----------------
-   -- Get_Summary --
-   --  Purpose: Count the number of jobs per state from the List
-   -----------------
-   procedure Get_Summary (Tasks, Slots : out State_Count);
 
    package Sorting_By_Name is
      new Job_Lists.Generic_Sorting

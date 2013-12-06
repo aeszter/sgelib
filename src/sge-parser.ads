@@ -35,8 +35,6 @@ package SGE.Parser is
    function Get_Job_Nodes_From_Qstat_U (Doc : DOM.Core.Document)
                                            return DOM.Core.Node_List;
 
-   Resource_Selector : constant String := "-F h_rt,eth,ib,ibs,ssd,gpu,mem_total,num_proc,cm,q";
-
 private
    sgeroot : constant String := "/cm/shared/apps/sge/current";
 
