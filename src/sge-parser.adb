@@ -41,10 +41,11 @@ package body SGE.Parser is
    end Setup;
 
    function Setup_No_XML (Command  : String;
-                          Selector : String) return Spread_Sheets.Spread_Sheet is
+                          Selector : String;
+                         Subpath : String := "/utilbin/linux-x64/") return Spread_Sheets.Spread_Sheet is
       SGE_Command : Plain_Pipe_Stream;
    begin
-      SGE_Command.Execute (Command => sgeroot & "/utilbin/linux-x64/" & Command,
+      SGE_Command.Execute (Command => sgeroot & Subpath & Command,
                            Arguments => Selector,
                            Environment => "SGE_ROOT=" & sgeroot);
 

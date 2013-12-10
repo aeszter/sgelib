@@ -23,7 +23,8 @@ package SGE.Parser is
    function Setup (Command  : String := "qstat";
                    Selector : String) return DOM.Core.Document;
    function Setup_No_XML (Command  : String;
-                          Selector : String) return Spread_Sheets.Spread_Sheet;
+                          Selector : String;
+                          Subpath  : String := "/utilbin/linux-x64/") return Spread_Sheets.Spread_Sheet;
    procedure Free;
    function Get_Elements_By_Tag_Name
      (Doc : DOM.Core.Document; Tag_Name : DOM.Core.DOM_String := "*")

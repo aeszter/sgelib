@@ -21,6 +21,7 @@ package SGE.Jobs is
 
    type Job is private;
 
+   function Count return Natural;
    function State_As_String (J : Job) return String;
    function To_String (State : Job_State) return String;
    function To_State (State : String) return Job_State;
@@ -40,6 +41,7 @@ package SGE.Jobs is
    function Get_PE (J : Job) return Unbounded_String;
    function Get_Slot_List (J : Job) return Ranges.Step_Range_List;
    function Get_Slot_Number (J : Job) return Unbounded_String;
+   function Get_Minimum_Slots (J : Job) return Positive;
    function Get_Queue (J : Job) return Unbounded_String;
    function Get_Hard_Resources (J : Job) return Resources.Hashed_List;
    function Get_Soft_Resources (J : Job) return Resources.Hashed_List;
@@ -149,6 +151,8 @@ package SGE.Jobs is
    -- Prune_List --
    --  Purpose: Remove Jobs not matching certain criteria
    -----------------
+
+   procedure Prune_List (Keep : not null access function (J : Job) return Boolean);
    procedure Prune_List (PE, Queue, Hard_Requests,
                          Soft_Requests,
                          Slot_Number, Slot_Ranges : Unbounded_String);

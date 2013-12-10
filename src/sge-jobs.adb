@@ -8,6 +8,7 @@ with SGE.Utils;          use SGE.Utils; use SGE.Utils.String_Lists; use SGE.Util
 with SGE.Parser;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Real_Time;
+with Ada.Strings.Fixed;
 with Interfaces.C;
 with Ada.Containers; use Ada.Containers;
 
@@ -36,6 +37,10 @@ package body SGE.Jobs is
    -------------
    --  accessors
    -------------
+   function Count return Natural is
+   begin
+      return Natural (List.Length);
+   end Count;
 
    function Get_Task_Count (J : Job) return Natural is
    begin
@@ -44,7 +49,8 @@ package body SGE.Jobs is
 
    function Get_ID (J : Job) return String is
    begin
-      return J.Number'Img;
+      return Ada.Strings.Fixed.Trim (Source => J.Number'Img,
+                                     Side => Ada.Strings.Left);
    end Get_ID;
 
    function Get_PE (J : Job) return Unbounded_String is
@@ -61,6 +67,15 @@ package body SGE.Jobs is
    begin
       return J.Slot_Number;
    end Get_Slot_Number;
+
+   function Get_Minimum_Slots (J : Job) return Positive is
+   begin
+      if Is_Empty (J.Slot_List) then
+         return Positive'Value (To_String (J.Slot_Number));
+      end if;
+
+      return Min (J.Slot_List);
+   end Get_Minimum_Slots;
 
    function Get_Queue (J : Job) return Unbounded_String is
    begin
@@ -503,13 +518,11 @@ package body SGE.Jobs is
       end loop;
    end Append_List;
 
-   -----------------
-   -- Append_List --
-   -----------------
 
    procedure Prune_List (PE, Queue, Hard_Requests,
                          Soft_Requests,
                          Slot_Number, Slot_Ranges : Unbounded_String) is
+      --  FIXME: implement in terms of the new kernel-based Prune_List below
       J : Job;
       Pruned_List : Job_Lists.List;
    begin
@@ -533,6 +546,23 @@ package body SGE.Jobs is
                   Pruned_List.Append (J);
                end if;
             end if;
+         end if;
+         exit when At_End;
+         J := Next;
+      end loop;
+      List.Clear;
+      List.Splice (Source => Pruned_List, Before => List.First);
+   end Prune_List;
+
+   procedure Prune_List (Keep : not null access function (J : Job) return Boolean) is
+      J : Job;
+      Pruned_List : Job_Lists.List;
+   begin
+      Rewind;
+      J := Current;
+      loop
+         if Keep (J) then
+            Pruned_List.Append (J);
          end if;
          exit when At_End;
          J := Next;
