@@ -71,6 +71,8 @@ package SGE.Jobs is
    function Get_Context (J : Job) return Utils.String_Pairs.Map;
    function Get_Context (J : Job; Key : String) return String;
    function Get_Last_Migration (J : Job) return Time;
+   function Get_CPU_Range (J : Job) return String;
+   function Get_GPU_Range (J : Job) return String;
    function Get_Priority (J : Job) return Utils.Fixed;
    function Get_Override_Tickets (J : Job) return Natural;
    function Get_Share_Tickets (J : Job) return Natural;

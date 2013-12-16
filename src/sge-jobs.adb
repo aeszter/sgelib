@@ -383,6 +383,30 @@ package body SGE.Jobs is
       end if;
    end Get_Last_Migration;
 
+   function Get_CPU_Range (J : Job) return String is
+      CPU_Range : constant Unbounded_String := To_Unbounded_String ("SLOTSCPU");
+   begin
+      if J.Context.Contains (CPU_Range) then
+         return Ranges.To_String (Ranges.To_Step_Range_List
+                                  (To_String (J.Context.Element (CPU_Range))),
+                                 Short => True);
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_CPU_Range;
+
+   function Get_GPU_Range (J : Job) return String is
+      GPU_Range : constant Unbounded_String := To_Unbounded_String ("SLOTSGPU");
+   begin
+      if J.Context.Contains (GPU_Range) then
+         return Ranges.To_String (Ranges.To_Step_Range_List (To_String
+                                  (J.Context.Element (GPU_Range))),
+                                 Short => True);
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_GPU_Range;
+
    ---------------------
    -- State_As_String --
    ---------------------
