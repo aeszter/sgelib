@@ -928,7 +928,8 @@ package body SGE.Jobs is
    begin
       for I in 1 .. Length (Resource_Nodes) loop
          N := Item (Resource_Nodes, I - 1);
-         if Name (N) = "qstat_l_requests" then
+         if Name (N) = "qstat_l_requests"
+         or else Name (N) = "element" then
             Res_Bool := False;
             Res_State := Undecided;
             Resource_Tags := Child_Nodes (N);
