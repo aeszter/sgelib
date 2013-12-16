@@ -5,6 +5,7 @@ with DOM.Core.Nodes; use DOM.Core.Nodes;
 with SGE.Pipe_Streams; use SGE.Pipe_Streams;
 with Ada.Exceptions; use Ada.Exceptions;
 with SGE.Plain_Pipe_Streams; use SGE.Plain_Pipe_Streams;
+with SGE.Spread_Sheets;
 
 package body SGE.Parser is
 
@@ -40,9 +41,11 @@ package body SGE.Parser is
            & Exception_Message (E);
    end Setup;
 
-   function Setup_No_XML (Command  : String;
+   procedure Setup_No_XML (Command  : String;
                           Selector : String;
-                         Subpath : String := "/utilbin/linux-x64/") return Spread_Sheets.Spread_Sheet is
+                          Subpath  : String := "/utilbin/linux-x64/";
+                          Output : out SGE.Spread_Sheets.Spread_Sheet;
+                          Exit_Status : out Natural) is
       SGE_Command : Plain_Pipe_Stream;
    begin
       SGE_Command.Execute (Command => sgeroot & Subpath & Command,
@@ -50,8 +53,8 @@ package body SGE.Parser is
                            Environment => "SGE_ROOT=" & sgeroot);
 
       Table.Parse (SGE_Command);
-      SGE_Command.Close;
-      return Table;
+      SGE_Command.Close (Exit_Status);
+      Output := Table;
    exception
          when Plain_Pipe_Streams.Failed_Creation_Error =>
             raise Parser_Error with "Failed to spawn """ & Command
