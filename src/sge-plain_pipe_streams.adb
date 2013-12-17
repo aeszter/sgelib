@@ -44,15 +44,16 @@ package body SGE.Plain_Pipe_Streams is
    -- Close --
    -----------
 
-   procedure Close (Input : in out Plain_Pipe_Stream) is
+   procedure Close (Input : in out Plain_Pipe_Stream; Exit_Status : out Natural) is
       Status : Termination_Status;
    begin
       Wait_For_Child_Process (Status => Status, Child => Input.PID);
+      Exit_Status := Natural (Exit_Status_Of (Status));
       case Exit_Status_Of (Status) is
          when Normal_Exit => return;
          when Failed_Creation_Exit => raise Failed_Creation_Error;
-            when Unhandled_Exception_Exit => raise Exception_Error;
-         when others => raise Other_Error with Exit_Status_Of (Status)'Img;
+         when Unhandled_Exception_Exit => raise Exception_Error;
+         when others => return;
       end case;
    end Close;
 

@@ -16,7 +16,7 @@ package SGE.Plain_Pipe_Streams is
 --  Return a single character from From.
    function Eof (From : Plain_Pipe_Stream) return Boolean;
    --  Return True if there is no more character to read on the stream
-   procedure Close (Input : in out Plain_Pipe_Stream);
+   procedure Close (Input : in out Plain_Pipe_Stream; Exit_Status : out Natural);
 
    procedure Execute (P : in out Plain_Pipe_Stream;
                       Command : in String;
