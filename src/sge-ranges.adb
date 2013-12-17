@@ -3,6 +3,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with SGE.Utils; use SGE.Utils; use SGE.Utils.Hash_Strings;
+with Ada.Strings.Maps; use Ada.Strings.Maps;
 
 package body SGE.Ranges is
 
@@ -75,7 +76,9 @@ package body SGE.Ranges is
    begin
       loop
          Comma := Index (Source  => From (Prev + 1 .. From'Last),
-                           Pattern => ",");
+                         Pattern => ",",
+                         Mapping => To_Mapping (From => ";",
+                                                To   => ","));
          if Comma = 0 then
             List.Append (New_Item => To_Step_Range (From (Prev + 1 .. From'Last)));
             return List;
