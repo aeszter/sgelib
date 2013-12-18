@@ -87,6 +87,7 @@ package SGE.Jobs is
    function Get_Mem (J : Job) return Float;
    function Get_IO (J : Job) return Float;
 
+   function Has_Error_Log_Entries (J : Job) return Boolean;
    -----------------
    -- Get_Summary --
    --  Purpose: Count the number of jobs per state from the List
@@ -218,6 +219,9 @@ package SGE.Jobs is
                              Process : not null access procedure (Queue : String));
    procedure Iterate_Slots (J : Job;
                             Process : not null access procedure (R : Step_Range));
+   procedure Iterate_Error_Log (J : Job;
+                               Process : not null access procedure (Message : String));
+
 
    Max_Name_Length : constant Positive := 25;
 

@@ -503,6 +503,11 @@ package body SGE.Jobs is
       end case;
    end Has_Error;
 
+   function Has_Error_Log_Entries (J : Job) return Boolean is
+   begin
+      return not J.Error_Log.Is_Empty;
+   end Has_Error_Log_Entries;
+
    --------------
    -- End_Time --
    --------------
@@ -1844,5 +1849,18 @@ package body SGE.Jobs is
    begin
       J.Slot_List.Iterate (Wrapper'Access);
    end Iterate_Slots;
+
+   procedure Iterate_Error_Log (J : Job;
+                               Process : not null access procedure (Message : String))
+   is
+      procedure Wrapper (Position : Utils.String_Lists.Cursor) is
+      begin
+         Process (To_String (Element (Position)));
+      end Wrapper;
+
+   begin
+      J.Error_Log.Iterate (Wrapper'Access);
+   end Iterate_Error_Log;
+
 
 end SGE.Jobs;
