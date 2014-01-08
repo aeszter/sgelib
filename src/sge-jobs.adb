@@ -84,7 +84,8 @@ package body SGE.Jobs is
       use Ada.Strings.Maps;
       Raw_Range : String := Get_CPU_Range (J);
       Separator : Natural := Index (Source => Raw_Range,
-                                    Set    => To_Set ("0123456789"),
+                                    Set    => To_Set (" 0123456789"),
+                                    --  note leading blank
                                     Test   => Outside);
    begin
       if not Supports_Balancer (J) then
@@ -92,6 +93,10 @@ package body SGE.Jobs is
       else
          return Natural'Value (Raw_Range (Raw_Range'First .. Separator - 1));
       end if;
+   exception
+      when Constraint_Error =>
+         raise Constraint_Error with "Cannot extract slots from context """ & Raw_Range & """("
+           & Raw_Range'First'Img & ".." & Separator'Img & "-1)";
    end Get_Minimum_CPU_Slots;
 
    function Get_Queue (J : Job) return Unbounded_String is
