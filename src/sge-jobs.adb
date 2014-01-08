@@ -11,6 +11,7 @@ with Ada.Real_Time;
 with Ada.Strings.Fixed;
 with Interfaces.C;
 with Ada.Containers; use Ada.Containers;
+with Ada.Strings.Maps;
 
 package body SGE.Jobs is
    use Job_Lists;
@@ -76,6 +77,22 @@ package body SGE.Jobs is
 
       return Min (J.Slot_List);
    end Get_Minimum_Slots;
+
+   function Get_Minimum_CPU_Slots (J : Job) return Positive is
+      use Ada.Strings;
+      use Ada.Strings.Fixed;
+      use Ada.Strings.Maps;
+      Raw_Range : String := Get_CPU_Range (J);
+      Separator : Natural := Index (Source => Raw_Range,
+                                    Set    => To_Set ("0123456789"),
+                                    Test   => Outside);
+   begin
+      if not Supports_Balancer (J) then
+         return Get_Minimum_Slots (J);
+      else
+         return Natural'Value (Raw_Range (Raw_Range'First .. Separator - 1));
+      end if;
+   end Get_Minimum_CPU_Slots;
 
    function Get_Queue (J : Job) return Unbounded_String is
    begin
