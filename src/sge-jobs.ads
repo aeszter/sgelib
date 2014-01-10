@@ -18,6 +18,7 @@ package SGE.Jobs is
                        priority, exit_status, signal);
    type Usage is array (Usage_Type) of Usage_Number;
    type Posix_Priority_Type is range -1_023 .. 1_024;
+   type Balancer_Capability is (CPU_GPU, Low_Cores, Any);
 
    type Job is private;
 
@@ -42,12 +43,16 @@ package SGE.Jobs is
    function Get_Slot_List (J : Job) return Ranges.Step_Range_List;
    function Get_Slot_Number (J : Job) return Unbounded_String;
    function Get_Minimum_Slots (J : Job) return Positive;
+   --  maximum lower bound of the slot list
+   function Get_Minimum_CPU_Slots (J : Job) return Positive;
+   --  maximum lower bound on the slot list assuming the job is migrated
+   --  to a (pure) cpu queue by the balancer
    function Get_Queue (J : Job) return Unbounded_String;
    function Get_Hard_Resources (J : Job) return Resources.Hashed_List;
    function Get_Soft_Resources (J : Job) return Resources.Hashed_List;
    function Get_Hard_Resources (J : Job) return String;
    function Get_Soft_Resources (J : Job) return String;
-   function Supports_Balancer (J : Job) return Boolean;
+   function Supports_Balancer (J : Job; What : Balancer_Capability := Any) return Boolean;
    function Get_Name (J : Job) return String;
    function Get_Full_Name (J : Job) return String;
    function Is_Name_Truncated (J : Job) return Boolean;
@@ -70,9 +75,14 @@ package SGE.Jobs is
    function Get_Detected_Queues (J : Job) return String_Sets.Set;
    function Get_Context (J : Job) return Utils.String_Pairs.Map;
    function Get_Context (J : Job; Key : String) return String;
+   function Has_Context (J : Job; Key : String) return Boolean;
    function Get_Last_Migration (J : Job) return Time;
+   function Get_Last_Reduction (J : Job) return Time;
    function Get_CPU_Range (J : Job) return String;
    function Get_GPU_Range (J : Job) return String;
+   function Get_Reduce_Wait (J : Job) return Duration;
+   function Get_Reduced_Slots (J : Job) return String;
+   function Get_Reduced_Runtime (J : Job) return String;
    function Get_Priority (J : Job) return Utils.Fixed;
    function Get_Override_Tickets (J : Job) return Natural;
    function Get_Share_Tickets (J : Job) return Natural;
@@ -87,6 +97,7 @@ package SGE.Jobs is
    function Get_Mem (J : Job) return Float;
    function Get_IO (J : Job) return Float;
 
+   function Has_Error_Log_Entries (J : Job) return Boolean;
    -----------------
    -- Get_Summary --
    --  Purpose: Count the number of jobs per state from the List
@@ -218,6 +229,9 @@ package SGE.Jobs is
                              Process : not null access procedure (Queue : String));
    procedure Iterate_Slots (J : Job;
                             Process : not null access procedure (R : Step_Range));
+   procedure Iterate_Error_Log (J : Job;
+                               Process : not null access procedure (Message : String));
+
 
    Max_Name_Length : constant Positive := 25;
 

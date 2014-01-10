@@ -11,6 +11,7 @@ with Ada.Real_Time;
 with Ada.Strings.Fixed;
 with Interfaces.C;
 with Ada.Containers; use Ada.Containers;
+with Ada.Strings.Maps;
 
 package body SGE.Jobs is
    use Job_Lists;
@@ -77,6 +78,30 @@ package body SGE.Jobs is
       return Min (J.Slot_List);
    end Get_Minimum_Slots;
 
+   function Get_Minimum_CPU_Slots (J : Job) return Positive is
+      use Ada.Strings;
+      use Ada.Strings.Fixed;
+      use Ada.Strings.Maps;
+   begin
+      if not Supports_Balancer (J, CPU_GPU) then
+         return Get_Minimum_Slots (J);
+      else
+         declare
+            Raw_Range : String := Get_CPU_Range (J);
+            Separator : Natural := Index (Source => Raw_Range,
+                                          Set    => To_Set (" 0123456789"),
+                                          --  note leading blank
+                                          Test   => Outside);
+         begin
+            return Natural'Value (Raw_Range (Raw_Range'First .. Separator - 1));
+         exception
+            when Constraint_Error =>
+               raise Constraint_Error with "Cannot extract slots from context """ & Raw_Range & """("
+                 & Raw_Range'First'Img & ".." & Separator'Img & "-1)";
+         end;
+      end if;
+   end Get_Minimum_CPU_Slots;
+
    function Get_Queue (J : Job) return Unbounded_String is
    begin
       return J.Queue;
@@ -102,14 +127,26 @@ package body SGE.Jobs is
       return J.Soft;
    end Get_Soft_Resources;
 
-   function Supports_Balancer (J : Job) return Boolean is
+   function Supports_Balancer (J : Job; What : Balancer_Capability := Any) return Boolean is
    begin
-      if J.Context.Contains (To_Unbounded_String ("SLOTSCPU"))
-        and then J.Context.Contains (To_Unbounded_String ("SLOTSGPU")) then
-         return True;
-      else
-         return False;
-      end if;
+      case What is
+         when CPU_GPU =>
+            if J.Context.Contains (To_Unbounded_String ("SLOTSCPU"))
+              and then J.Context.Contains (To_Unbounded_String ("SLOTSGPU")) then
+               return True;
+            else
+               return False;
+            end if;
+         when Low_Cores =>
+            if J.Context.Contains (To_Unbounded_String ("WAITREDUCE"))
+              and then J.Context.Contains (To_Unbounded_String ("SLOTSREDUCE")) then
+               return True;
+            else
+               return False;
+            end if;
+         when Any =>
+            return Supports_Balancer (J, CPU_GPU) or else Supports_Balancer (J, Low_Cores);
+      end case;
    end Supports_Balancer;
 
    function Get_Name (J : Job) return String is
@@ -291,6 +328,11 @@ package body SGE.Jobs is
       end if;
    end Get_Context;
 
+   function Has_Context (J : Job; Key : String) return Boolean is
+   begin
+      return J.Context.Contains (To_Unbounded_String (Key));
+   end Has_Context;
+
    function Get_Task_IDs (J : Job) return Ranges.Step_Range_List is
    begin
       return J.Task_IDs;
@@ -382,6 +424,48 @@ package body SGE.Jobs is
          raise Constraint_Error;
       end if;
    end Get_Last_Migration;
+
+   function Get_Last_Reduction (J : Job) return Time is
+      Last_Red : constant Unbounded_String := To_Unbounded_String ("LASTRED");
+   begin
+      if J.Context.Contains (Last_Red) then
+         return Ada.Calendar.Conversions.To_Ada_Time
+           (Interfaces.C.long'Value (To_String (J.Context.Element (Last_Red))));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Last_Reduction;
+
+   function Get_Reduce_Wait (J : Job) return Duration is
+      Key : constant Unbounded_String := To_Unbounded_String ("WAITREDUCE");
+   begin
+      if J.Context.Contains (Key) then
+         return Ada.Real_Time.To_Duration
+           (Ada.Real_Time.Seconds (Integer'Value (To_String (J.Context.Element (Key)))));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Reduce_Wait;
+
+   function Get_Reduced_Runtime (J : Job) return String is
+      Key : constant Unbounded_String := To_Unbounded_String ("RTREDUCE");
+   begin
+      if J.Context.Contains (Key) then
+         return To_String (J.Context.Element (Key));
+      else
+         return "";
+      end if;
+   end Get_Reduced_Runtime;
+
+   function Get_Reduced_Slots (J : Job) return String is
+      Key : constant Unbounded_String := To_Unbounded_String ("SLOTSREDUCE");
+   begin
+      if J.Context.Contains (Key) then
+         return To_String (J.Context.Element (Key));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Reduced_Slots;
 
    function Get_CPU_Range (J : Job) return String is
       CPU_Range : constant Unbounded_String := To_Unbounded_String ("SLOTSCPU");
@@ -502,6 +586,11 @@ package body SGE.Jobs is
          when others => return False;
       end case;
    end Has_Error;
+
+   function Has_Error_Log_Entries (J : Job) return Boolean is
+   begin
+      return not J.Error_Log.Is_Empty;
+   end Has_Error_Log_Entries;
 
    --------------
    -- End_Time --
@@ -1844,5 +1933,18 @@ package body SGE.Jobs is
    begin
       J.Slot_List.Iterate (Wrapper'Access);
    end Iterate_Slots;
+
+   procedure Iterate_Error_Log (J : Job;
+                               Process : not null access procedure (Message : String))
+   is
+      procedure Wrapper (Position : Utils.String_Lists.Cursor) is
+      begin
+         Process (To_String (Element (Position)));
+      end Wrapper;
+
+   begin
+      J.Error_Log.Iterate (Wrapper'Access);
+   end Iterate_Error_Log;
+
 
 end SGE.Jobs;

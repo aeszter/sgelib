@@ -270,7 +270,7 @@ package body SGE.Host_Properties is
         &",model=>" & Props.Model'Img
         & ",mem=>" & Props.Memory'Img
         & ",cores=>" & Props.Cores'Img
-        & "rt=>" & To_String (Props.Runtime)
+        & ",rt=>" & To_String (Props.Runtime)
       &")";
    end To_String;
 
