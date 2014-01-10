@@ -325,6 +325,11 @@ package body SGE.Jobs is
       end if;
    end Get_Context;
 
+   function Has_Context (J : Job; Key : String) return Boolean is
+   begin
+      return J.Context.Contains (To_Unbounded_String (Key));
+   end Has_Context;
+
    function Get_Task_IDs (J : Job) return Ranges.Step_Range_List is
    begin
       return J.Task_IDs;
@@ -416,6 +421,17 @@ package body SGE.Jobs is
          raise Constraint_Error;
       end if;
    end Get_Last_Migration;
+
+   function Get_Last_Reduction (J : Job) return Time is
+      Last_Red : constant Unbounded_String := To_Unbounded_String ("LASTRED");
+   begin
+      if J.Context.Contains (Last_Red) then
+         return Ada.Calendar.Conversions.To_Ada_Time
+           (Interfaces.C.long'Value (To_String (J.Context.Element (Last_Red))));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Last_Reduction;
 
    function Get_Reduce_Wait (J : Job) return Duration is
       Key : constant Unbounded_String := To_Unbounded_String ("WAITREDUCE");

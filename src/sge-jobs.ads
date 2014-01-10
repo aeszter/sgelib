@@ -75,7 +75,9 @@ package SGE.Jobs is
    function Get_Detected_Queues (J : Job) return String_Sets.Set;
    function Get_Context (J : Job) return Utils.String_Pairs.Map;
    function Get_Context (J : Job; Key : String) return String;
+   function Has_Context (J : Job; Key : String) return Boolean;
    function Get_Last_Migration (J : Job) return Time;
+   function Get_Last_Reduction (J : Job) return Time;
    function Get_CPU_Range (J : Job) return String;
    function Get_GPU_Range (J : Job) return String;
    function Get_Reduce_Wait (J : Job) return Duration;
