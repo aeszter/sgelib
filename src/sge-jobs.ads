@@ -18,6 +18,7 @@ package SGE.Jobs is
                        priority, exit_status, signal);
    type Usage is array (Usage_Type) of Usage_Number;
    type Posix_Priority_Type is range -1_023 .. 1_024;
+   type Balancer_Capability is (CPU_GPU, Low_Cores, Any);
 
    type Job is private;
 
@@ -51,7 +52,7 @@ package SGE.Jobs is
    function Get_Soft_Resources (J : Job) return Resources.Hashed_List;
    function Get_Hard_Resources (J : Job) return String;
    function Get_Soft_Resources (J : Job) return String;
-   function Supports_Balancer (J : Job) return Boolean;
+   function Supports_Balancer (J : Job; What : Balancer_Capability := Any) return Boolean;
    function Get_Name (J : Job) return String;
    function Get_Full_Name (J : Job) return String;
    function Is_Name_Truncated (J : Job) return Boolean;
@@ -77,6 +78,9 @@ package SGE.Jobs is
    function Get_Last_Migration (J : Job) return Time;
    function Get_CPU_Range (J : Job) return String;
    function Get_GPU_Range (J : Job) return String;
+   function Get_Reduce_Wait (J : Job) return Duration;
+   function Get_Reduced_Slots (J : Job) return String;
+   function Get_Reduced_Runtime (J : Job) return String;
    function Get_Priority (J : Job) return Utils.Fixed;
    function Get_Override_Tickets (J : Job) return Natural;
    function Get_Share_Tickets (J : Job) return Natural;

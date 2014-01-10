@@ -124,14 +124,26 @@ package body SGE.Jobs is
       return J.Soft;
    end Get_Soft_Resources;
 
-   function Supports_Balancer (J : Job) return Boolean is
+   function Supports_Balancer (J : Job; What : Balancer_Capability := Any) return Boolean is
    begin
-      if J.Context.Contains (To_Unbounded_String ("SLOTSCPU"))
-        and then J.Context.Contains (To_Unbounded_String ("SLOTSGPU")) then
-         return True;
-      else
-         return False;
-      end if;
+      case What is
+         when CPU_GPU =>
+            if J.Context.Contains (To_Unbounded_String ("SLOTSCPU"))
+              and then J.Context.Contains (To_Unbounded_String ("SLOTSGPU")) then
+               return True;
+            else
+               return False;
+            end if;
+         when Low_Cores =>
+            if J.Context.Contains (To_Unbounded_String ("WAITREDUCE"))
+              and then J.Context.Contains (To_Unbounded_String ("SLOTSREDUCED")) then
+               return True;
+            else
+               return False;
+            end if;
+         when Any =>
+            return Supports_Balancer (J, CPU_GPU) or else Supports_Balancer (J, Low_Cores);
+      end case;
    end Supports_Balancer;
 
    function Get_Name (J : Job) return String is
@@ -404,6 +416,37 @@ package body SGE.Jobs is
          raise Constraint_Error;
       end if;
    end Get_Last_Migration;
+
+   function Get_Reduce_Wait (J : Job) return Duration is
+      Key : constant Unbounded_String := To_Unbounded_String ("WAITREDUCE");
+   begin
+      if J.Context.Contains (Key) then
+         return Ada.Real_Time.To_Duration
+           (Ada.Real_Time.Seconds (Integer'Value (To_String (J.Context.Element (Key)))));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Reduce_Wait;
+
+   function Get_Reduced_Runtime (J : Job) return String is
+      Key : constant Unbounded_String := To_Unbounded_String ("RTREDUCE");
+   begin
+      if J.Context.Contains (Key) then
+         return To_String (J.Context.Element (Key));
+      else
+         return "";
+      end if;
+   end Get_Reduced_Runtime;
+
+   function Get_Reduced_Slots (J : Job) return String is
+      Key : constant Unbounded_String := To_Unbounded_String ("SLOTSREDUCE");
+   begin
+      if J.Context.Contains (Key) then
+         return To_String (J.Context.Element (Key));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Reduced_Slots;
 
    function Get_CPU_Range (J : Job) return String is
       CPU_Range : constant Unbounded_String := To_Unbounded_String ("SLOTSCPU");
