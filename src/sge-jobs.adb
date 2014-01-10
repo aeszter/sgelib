@@ -82,21 +82,24 @@ package body SGE.Jobs is
       use Ada.Strings;
       use Ada.Strings.Fixed;
       use Ada.Strings.Maps;
-      Raw_Range : String := Get_CPU_Range (J);
-      Separator : Natural := Index (Source => Raw_Range,
-                                    Set    => To_Set (" 0123456789"),
-                                    --  note leading blank
-                                    Test   => Outside);
    begin
-      if not Supports_Balancer (J) then
+      if not Supports_Balancer (J, CPU_GPU) then
          return Get_Minimum_Slots (J);
       else
-         return Natural'Value (Raw_Range (Raw_Range'First .. Separator - 1));
+         declare
+            Raw_Range : String := Get_CPU_Range (J);
+            Separator : Natural := Index (Source => Raw_Range,
+                                          Set    => To_Set (" 0123456789"),
+                                          --  note leading blank
+                                          Test   => Outside);
+         begin
+            return Natural'Value (Raw_Range (Raw_Range'First .. Separator - 1));
+         exception
+            when Constraint_Error =>
+               raise Constraint_Error with "Cannot extract slots from context """ & Raw_Range & """("
+                 & Raw_Range'First'Img & ".." & Separator'Img & "-1)";
+         end;
       end if;
-   exception
-      when Constraint_Error =>
-         raise Constraint_Error with "Cannot extract slots from context """ & Raw_Range & """("
-           & Raw_Range'First'Img & ".." & Separator'Img & "-1)";
    end Get_Minimum_CPU_Slots;
 
    function Get_Queue (J : Job) return Unbounded_String is
@@ -136,7 +139,7 @@ package body SGE.Jobs is
             end if;
          when Low_Cores =>
             if J.Context.Contains (To_Unbounded_String ("WAITREDUCE"))
-              and then J.Context.Contains (To_Unbounded_String ("SLOTSREDUCED")) then
+              and then J.Context.Contains (To_Unbounded_String ("SLOTSREDUCE")) then
                return True;
             else
                return False;
