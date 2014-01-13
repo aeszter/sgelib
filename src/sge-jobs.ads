@@ -42,11 +42,21 @@ package SGE.Jobs is
    function Get_PE (J : Job) return Unbounded_String;
    function Get_Slot_List (J : Job) return Ranges.Step_Range_List;
    function Get_Slot_Number (J : Job) return Unbounded_String;
-   function Get_Minimum_Slots (J : Job) return Positive;
+
    --  maximum lower bound of the slot list
-   function Get_Minimum_CPU_Slots (J : Job) return Positive;
+   function Get_Minimum_Slots (J : Job) return Positive;
+
+   --  minimum upper bound of the slot list
+   function Get_Maximum_Slots (J : Job) return Positive;
+
    --  maximum lower bound on the slot list assuming the job is migrated
    --  to a (pure) cpu queue by the balancer
+   function Get_Minimum_CPU_Slots (J : Job) return Positive;
+
+   --  minimum upper bound on the slot list assuming the job is migrated
+   --  to a (pure) cpu queue by the balancer
+   function Get_Maximum_CPU_Slots (J : Job) return Positive;
+
    function Get_Queue (J : Job) return Unbounded_String;
    function Get_Hard_Resources (J : Job) return Resources.Hashed_List;
    function Get_Soft_Resources (J : Job) return Resources.Hashed_List;

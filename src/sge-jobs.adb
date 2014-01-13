@@ -78,6 +78,15 @@ package body SGE.Jobs is
       return Min (J.Slot_List);
    end Get_Minimum_Slots;
 
+   function Get_Maximum_Slots (J : Job) return Positive is
+   begin
+      if Is_Empty (J.Slot_List) then
+         return Positive'Value (To_String (J.Slot_Number));
+      end if;
+
+      return Max (J.Slot_List);
+   end Get_Maximum_Slots;
+
    function Get_Minimum_CPU_Slots (J : Job) return Positive is
       use Ada.Strings;
       use Ada.Strings.Fixed;
@@ -101,6 +110,31 @@ package body SGE.Jobs is
          end;
       end if;
    end Get_Minimum_CPU_Slots;
+
+   function Get_Maximum_CPU_Slots (J : Job) return Positive is
+      use Ada.Strings;
+      use Ada.Strings.Fixed;
+      use Ada.Strings.Maps;
+   begin
+      if not Supports_Balancer (J, CPU_GPU) then
+         return Get_Maximum_Slots (J);
+      else
+         declare
+            Raw_Range : String := Get_CPU_Range (J);
+            Separator : Natural := Index (Source => Raw_Range,
+                                          Set    => To_Set (" 0123456789"),
+                                          --  note leading blank
+                                          Test   => Outside,
+                                          Going  => Backward);
+         begin
+            return Natural'Value (Raw_Range (Separator + 1 .. Raw_Range'Last));
+         exception
+            when Constraint_Error =>
+               raise Constraint_Error with "Cannot extract slots from context """ & Raw_Range & """("
+                 & Separator'Img & "+1)" & ".." & Raw_Range'Last'Img;
+         end;
+      end if;
+   end Get_Maximum_CPU_Slots;
 
    function Get_Queue (J : Job) return Unbounded_String is
    begin
