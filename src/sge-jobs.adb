@@ -436,12 +436,11 @@ package body SGE.Jobs is
       end if;
    end Get_Last_Reduction;
 
-   function Get_Reduce_Wait (J : Job) return Duration is
+   function Get_Reduce_Wait (J : Job) return Natural is
       Key : constant Unbounded_String := To_Unbounded_String ("WAITREDUCE");
    begin
       if J.Context.Contains (Key) then
-         return Ada.Real_Time.To_Duration
-           (Ada.Real_Time.Seconds (Integer'Value (To_String (J.Context.Element (Key)))));
+         return Integer'Value (To_String (J.Context.Element (Key)));
       else
          raise Constraint_Error;
       end if;

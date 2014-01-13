@@ -80,7 +80,7 @@ package SGE.Jobs is
    function Get_Last_Reduction (J : Job) return Time;
    function Get_CPU_Range (J : Job) return String;
    function Get_GPU_Range (J : Job) return String;
-   function Get_Reduce_Wait (J : Job) return Duration;
+   function Get_Reduce_Wait (J : Job) return Natural;
    function Get_Reduced_Slots (J : Job) return String;
    function Get_Reduced_Runtime (J : Job) return String;
    function Get_Priority (J : Job) return Utils.Fixed;
