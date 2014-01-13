@@ -242,9 +242,14 @@ package body SGE.Ranges is
 
    procedure Rehash (List : in out Step_Range_List) is
       Temp : Ada.Containers.Hash_Type := 0;
-      Pos : Range_Lists.Cursor := List.First;
+      Pos  : Range_Lists.Cursor := List.First;
+      Last : Natural := 0;
    begin
       while Pos /= No_Element loop
+         if Element (Pos).Min < Last then
+            raise Assumption_Error with "unordered Step_Range_List encountered";
+         end if;
+         Last := Element (Pos).Max;
          Temp := Temp xor Hash (Element (Pos));
          Next (Pos);
       end loop;
