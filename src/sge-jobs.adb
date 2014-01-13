@@ -508,6 +508,16 @@ package body SGE.Jobs is
       end if;
    end Get_Reduced_Slots;
 
+   function Get_Extended_Slots (J : Job) return String is
+      Key : constant Unbounded_String := To_Unbounded_String ("SLOTSEXTEND");
+   begin
+      if J.Context.Contains (Key) then
+         return To_String (J.Context.Element (Key));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Extended_Slots;
+
    function Get_CPU_Range (J : Job) return String is
       CPU_Range : constant Unbounded_String := To_Unbounded_String ("SLOTSCPU");
    begin

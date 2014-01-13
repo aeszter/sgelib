@@ -92,6 +92,7 @@ package SGE.Jobs is
    function Get_GPU_Range (J : Job) return String;
    function Get_Reduce_Wait (J : Job) return Natural;
    function Get_Reduced_Slots (J : Job) return String;
+   function Get_Extended_Slots (J : Job) return String;
    function Get_Reduced_Runtime (J : Job) return String;
    function Get_Priority (J : Job) return Utils.Fixed;
    function Get_Override_Tickets (J : Job) return Natural;
