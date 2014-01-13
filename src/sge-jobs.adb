@@ -144,8 +144,16 @@ package body SGE.Jobs is
             else
                return False;
             end if;
+         when High_Cores =>
+            if J.Context.Contains (To_Unbounded_String ("SLOTSEXTEND")) then
+               return True;
+            else
+               return False;
+            end if;
          when Any =>
-            return Supports_Balancer (J, CPU_GPU) or else Supports_Balancer (J, Low_Cores);
+            return Supports_Balancer (J, CPU_GPU)
+              or else Supports_Balancer (J, Low_Cores)
+              or else Supports_Balancer (J, High_Cores);
       end case;
    end Supports_Balancer;
 

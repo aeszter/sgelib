@@ -18,7 +18,7 @@ package SGE.Jobs is
                        priority, exit_status, signal);
    type Usage is array (Usage_Type) of Usage_Number;
    type Posix_Priority_Type is range -1_023 .. 1_024;
-   type Balancer_Capability is (CPU_GPU, Low_Cores, Any);
+   type Balancer_Capability is (CPU_GPU, Low_Cores, High_Cores, Any);
 
    type Job is private;
 
