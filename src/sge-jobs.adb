@@ -398,6 +398,11 @@ package body SGE.Jobs is
       return Job_Lists.No_Element;
    end Find_Job;
 
+   function Find_Job (ID : Natural) return Job is
+   begin
+      return Element (Find_Job (ID));
+   end Find_Job;
+
    procedure Sort is
    begin
       Sorting_By_Resources.Sort (List);

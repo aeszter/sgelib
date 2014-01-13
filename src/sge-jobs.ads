@@ -228,6 +228,9 @@ package SGE.Jobs is
    function Current return Job;
    --  retrieve the current job without changing the memory pointer
 
+   function Find_Job (ID : Natural) return Job;
+
+
    procedure Iterate (Process : not null access procedure (J : Job));
    procedure Iterate_Predecessors (J       : Job;
                                    Process : not null access procedure (ID : Natural));
