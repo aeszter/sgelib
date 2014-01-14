@@ -6,6 +6,7 @@ with SGE.Resources;      use SGE.Resources; use SGE.Resources.Resource_Lists;
 with SGE.Ranges;          use SGE.Ranges; use SGE.Ranges.Range_Lists;
 with SGE.Utils;          use SGE.Utils; use SGE.Utils.String_Lists; use SGE.Utils.String_Pairs;
 with SGE.Parser;
+with SGE.Quota;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Real_Time;
 with Ada.Strings.Fixed;
@@ -1907,6 +1908,23 @@ package body SGE.Jobs is
    begin
       List.Iterate (Apply_Overlay_Entry'Access);
    end Apply_Overlay;
+
+   procedure Update_Quota_For_Job (J : in out Job) is
+   begin
+      J.RQS_Reached := SGE.Quota.Get_Headroom (User => J.Owner,
+                                               PEs  => J.PE /= Null_Unbounded_String) < Get_Maximum_Slots (J);
+   end Update_Quota_For_Job;
+
+   procedure Quota_For_Job (Position : Job_Lists.Cursor) is
+   begin
+      List.Update_Element (Position => Position,
+                           Process  => Update_Quota_For_Job'Access);
+   end Quota_For_Job;
+
+   procedure Update_Quota is
+   begin
+      List.Iterate (Quota_For_Job'Access);
+   end Update_Quota;
 
    procedure Record_Error (J : in out Job; Message : String) is
    begin

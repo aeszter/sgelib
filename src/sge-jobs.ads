@@ -170,6 +170,8 @@ package SGE.Jobs is
    -------------------
 
    procedure Apply_Overlay;
+   procedure Update_Quota;
+
 
    -----------------
    -- Prune_List --
@@ -316,6 +318,7 @@ private
       Std_Err_Paths    : String_Lists.List;
 
       Error_Log        : Utils.String_List;
+      RQS_Reached      : Boolean;
    end record;
 
    package Job_Lists is
