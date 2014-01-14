@@ -6,14 +6,15 @@ package SGE.Host_Properties is
 
    Unsupported_Error, Other_Error : exception;
    type Set_Of_Properties is private;
-   type Fixed is delta 0.01 digits 5 range 0.0 .. 100.0;
+   type Fixed is delta 0.01 digits 6 range 0.0 .. 1000.0;
+   type Load is new Fixed range 0.0 .. 1000.0;
 
    function Get_Memory (Props :  Set_Of_Properties) return Gigs;
    function Get_Cores (Props : Set_Of_Properties) return Positive;
    function Get_Network (Props : Set_Of_Properties) return Network;
    function Get_Model (Props : Set_Of_Properties) return CPU_Model;
    function Get_Runtime (Props : Set_Of_Properties) return String;
-   function Get_Load_One (Props : Set_Of_Properties) return Fixed;
+   function Get_Load_One (Props : Set_Of_Properties) return Load;
    function Has_SSD (Props : Set_Of_Properties) return Boolean;
    function Has_GPU (Props : Set_Of_Properties) return Boolean;
    procedure Set_Memory (Props : in out Set_Of_Properties;
@@ -54,6 +55,6 @@ private
       Cores                 : Positive := 1;
       Runtime               : Unbounded_String;
       SSD, GPU              : Boolean := False;
-      Load_One, Load_Five   : Fixed := 0.0;
+      Load_One, Load_Five   : Load := 0.0;
    end record;
 end SGE.Host_Properties;

@@ -452,7 +452,7 @@ package body SGE.Hosts is
       A := Get_Attr (N, "name");
       if Value (A) = "load_avg" then
          begin
-            H.Load := Fixed'Value (Value (First_Child (N)));
+            H.Load := Load'Value (Value (First_Child (N)));
             exception when Constraint_Error => H.Load := 0.0;
          end;
       elsif Value (A) = "mem_used" then
@@ -527,7 +527,7 @@ package body SGE.Hosts is
    --  Parameter H: The host record under consideration
    -------------------
 
-   function Load_Per_Core (H : Host) return Fixed is
+   function Load_Per_Core (H : Host) return Load is
    begin
       return H.Load / Get_Cores (H.Properties);
    exception
@@ -540,12 +540,12 @@ package body SGE.Hosts is
       end if;
    end Load_Per_Core;
 
-   function Get_Load (H : Host) return Fixed is
+   function Get_Load (H : Host) return Load is
    begin
       return H.Load;
    end Get_Load;
 
-   function Get_Load_One (H : Host) return Fixed is
+   function Get_Load_One (H : Host) return Load is
    begin
       return Get_Load_One (H.Properties);
    end Get_Load_One;
@@ -669,7 +669,7 @@ package body SGE.Hosts is
    --  "load_high", "load_extreme"
    -----------------
 
-   function Color_Class (Load : Fixed) return String is
+   function Color_Class (Load : Host_Properties.Load) return String is
    begin
       if Load < 0.1 then
          return "load_cold";
