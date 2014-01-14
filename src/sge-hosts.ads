@@ -41,15 +41,15 @@ package SGE.Hosts is
    --  Getters
    --
    -----------------------
-   function Load_Per_Core (H : Host) return Fixed;
-   function Get_Load (H : Host) return Fixed;
-   function Get_Load_One (H : Host) return Fixed;
+   function Load_Per_Core (H : Host) return Load;
+   function Get_Load (H : Host) return Load;
+   function Get_Load_One (H : Host) return Load;
    function Mem_Ratio (H : Host) return Fixed;
    function Mem_Percentage (H : Host) return Percent;
    function Swap_Ratio (H : Host) return Fixed;
    function Swap_Percentage (H : Host) return Percent;
    function Color_Class (P : Percent) return String;
-   function Color_Class (Load : Fixed) return String;
+   function Color_Class (Load : Host_Properties.Load) return String;
    function Get_Free_Slots (H : Host) return Natural;
    function Get_Used_Slots (H : Host) return Natural;
    function Get_Name (H : Host) return String;
@@ -137,7 +137,7 @@ private
       Name       : Unbounded_String;
       Jobs       : Job_List;
       Properties : Set_Of_Properties;
-      Load       : Fixed;
+      Load       : SGE.Host_Properties.Load;
       Slots_Used : Natural := 0;
       Mem_Used   : Resources.Gigs;
       Swap_Total : Resources.Gigs;
