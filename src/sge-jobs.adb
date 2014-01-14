@@ -1912,6 +1912,7 @@ package body SGE.Jobs is
    procedure Update_Quota_For_Job (J : in out Job) is
    begin
       J.RQS_Reached := SGE.Quota.Get_Headroom (User => J.Owner,
+                                               Resource => "slots",
                                                PEs  => J.PE /= Null_Unbounded_String) < Get_Maximum_Slots (J);
    end Update_Quota_For_Job;
 
