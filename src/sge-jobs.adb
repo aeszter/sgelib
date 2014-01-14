@@ -206,9 +206,9 @@ package body SGE.Jobs is
       return J.Name_Truncated;
    end Is_Name_Truncated;
 
-   function Get_Owner (J : Job) return String is
+   function Get_Owner (J : Job) return User_Name is
    begin
-      return To_String (J.Owner);
+      return J.Owner;
    end Get_Owner;
 
    function Get_Group (J : Job) return String is
@@ -895,7 +895,7 @@ package body SGE.Jobs is
                   J.Name_Truncated := False;
                end if;
             elsif Name (C) = "JB_owner" then
-               J.Owner := To_Unbounded_String (Value (First_Child (C)));
+               J.Owner := To_User_Name (Value (First_Child (C)));
             elsif Name (C) = "state" then
                J.State := To_State (Value (First_Child (C)));
             elsif Name (C) = "JB_submission_time" then

@@ -66,7 +66,7 @@ package SGE.Jobs is
    function Get_Name (J : Job) return String;
    function Get_Full_Name (J : Job) return String;
    function Is_Name_Truncated (J : Job) return Boolean;
-   function Get_Owner (J : Job) return String;
+   function Get_Owner (J : Job) return User_Name;
    function Get_Group (J : Job) return String;
    function Get_Account (J : Job) return String;
    function Get_Submission_Time (J : Job) return Ada.Calendar.Time;
@@ -257,7 +257,7 @@ private
       Full_Name            : Unbounded_String; -- Job name
       Name                 : Unbounded_String; -- Job name, truncated to Max_J_Name_Length
       Name_Truncated       : Boolean;          -- Whether Full_Name and Name differ
-      Owner                : Unbounded_String; -- User whom this job belongs to
+      Owner                : Utils.User_Name; -- User whom this job belongs to
       Group                : Unbounded_String;
       Account              : Unbounded_String;
 

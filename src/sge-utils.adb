@@ -57,5 +57,17 @@ package body SGE.Utils is
       end loop;
    end To_String_List;
 
+   function To_User_Name (User : String) return User_Name is
+      use Ada.Strings.Fixed;
+   begin
+      return User_Name (Head (Source => User,
+                              Count  => User_Name'Length));
+   end To_User_Name;
+
+   function To_String (User : User_Name) return String is
+   begin
+      return String (User);
+   end To_String;
+
 
 end SGE.Utils;
