@@ -644,6 +644,12 @@ package body SGE.Jobs is
       end case;
    end Has_Error;
 
+   function Quota_Inhibited (J : Job) return Boolean is
+   begin
+      return J.RQS_Reached;
+   end Quota_Inhibited;
+
+
    function Has_Error_Log_Entries (J : Job) return Boolean is
    begin
       return not J.Error_Log.Is_Empty;

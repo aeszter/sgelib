@@ -44,7 +44,7 @@ package body SGE.Quota is
             for Field_Index in 1 .. Length (Subnodes) loop
                Field_Node := Item (Subnodes, Field_Index - 1);
                if Name (Field_Node) = "users" then
-                  RQS.User := To_User_Name (Value (Field_Node));
+                  RQS.User := To_User_Name (Value (First_Child (Field_Node)));
                elsif Name (Field_Node) = "pes" then
                   RQS.PEs := True;
                elsif Name (Field_Node) = "limit" then
@@ -77,6 +77,9 @@ package body SGE.Quota is
       return List.Element ((User => User,
                             PEs      => PEs,
                             Resource => To_Unbounded_String (Resource))).Limit;
+   exception
+      when Constraint_Error =>
+         return 1_000;
    end Get_Limit;
 
    ---------------
@@ -92,7 +95,10 @@ package body SGE.Quota is
    begin
       return List.Element ((User    => User,
                          PEs     => PEs,
-                         Resource => To_Unbounded_String (Resource))).Value;
+                            Resource => To_Unbounded_String (Resource))).Value;
+   exception
+      when Constraint_Error =>
+         return 0;
    end Get_Value;
 
    ------------------

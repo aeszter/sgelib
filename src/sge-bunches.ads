@@ -30,6 +30,7 @@ package SGE.Bunches is
    function Get_Waiting_Jobs (B : Bunch) return Natural;
    function Get_Errors (B : Bunch) return Natural;
    function Get_Jobs_On_Hold (B : Bunch) return Natural;
+   function Get_Quota_Inhibited_Jobs (B : Bunch) return Natural;
    function Has_Balancer (B : Bunch) return Boolean;
    function Get_Hard_Resources (B : Bunch) return String;
    function Get_Soft_Resources (B : Bunch) return String;
@@ -39,13 +40,14 @@ package SGE.Bunches is
 
 private
    type Bunch is record
-      PE, Queue      : Unbounded_String;
-      Slot_Number    : Unbounded_String;
-      Slot_List      : Ranges.Step_Range_List;
-      Hard, Soft     : Resources.Hashed_List;
-      Total, On_Hold : Natural;
-      Error, Waiting : Natural;
-      Balancer       : Boolean;
+      PE, Queue       : Unbounded_String;
+      Slot_Number     : Unbounded_String;
+      Slot_List       : Ranges.Step_Range_List;
+      Hard, Soft      : Resources.Hashed_List;
+      Total, On_Hold  : Natural;
+      Error, Waiting  : Natural;
+      Quota_Inhibited : Natural;
+      Balancer        : Boolean;
    end record;
 
    package Bunch_Lists is

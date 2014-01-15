@@ -24,7 +24,7 @@ private
    type Index_Card is record
       User : User_Name;
       Resource : Unbounded_String;
-      PEs : Boolean;
+      PEs : Boolean := False;
    end record;
 
    type Quota is record

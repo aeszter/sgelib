@@ -33,6 +33,7 @@ package SGE.Jobs is
 
    function On_Hold (J : Job) return Boolean;
    function Has_Error (J : Job) return Boolean;
+   function Quota_Inhibited (J : Job) return Boolean;
 
    function End_Time (J : Job) return Time;
    function Remaining_Time (J : Job) return Duration;

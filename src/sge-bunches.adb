@@ -39,6 +39,8 @@ package body SGE.Bunches is
                B.On_Hold := B.On_Hold + Get_Task_Count (J);
             elsif Has_Error (J) then
                B.Error := B.Error + Get_Task_Count (J);
+            elsif  Quota_Inhibited (J) then
+               B.Quota_Inhibited := B.Quota_Inhibited + Get_Task_Count (J);
             else
                B.Waiting := B.Waiting + Get_Task_Count (J);
             end if;
@@ -73,6 +75,7 @@ package body SGE.Bunches is
       B.Total       := 0;
       B.On_Hold     := 0;
       B.Waiting     := 0;
+      B.Quota_Inhibited := 0;
       B.Error       := 0;
       return B;
    end New_Bunch;
@@ -164,6 +167,11 @@ package body SGE.Bunches is
    begin
       return B.On_Hold;
    end Get_Jobs_On_Hold;
+
+   function Get_Quota_Inhibited_Jobs (B : Bunch) return Natural is
+   begin
+      return B.Quota_Inhibited;
+   end Get_Quota_Inhibited_Jobs;
 
    function Has_Balancer (B : Bunch) return Boolean is
    begin
