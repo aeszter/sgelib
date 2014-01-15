@@ -606,6 +606,8 @@ package body SGE.Jobs is
          return hqw;
       elsif State = "ERq" then
          return ERq;
+      elsif State = "hr" then
+         return hr;
       else
          return unknown;
       end if;
