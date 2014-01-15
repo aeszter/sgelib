@@ -31,7 +31,7 @@ package SGE.Bunches is
    function Get_Errors (B : Bunch) return Natural;
    function Get_Jobs_On_Hold (B : Bunch) return Natural;
    function Get_Quota_Inhibited_Jobs (B : Bunch) return Natural;
-   function Has_Balancer (B : Bunch) return Boolean;
+   function Has_Balancer (B : Bunch; Capability : Balancer_Capability) return Boolean;
    function Get_Hard_Resources (B : Bunch) return String;
    function Get_Soft_Resources (B : Bunch) return String;
    function Get_Slot_Hash (B : Bunch) return String;
@@ -47,7 +47,7 @@ private
       Total, On_Hold  : Natural;
       Error, Waiting  : Natural;
       Quota_Inhibited : Natural;
-      Balancer        : Boolean;
+      Balancer        : Balancer_Support;
    end record;
 
    package Bunch_Lists is

@@ -71,7 +71,9 @@ package body SGE.Bunches is
       B.Queue       := Get_Queue (J);
       B.Hard        := Get_Hard_Resources (J);
       B.Soft        := Get_Soft_Resources (J);
-      B.Balancer    := Supports_Balancer (J);
+      for Capability in Balancer_Support'Range loop
+         B.Balancer (Capability) := Supports_Balancer (J, Capability);
+      end loop;
       B.Total       := 0;
       B.On_Hold     := 0;
       B.Waiting     := 0;
@@ -96,8 +98,12 @@ package body SGE.Bunches is
 
    function "=" (Left : Bunch; Right : Job) return Boolean is
    begin
+      for Capability in Balancer_Support'Range loop
+         if Left.Balancer (Capability) /= Supports_Balancer (Right, Capability) then
+            return False;
+         end if;
+      end loop;
       return (Left.PE = Get_PE (Right) and then
-                   Left.Balancer = Supports_Balancer (Right) and then
                    Left.Slot_Number = Get_Slot_Number (Right) and then
                    Left.Slot_List = Get_Slot_List (Right) and then
                    Left.Hard = Get_Hard_Resources (Right) and then
@@ -173,9 +179,9 @@ package body SGE.Bunches is
       return B.Quota_Inhibited;
    end Get_Quota_Inhibited_Jobs;
 
-   function Has_Balancer (B : Bunch) return Boolean is
+   function Has_Balancer (B : Bunch; Capability : Balancer_Capability) return Boolean is
    begin
-      return B.Balancer;
+      return B.Balancer (Capability);
    end Has_Balancer;
 
    function Get_Hard_Resources (B : Bunch) return String is

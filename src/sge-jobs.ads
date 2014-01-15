@@ -19,12 +19,15 @@ package SGE.Jobs is
    type Usage is array (Usage_Type) of Usage_Number;
    type Posix_Priority_Type is range -1_023 .. 1_024;
    type Balancer_Capability is (CPU_GPU, Low_Cores, High_Cores, Any);
+   type Balancer_Support is array (Balancer_Capability) of Boolean;
+
 
    type Job is private;
 
    function Count return Natural;
    function State_As_String (J : Job) return String;
    function To_String (State : Job_State) return String;
+   function To_String (Capability : Balancer_Capability) return String;
    function To_State (State : String) return Job_State;
    function To_Memory (Amount : Usage_Integer) return String;
    --  Purpose: Compose a memory quantity consisting of a number and a unit
@@ -320,6 +323,7 @@ private
 
       Error_Log        : Utils.String_List;
       RQS_Reached      : Boolean;
+      Balancer         : Balancer_Support;
    end record;
 
    package Job_Lists is

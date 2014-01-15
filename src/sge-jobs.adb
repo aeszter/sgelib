@@ -13,6 +13,7 @@ with Ada.Strings.Fixed;
 with Interfaces.C;
 with Ada.Containers; use Ada.Containers;
 with Ada.Strings.Maps;
+with Ada.Characters.Handling;
 
 package body SGE.Jobs is
    use Job_Lists;
@@ -20,6 +21,8 @@ package body SGE.Jobs is
 
 
    procedure Parse_JAT_Message_List (Message_List : Node; J : in out Job);
+   procedure Determine_Balancer_Support (J : in out Job);
+
 
    procedure Parse_JAT_Task_List
      (J             : in out Job;
@@ -164,33 +167,30 @@ package body SGE.Jobs is
 
    function Supports_Balancer (J : Job; What : Balancer_Capability := Any) return Boolean is
    begin
-      case What is
-         when CPU_GPU =>
-            if J.Context.Contains (To_Unbounded_String ("SLOTSCPU"))
-              and then J.Context.Contains (To_Unbounded_String ("SLOTSGPU")) then
-               return True;
-            else
-               return False;
-            end if;
-         when Low_Cores =>
-            if J.Context.Contains (To_Unbounded_String ("WAITREDUCE"))
-              and then J.Context.Contains (To_Unbounded_String ("SLOTSREDUCE")) then
-               return True;
-            else
-               return False;
-            end if;
-         when High_Cores =>
-            if J.Context.Contains (To_Unbounded_String ("SLOTSEXTEND")) then
-               return True;
-            else
-               return False;
-            end if;
-         when Any =>
-            return Supports_Balancer (J, CPU_GPU)
-              or else Supports_Balancer (J, Low_Cores)
-              or else Supports_Balancer (J, High_Cores);
-      end case;
+      return J.Balancer (What);
    end Supports_Balancer;
+
+   procedure Determine_Balancer_Support (J : in out Job) is
+   begin
+      for Capability in Balancer_Capability'Range loop
+         J.Balancer (Capability) := False;
+      end loop;
+
+      if J.Context.Contains (To_Unbounded_String ("SLOTSCPU"))
+        and then J.Context.Contains (To_Unbounded_String ("SLOTSGPU")) then
+         J.Balancer (CPU_GPU) := True;
+         J.Balancer (Any) := True;
+      end if;
+      if J.Context.Contains (To_Unbounded_String ("WAITREDUCE"))
+        and then J.Context.Contains (To_Unbounded_String ("SLOTSREDUCE")) then
+         J.Balancer (Low_Cores) := True;
+         J.Balancer (Any) := True;
+      end if;
+      if J.Context.Contains (To_Unbounded_String ("SLOTSEXTEND")) then
+         J.Balancer (High_Cores) := True;
+         J.Balancer (Any) := True;
+      end if;
+   end Determine_Balancer_Support;
 
    function Get_Name (J : Job) return String is
    begin
@@ -573,6 +573,11 @@ package body SGE.Jobs is
          when hr => return "hr";
          when unknown => return "unknown";
       end case;
+   end To_String;
+
+   function To_String (Capability : Balancer_Capability) return String is
+   begin
+      return Ada.Characters.Handling.To_Lower (Capability'Img);
    end To_String;
 
    --------------
@@ -1906,6 +1911,7 @@ package body SGE.Jobs is
       J.Reserve := Update.Reserve;
       J.Slot_List := Update.Slot_List;
       J.Context := Update.Context;
+      Determine_Balancer_Support (J);
    end Update_Job_From_Overlay;
 
    procedure Apply_Overlay_Entry (Position : Job_Lists.Cursor) is
