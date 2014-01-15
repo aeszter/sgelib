@@ -1573,7 +1573,11 @@ package body SGE.Jobs is
 
    function Precedes_By_Resources (Left, Right : Job) return Boolean is
    begin
-      if Left.Queue < Right.Queue then
+      if Supports_Balancer (Left) and then not Supports_Balancer (Right) then
+         return True;
+      elsif not Supports_Balancer (Left) and then Supports_Balancer (Right) then
+         return False;
+      elsif Left.Queue < Right.Queue then
          return True;
       elsif Left.Queue > Right.Queue then
          return False;
