@@ -1911,6 +1911,7 @@ package body SGE.Jobs is
       J.Reserve := Update.Reserve;
       J.Slot_List := Update.Slot_List;
       J.Context := Update.Context;
+      J.PE := Update.PE;
       Determine_Balancer_Support (J);
    end Update_Job_From_Overlay;
 
