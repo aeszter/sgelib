@@ -891,6 +891,9 @@ package body SGE.Jobs is
       J.Mem := 0.0;
       J.IO := 0.0;
       J.CPU := 0.0;
+      for Capability in Balancer_Capability'Range loop
+         J.Balancer (Capability) := False;
+      end loop;
       Update_Job (J => J, List => List);
       return J;
    end New_Job;
