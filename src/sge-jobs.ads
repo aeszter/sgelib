@@ -25,6 +25,9 @@ package SGE.Jobs is
    type Job is private;
 
    function Count return Natural;
+   function Count (Predicate : not null access function (J : Job) return Boolean)
+      return Natural;
+
    function State_As_String (J : Job) return String;
    function To_String (State : Job_State) return String;
    function To_String (Capability : Balancer_Capability) return String;

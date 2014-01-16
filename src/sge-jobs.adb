@@ -47,6 +47,22 @@ package body SGE.Jobs is
       return Natural (List.Length);
    end Count;
 
+   function Count (Predicate : not null access function (J : Job) return Boolean)
+                   return Natural is
+
+      Counter : Natural := 0;
+      procedure Wrapper (Position : Job_Lists.Cursor) is
+      begin
+         if Predicate (Element (Position)) then
+            Counter := Counter + 1;
+         end if;
+      end Wrapper;
+
+   begin
+      List.Iterate (Wrapper'Access);
+      return Counter;
+   end Count;
+
    function Get_Task_Count (J : Job) return Natural is
    begin
       return Count (J.Task_IDs);
