@@ -6,12 +6,14 @@ with SGE.Resources;      use SGE.Resources; use SGE.Resources.Resource_Lists;
 with SGE.Ranges;          use SGE.Ranges; use SGE.Ranges.Range_Lists;
 with SGE.Utils;          use SGE.Utils; use SGE.Utils.String_Lists; use SGE.Utils.String_Pairs;
 with SGE.Parser;
+with SGE.Quota;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Real_Time;
 with Ada.Strings.Fixed;
 with Interfaces.C;
 with Ada.Containers; use Ada.Containers;
 with Ada.Strings.Maps;
+with Ada.Characters.Handling;
 
 package body SGE.Jobs is
    use Job_Lists;
@@ -19,6 +21,8 @@ package body SGE.Jobs is
 
 
    procedure Parse_JAT_Message_List (Message_List : Node; J : in out Job);
+   procedure Determine_Balancer_Support (J : in out Job);
+
 
    procedure Parse_JAT_Task_List
      (J             : in out Job;
@@ -41,6 +45,22 @@ package body SGE.Jobs is
    function Count return Natural is
    begin
       return Natural (List.Length);
+   end Count;
+
+   function Count (Predicate : not null access function (J : Job) return Boolean)
+                   return Natural is
+
+      Counter : Natural := 0;
+      procedure Wrapper (Position : Job_Lists.Cursor) is
+      begin
+         if Predicate (Element (Position)) then
+            Counter := Counter + 1;
+         end if;
+      end Wrapper;
+
+   begin
+      List.Iterate (Wrapper'Access);
+      return Counter;
    end Count;
 
    function Get_Task_Count (J : Job) return Natural is
@@ -78,6 +98,15 @@ package body SGE.Jobs is
       return Min (J.Slot_List);
    end Get_Minimum_Slots;
 
+   function Get_Maximum_Slots (J : Job) return Positive is
+   begin
+      if Is_Empty (J.Slot_List) then
+         return Positive'Value (To_String (J.Slot_Number));
+      end if;
+
+      return Max (J.Slot_List);
+   end Get_Maximum_Slots;
+
    function Get_Minimum_CPU_Slots (J : Job) return Positive is
       use Ada.Strings;
       use Ada.Strings.Fixed;
@@ -101,6 +130,31 @@ package body SGE.Jobs is
          end;
       end if;
    end Get_Minimum_CPU_Slots;
+
+   function Get_Maximum_CPU_Slots (J : Job) return Positive is
+      use Ada.Strings;
+      use Ada.Strings.Fixed;
+      use Ada.Strings.Maps;
+   begin
+      if not Supports_Balancer (J, CPU_GPU) then
+         return Get_Maximum_Slots (J);
+      else
+         declare
+            Raw_Range : String := Get_CPU_Range (J);
+            Separator : Natural := Index (Source => Raw_Range,
+                                          Set    => To_Set (" 0123456789"),
+                                          --  note leading blank
+                                          Test   => Outside,
+                                          Going  => Backward);
+         begin
+            return Natural'Value (Raw_Range (Separator + 1 .. Raw_Range'Last));
+         exception
+            when Constraint_Error =>
+               raise Constraint_Error with "Cannot extract slots from context """ & Raw_Range & """("
+                 & Separator'Img & "+1)" & ".." & Raw_Range'Last'Img;
+         end;
+      end if;
+   end Get_Maximum_CPU_Slots;
 
    function Get_Queue (J : Job) return Unbounded_String is
    begin
@@ -129,25 +183,30 @@ package body SGE.Jobs is
 
    function Supports_Balancer (J : Job; What : Balancer_Capability := Any) return Boolean is
    begin
-      case What is
-         when CPU_GPU =>
-            if J.Context.Contains (To_Unbounded_String ("SLOTSCPU"))
-              and then J.Context.Contains (To_Unbounded_String ("SLOTSGPU")) then
-               return True;
-            else
-               return False;
-            end if;
-         when Low_Cores =>
-            if J.Context.Contains (To_Unbounded_String ("WAITREDUCE"))
-              and then J.Context.Contains (To_Unbounded_String ("SLOTSREDUCE")) then
-               return True;
-            else
-               return False;
-            end if;
-         when Any =>
-            return Supports_Balancer (J, CPU_GPU) or else Supports_Balancer (J, Low_Cores);
-      end case;
+      return J.Balancer (What);
    end Supports_Balancer;
+
+   procedure Determine_Balancer_Support (J : in out Job) is
+   begin
+      for Capability in Balancer_Capability'Range loop
+         J.Balancer (Capability) := False;
+      end loop;
+
+      if J.Context.Contains (To_Unbounded_String ("SLOTSCPU"))
+        and then J.Context.Contains (To_Unbounded_String ("SLOTSGPU")) then
+         J.Balancer (CPU_GPU) := True;
+         J.Balancer (Any) := True;
+      end if;
+      if J.Context.Contains (To_Unbounded_String ("WAITREDUCE"))
+        and then J.Context.Contains (To_Unbounded_String ("SLOTSREDUCE")) then
+         J.Balancer (Low_Cores) := True;
+         J.Balancer (Any) := True;
+      end if;
+      if J.Context.Contains (To_Unbounded_String ("SLOTSEXTEND")) then
+         J.Balancer (High_Cores) := True;
+         J.Balancer (Any) := True;
+      end if;
+   end Determine_Balancer_Support;
 
    function Get_Name (J : Job) return String is
    begin
@@ -164,9 +223,9 @@ package body SGE.Jobs is
       return J.Name_Truncated;
    end Is_Name_Truncated;
 
-   function Get_Owner (J : Job) return String is
+   function Get_Owner (J : Job) return User_Name is
    begin
-      return To_String (J.Owner);
+      return J.Owner;
    end Get_Owner;
 
    function Get_Group (J : Job) return String is
@@ -356,6 +415,11 @@ package body SGE.Jobs is
       return Job_Lists.No_Element;
    end Find_Job;
 
+   function Find_Job (ID : Natural) return Job is
+   begin
+      return Element (Find_Job (ID));
+   end Find_Job;
+
    procedure Sort is
    begin
       Sorting_By_Resources.Sort (List);
@@ -436,12 +500,11 @@ package body SGE.Jobs is
       end if;
    end Get_Last_Reduction;
 
-   function Get_Reduce_Wait (J : Job) return Duration is
+   function Get_Reduce_Wait (J : Job) return Natural is
       Key : constant Unbounded_String := To_Unbounded_String ("WAITREDUCE");
    begin
       if J.Context.Contains (Key) then
-         return Ada.Real_Time.To_Duration
-           (Ada.Real_Time.Seconds (Integer'Value (To_String (J.Context.Element (Key)))));
+         return Integer'Value (To_String (J.Context.Element (Key)));
       else
          raise Constraint_Error;
       end if;
@@ -466,6 +529,16 @@ package body SGE.Jobs is
          raise Constraint_Error;
       end if;
    end Get_Reduced_Slots;
+
+   function Get_Extended_Slots (J : Job) return String is
+      Key : constant Unbounded_String := To_Unbounded_String ("SLOTSEXTEND");
+   begin
+      if J.Context.Contains (Key) then
+         return To_String (J.Context.Element (Key));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Extended_Slots;
 
    function Get_CPU_Range (J : Job) return String is
       CPU_Range : constant Unbounded_String := To_Unbounded_String ("SLOTSCPU");
@@ -518,6 +591,11 @@ package body SGE.Jobs is
       end case;
    end To_String;
 
+   function To_String (Capability : Balancer_Capability) return String is
+   begin
+      return Ada.Characters.Handling.To_Lower (Capability'Img);
+   end To_String;
+
    --------------
    -- To_State --
    --------------
@@ -544,6 +622,8 @@ package body SGE.Jobs is
          return hqw;
       elsif State = "ERq" then
          return ERq;
+      elsif State = "hr" then
+         return hr;
       else
          return unknown;
       end if;
@@ -586,6 +666,12 @@ package body SGE.Jobs is
          when others => return False;
       end case;
    end Has_Error;
+
+   function Quota_Inhibited (J : Job) return Boolean is
+   begin
+      return J.RQS_Reached;
+   end Quota_Inhibited;
+
 
    function Has_Error_Log_Entries (J : Job) return Boolean is
    begin
@@ -839,7 +925,7 @@ package body SGE.Jobs is
                   J.Name_Truncated := False;
                end if;
             elsif Name (C) = "JB_owner" then
-               J.Owner := To_Unbounded_String (Value (First_Child (C)));
+               J.Owner := To_User_Name (Value (First_Child (C)));
             elsif Name (C) = "state" then
                J.State := To_State (Value (First_Child (C)));
             elsif Name (C) = "JB_submission_time" then
@@ -1510,7 +1596,11 @@ package body SGE.Jobs is
 
    function Precedes_By_Resources (Left, Right : Job) return Boolean is
    begin
-      if Left.Queue < Right.Queue then
+      if Supports_Balancer (Left) and then not Supports_Balancer (Right) then
+         return True;
+      elsif not Supports_Balancer (Left) and then Supports_Balancer (Right) then
+         return False;
+      elsif Left.Queue < Right.Queue then
          return True;
       elsif Left.Queue > Right.Queue then
          return False;
@@ -1839,6 +1929,8 @@ package body SGE.Jobs is
       J.Reserve := Update.Reserve;
       J.Slot_List := Update.Slot_List;
       J.Context := Update.Context;
+      J.PE := Update.PE;
+      Determine_Balancer_Support (J);
    end Update_Job_From_Overlay;
 
    procedure Apply_Overlay_Entry (Position : Job_Lists.Cursor) is
@@ -1851,6 +1943,24 @@ package body SGE.Jobs is
    begin
       List.Iterate (Apply_Overlay_Entry'Access);
    end Apply_Overlay;
+
+   procedure Update_Quota_For_Job (J : in out Job) is
+   begin
+      J.RQS_Reached := SGE.Quota.Get_Headroom (User => J.Owner,
+                                               Resource => "slots",
+                                               PEs  => J.PE /= Null_Unbounded_String) < Get_Maximum_Slots (J);
+   end Update_Quota_For_Job;
+
+   procedure Quota_For_Job (Position : Job_Lists.Cursor) is
+   begin
+      List.Update_Element (Position => Position,
+                           Process  => Update_Quota_For_Job'Access);
+   end Quota_For_Job;
+
+   procedure Update_Quota is
+   begin
+      List.Iterate (Quota_For_Job'Access);
+   end Update_Quota;
 
    procedure Record_Error (J : in out Job; Message : String) is
    begin

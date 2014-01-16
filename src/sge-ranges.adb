@@ -231,11 +231,25 @@ package body SGE.Ranges is
       end if;
    end Min;
 
+   function Max (List : Step_Range_List) return Natural is
+   begin
+      if List.Is_Empty then
+         raise Program_Error with "Tried to get Max of empty list";
+      else
+         return List.Last_Element.Max;
+      end if;
+   end Max;
+
    procedure Rehash (List : in out Step_Range_List) is
       Temp : Ada.Containers.Hash_Type := 0;
-      Pos : Range_Lists.Cursor := List.First;
+      Pos  : Range_Lists.Cursor := List.First;
+      Last : Natural := 0;
    begin
       while Pos /= No_Element loop
+         if Element (Pos).Min < Last then
+            raise Assumption_Error with "unordered Step_Range_List encountered";
+         end if;
+         Last := Element (Pos).Max;
          Temp := Temp xor Hash (Element (Pos));
          Next (Pos);
       end loop;

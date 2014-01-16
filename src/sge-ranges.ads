@@ -76,9 +76,13 @@ package SGE.Ranges is
    function Hash (List : Step_Range_List) return String;
    function Hash (S : Step_Range) return Hash_Type;
 
-   function Min (List : Step_Range_List) return Natural;
    --  return the "Minimum" number represented by the SRL. For now, the list is
    --  assumed to be ordered, so the Min of the first SR in the list is returned.
+   function Min (List : Step_Range_List) return Natural;
+
+   --  return the "Maximum" number represented by the SRL. For now, the list is
+   --  assumed to be ordered, so the Max of the last SR in the list is returned.
+   function Max (List : Step_Range_List) return Natural;
 
 private
    type Step_Range_List is new Range_Lists.List with

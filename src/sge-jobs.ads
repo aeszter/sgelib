@@ -18,13 +18,19 @@ package SGE.Jobs is
                        priority, exit_status, signal);
    type Usage is array (Usage_Type) of Usage_Number;
    type Posix_Priority_Type is range -1_023 .. 1_024;
-   type Balancer_Capability is (CPU_GPU, Low_Cores, Any);
+   type Balancer_Capability is (CPU_GPU, Low_Cores, High_Cores, Any);
+   type Balancer_Support is array (Balancer_Capability) of Boolean;
+
 
    type Job is private;
 
    function Count return Natural;
+   function Count (Predicate : not null access function (J : Job) return Boolean)
+      return Natural;
+
    function State_As_String (J : Job) return String;
    function To_String (State : Job_State) return String;
+   function To_String (Capability : Balancer_Capability) return String;
    function To_State (State : String) return Job_State;
    function To_Memory (Amount : Usage_Integer) return String;
    --  Purpose: Compose a memory quantity consisting of a number and a unit
@@ -33,6 +39,7 @@ package SGE.Jobs is
 
    function On_Hold (J : Job) return Boolean;
    function Has_Error (J : Job) return Boolean;
+   function Quota_Inhibited (J : Job) return Boolean;
 
    function End_Time (J : Job) return Time;
    function Remaining_Time (J : Job) return Duration;
@@ -42,11 +49,21 @@ package SGE.Jobs is
    function Get_PE (J : Job) return Unbounded_String;
    function Get_Slot_List (J : Job) return Ranges.Step_Range_List;
    function Get_Slot_Number (J : Job) return Unbounded_String;
-   function Get_Minimum_Slots (J : Job) return Positive;
+
    --  maximum lower bound of the slot list
-   function Get_Minimum_CPU_Slots (J : Job) return Positive;
+   function Get_Minimum_Slots (J : Job) return Positive;
+
+   --  minimum upper bound of the slot list
+   function Get_Maximum_Slots (J : Job) return Positive;
+
    --  maximum lower bound on the slot list assuming the job is migrated
    --  to a (pure) cpu queue by the balancer
+   function Get_Minimum_CPU_Slots (J : Job) return Positive;
+
+   --  minimum upper bound on the slot list assuming the job is migrated
+   --  to a (pure) cpu queue by the balancer
+   function Get_Maximum_CPU_Slots (J : Job) return Positive;
+
    function Get_Queue (J : Job) return Unbounded_String;
    function Get_Hard_Resources (J : Job) return Resources.Hashed_List;
    function Get_Soft_Resources (J : Job) return Resources.Hashed_List;
@@ -56,7 +73,7 @@ package SGE.Jobs is
    function Get_Name (J : Job) return String;
    function Get_Full_Name (J : Job) return String;
    function Is_Name_Truncated (J : Job) return Boolean;
-   function Get_Owner (J : Job) return String;
+   function Get_Owner (J : Job) return User_Name;
    function Get_Group (J : Job) return String;
    function Get_Account (J : Job) return String;
    function Get_Submission_Time (J : Job) return Ada.Calendar.Time;
@@ -80,8 +97,9 @@ package SGE.Jobs is
    function Get_Last_Reduction (J : Job) return Time;
    function Get_CPU_Range (J : Job) return String;
    function Get_GPU_Range (J : Job) return String;
-   function Get_Reduce_Wait (J : Job) return Duration;
+   function Get_Reduce_Wait (J : Job) return Natural;
    function Get_Reduced_Slots (J : Job) return String;
+   function Get_Extended_Slots (J : Job) return String;
    function Get_Reduced_Runtime (J : Job) return String;
    function Get_Priority (J : Job) return Utils.Fixed;
    function Get_Override_Tickets (J : Job) return Natural;
@@ -159,6 +177,8 @@ package SGE.Jobs is
    -------------------
 
    procedure Apply_Overlay;
+   procedure Update_Quota;
+
 
    -----------------
    -- Prune_List --
@@ -217,6 +237,9 @@ package SGE.Jobs is
    function Current return Job;
    --  retrieve the current job without changing the memory pointer
 
+   function Find_Job (ID : Natural) return Job;
+
+
    procedure Iterate (Process : not null access procedure (J : Job));
    procedure Iterate_Predecessors (J       : Job;
                                    Process : not null access procedure (ID : Natural));
@@ -243,7 +266,7 @@ private
       Full_Name            : Unbounded_String; -- Job name
       Name                 : Unbounded_String; -- Job name, truncated to Max_J_Name_Length
       Name_Truncated       : Boolean;          -- Whether Full_Name and Name differ
-      Owner                : Unbounded_String; -- User whom this job belongs to
+      Owner                : Utils.User_Name; -- User whom this job belongs to
       Group                : Unbounded_String;
       Account              : Unbounded_String;
 
@@ -302,6 +325,8 @@ private
       Std_Err_Paths    : String_Lists.List;
 
       Error_Log        : Utils.String_List;
+      RQS_Reached      : Boolean;
+      Balancer         : Balancer_Support;
    end record;
 
    package Job_Lists is

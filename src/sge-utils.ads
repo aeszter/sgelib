@@ -6,8 +6,10 @@ with Ada.Containers.Ordered_Sets;
 with POSIX; use POSIX;
 
 package SGE.Utils is
-   Version : String := "v0.3.1";
+   Version : String := "v0.4";
    type Tri_State is (False, True, Undecided);
+   type User_Name is new String (1 .. 7);
+
    Assumption_Error : exception;
 
    type Fixed is delta 0.0001 digits 5;
@@ -45,5 +47,7 @@ package SGE.Utils is
    function To_Hash_String (S : String) return Hash_String_Type;
 
    procedure To_String_List (Source  : String; Dest : out POSIX_String_List);
+   function To_User_Name (User : String) return User_Name;
+   function To_String (User : User_Name) return String;
 
 end SGE.Utils;
