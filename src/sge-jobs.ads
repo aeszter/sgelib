@@ -93,6 +93,7 @@ package SGE.Jobs is
    function Get_Context (J : Job) return Utils.String_Pairs.Map;
    function Get_Context (J : Job; Key : String) return String;
    function Has_Context (J : Job; Key : String) return Boolean;
+   function Get_Last_Extension (J : Job) return Time;
    function Get_Last_Migration (J : Job) return Time;
    function Get_Last_Reduction (J : Job) return Time;
    function Get_CPU_Range (J : Job) return String;

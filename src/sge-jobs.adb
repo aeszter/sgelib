@@ -500,6 +500,17 @@ package body SGE.Jobs is
       end if;
    end Get_Last_Reduction;
 
+   function Get_Last_Extension (J : Job) return Time is
+      Last_Ext : constant Unbounded_String := To_Unbounded_String ("LASTEXT");
+   begin
+      if J.Context.Contains (Last_Ext) then
+         return Ada.Calendar.Conversions.To_Ada_Time
+           (Interfaces.C.long'Value (To_String (J.Context.Element (Last_Ext))));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Last_Extension;
+
    function Get_Reduce_Wait (J : Job) return Natural is
       Key : constant Unbounded_String := To_Unbounded_String ("WAITREDUCE");
    begin
@@ -891,10 +902,8 @@ package body SGE.Jobs is
       J.Mem := 0.0;
       J.IO := 0.0;
       J.CPU := 0.0;
-      for Capability in Balancer_Capability'Range loop
-         J.Balancer (Capability) := False;
-      end loop;
       Update_Job (J => J, List => List);
+      Determine_Balancer_Support (J);
       return J;
    end New_Job;
 
