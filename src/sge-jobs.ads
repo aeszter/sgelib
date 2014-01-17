@@ -88,7 +88,7 @@ package SGE.Jobs is
    function Get_Std_Err_Paths (J : Job) return String_List;
    function Is_Merge_Std_Err (J : Job) return Tri_State;
    function Has_Notify (J : Job) return Tri_State;
-   function Get_Task_List (J : Job) return String_Lists.List;
+   function Get_Task_List (J : Job) return String_Sets.Set;
    function Get_Detected_Queues (J : Job) return String_Sets.Set;
    function Get_Context (J : Job) return Utils.String_Pairs.Map;
    function Get_Context (J : Job; Key : String) return String;
@@ -319,7 +319,7 @@ private
       Slot_List        : Ranges.Step_Range_List;
       Queue_List       : String_Lists.List;
       Message_List     : String_Lists.List;
-      Task_List        : String_Lists.List;
+      Task_List        : String_Sets.Set;
 
       Std_Out_Paths    : String_Lists.List;
       Std_Err_Paths    : String_Lists.List;

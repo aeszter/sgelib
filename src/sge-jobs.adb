@@ -298,7 +298,7 @@ package body SGE.Jobs is
       return J.Notify;
    end Has_Notify;
 
-   function Get_Task_List (J : Job) return String_Lists.List is
+   function Get_Task_List (J : Job) return String_Sets.Set is
    begin
       return J.Task_List;
    end Get_Task_List;
@@ -1368,7 +1368,7 @@ package body SGE.Jobs is
       for M in 1 .. Length (JG_Nodes) loop
          JG_Entry := Item (JG_Nodes, M - 1);
          if Name (JG_Entry) = "JG_qname" then
-            J.Task_List.Append (To_Unbounded_String (Value (First_Child (JG_Entry))));
+            J.Task_List.Include (To_Unbounded_String (Value (First_Child (JG_Entry))));
          end if;
       end loop Over_JG_Nodes;
    end Parse_PET_Destinations;
