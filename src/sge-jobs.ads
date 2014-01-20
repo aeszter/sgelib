@@ -26,11 +26,13 @@ package SGE.Jobs is
 
    type Job is private;
 
+   function To_Abbrev (Flag : State_Flag) return String;
+   function To_String (Flag : State_Flag) return String;
+
    function Count return Natural;
    function Count (Predicate : not null access function (J : Job) return Boolean)
       return Natural;
 
-   function State_As_String (J : Job) return String;
    function To_String (Capability : Balancer_Capability) return String;
    function To_Memory (Amount : Usage_Integer) return String;
    --  Purpose: Compose a memory quantity consisting of a number and a unit
@@ -39,6 +41,7 @@ package SGE.Jobs is
 
    function On_Hold (J : Job) return Boolean;
    function Has_Error (J : Job) return Boolean;
+   function Is_Running (J : Job) return Boolean;
    function Quota_Inhibited (J : Job) return Boolean;
 
    function End_Time (J : Job) return Time;
@@ -273,7 +276,7 @@ private
 
       Priority             : Fixed; -- Numerical priority
       State_Array          : State;
-      State_String         : String (1..4);
+      State_String         : String (1 .. 4);
       Slot_Number          : Unbounded_String; -- how many slots/CPUs to use
       PE                   : Unbounded_String; -- Parallel environment
       Submission_Time      : Time;    -- when submitted
