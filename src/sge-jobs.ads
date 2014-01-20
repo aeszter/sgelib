@@ -10,8 +10,10 @@ with SGE.Utils; use SGE.Utils;
 package SGE.Jobs is
    Other_Error : exception;
 
-   type Job_State is (unknown, dt, dr, Eqw, t, r, Rr, Rq, qw, hqw, ERq, hr);
-   type State_Count is array (Job_State) of Natural;
+   type State_Flag is (deletion, Error, hold, running, Restarted, suspended,
+                       Q_Suspended, transfering, Threshold, waiting);
+   type State_Count is array (State_Flag) of Natural;
+   type State is array (State_Flag) of Boolean;
    type Usage_Type is (cpu, mem, io, iow, vmem, maxvmem,
                        ru_wallclock, ru_utime, ru_stime, ru_maxrss, ru_ixrss,
                        submission_time, start_time, end_time,
@@ -24,14 +26,14 @@ package SGE.Jobs is
 
    type Job is private;
 
+   function To_Abbrev (Flag : State_Flag) return String;
+   function To_String (Flag : State_Flag) return String;
+
    function Count return Natural;
    function Count (Predicate : not null access function (J : Job) return Boolean)
       return Natural;
 
-   function State_As_String (J : Job) return String;
-   function To_String (State : Job_State) return String;
    function To_String (Capability : Balancer_Capability) return String;
-   function To_State (State : String) return Job_State;
    function To_Memory (Amount : Usage_Integer) return String;
    --  Purpose: Compose a memory quantity consisting of a number and a unit
    --  Returns: A string of the form xx MB, where xx is a number not exceeding
@@ -39,6 +41,7 @@ package SGE.Jobs is
 
    function On_Hold (J : Job) return Boolean;
    function Has_Error (J : Job) return Boolean;
+   function Is_Running (J : Job) return Boolean;
    function Quota_Inhibited (J : Job) return Boolean;
 
    function End_Time (J : Job) return Time;
@@ -79,7 +82,7 @@ package SGE.Jobs is
    function Get_Submission_Time (J : Job) return Ada.Calendar.Time;
    function Get_Advance_Reservation (J : Job) return String;
    function Has_Reserve (J : Job) return Tri_State;
-   function Get_State (J : Job) return Job_State;
+   function Get_State (J : Job) return String;
    function Get_Directory (J : Job) return String;
    function Get_Script_File (J : Job) return String;
    function Get_Args (J : Job) return String_List;
@@ -272,7 +275,8 @@ private
       Account              : Unbounded_String;
 
       Priority             : Fixed; -- Numerical priority
-      State                : Job_State;
+      State_Array          : State;
+      State_String         : String (1 .. 4);
       Slot_Number          : Unbounded_String; -- how many slots/CPUs to use
       PE                   : Unbounded_String; -- Parallel environment
       Submission_Time      : Time;    -- when submitted
