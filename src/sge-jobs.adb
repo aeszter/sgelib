@@ -251,7 +251,7 @@ package body SGE.Jobs is
 
    function Get_Name (J : Job) return String is
    begin
-      return To_String (J.Name);
+      return Job_Names.To_String (J.Name);
    end Get_Name;
 
    function Get_Full_Name (J : Job) return String is
@@ -918,12 +918,11 @@ package body SGE.Jobs is
             elsif Name (C) = "JB_name" or else
             Name (C) = "JB_job_name" then
                J.Full_Name := To_Unbounded_String (Value (First_Child (C)));
+               J.Name := Job_Names.To_Bounded_String (Source => Value (First_Child (C)),
+                                                      Drop   => Ada.Strings.Right);
                if Length (J.Full_Name) > Max_Name_Length then
-                  J.Name := Head (Source => J.Full_Name,
-                            Count  => Max_Name_Length);
                   J.Name_Truncated := True;
                else
-                  J.Name := J.Full_Name;
                   J.Name_Truncated := False;
                end if;
             elsif Name (C) = "JB_owner" then

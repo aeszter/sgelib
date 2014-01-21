@@ -6,6 +6,7 @@ with SGE.Resources;
 with SGE.Parser; use SGE.Parser;
 with SGE.Ranges; use SGE.Ranges;
 with SGE.Utils; use SGE.Utils;
+with Ada.Strings.Bounded;
 
 package SGE.Jobs is
    Other_Error : exception;
@@ -263,12 +264,15 @@ package SGE.Jobs is
    Max_Name_Length : constant Positive := 25;
 
 private
+   package Job_Names is new Ada.Strings.Bounded.Generic_Bounded_Length (Max => Max_Name_Length);
+   subtype Job_Name is Job_Names.Bounded_String;
+
    type Job is record
       --  basic attributes
       Number               : Integer; -- Job ID
       Task_IDs             : Ranges.Step_Range_List;
       Full_Name            : Unbounded_String; -- Job name
-      Name                 : Unbounded_String; -- Job name, truncated to Max_J_Name_Length
+      Name                 : Job_Name; -- Job name, truncated to Max_J_Name_Length
       Name_Truncated       : Boolean;          -- Whether Full_Name and Name differ
       Owner                : Utils.User_Name; -- User whom this job belongs to
       Group                : Unbounded_String;
