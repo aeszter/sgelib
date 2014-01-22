@@ -185,11 +185,13 @@ package body SGE.Ranges is
    begin
       if Short and then What.Min = What.Max then
          return What.Min'Img;
+      elsif What.Min + What.Step = What.Max then
+         return What.Min'Img & "," & What.Max'Img;
       elsif What.Step = 1 then
          return What.Min'Img & " -" & What.Max'Img;
       else
          return What.Min'Img & " -" & What.Max'Img
-                & " Stride " & What.Step'Img;
+                & " / " & What.Step'Img;
       end if;
    end To_String;
 

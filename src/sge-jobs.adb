@@ -22,6 +22,7 @@ package body SGE.Jobs is
 
    procedure Parse_JAT_Message_List (Message_List : Node; J : in out Job);
    procedure Determine_Balancer_Support (J : in out Job);
+   procedure Update_State_Array (J : in out Job);
 
 
    procedure Parse_JAT_Task_List
@@ -208,6 +209,46 @@ package body SGE.Jobs is
       end if;
    end Determine_Balancer_Support;
 
+   procedure Update_State_Array (J : in out Job) is
+      Flag : State_Flag;
+   begin
+      for Flag in J.State_Array'Range loop
+         J.State_Array (Flag) := False;
+      end loop;
+
+      for Position in J.State_String'Range loop
+         case J.State_String (Position) is
+            when 'r' =>
+               Flag := running;
+            when 'd' =>
+               Flag := deletion;
+            when 'E' =>
+               Flag := Error;
+            when 'h' =>
+               Flag := hold;
+            when 'R' =>
+               Flag := Restarted;
+            when 's' =>
+               Flag := suspended;
+            when 'S' =>
+               Flag := Q_Suspended;
+            when 't' =>
+               Flag := transfering;
+            when 'T' => Flag := Threshold;
+            when 'q' =>
+               null;
+            when 'w' =>
+               Flag := waiting;
+            when ' ' =>
+               null;
+            when others =>
+               raise Jobs.Other_Error with "Unknown state character " &
+               J.State_String (Position) & " found";
+         end case;
+         J.State_Array (Flag) := True;
+      end loop;
+   end Update_State_Array;
+
    function Get_Name (J : Job) return String is
    begin
       return To_String (J.Name);
@@ -253,9 +294,9 @@ package body SGE.Jobs is
       return J.Reserve;
    end Has_Reserve;
 
-   function Get_State (J : Job) return Job_State is
+   function Get_State (J : Job) return String is
    begin
-      return J.State;
+      return Ada.Strings.Fixed.Trim (J.State_String, Ada.Strings.Right);
    end Get_State;
 
    function Get_Directory (J : Job) return String is
@@ -298,7 +339,7 @@ package body SGE.Jobs is
       return J.Notify;
    end Has_Notify;
 
-   function Get_Task_List (J : Job) return String_Lists.List is
+   function Get_Task_List (J : Job) return String_Sets.Set is
    begin
       return J.Task_List;
    end Get_Task_List;
@@ -463,11 +504,15 @@ package body SGE.Jobs is
    procedure Get_Summary (Tasks, Slots : out State_Count) is
 
       procedure Count (Position : Job_Lists.Cursor) is
-         State : Job_State := Job_Lists.Element (Position).State;
+         State_Array : State := Job_Lists.Element (Position).State_Array;
          Slot_Number : Natural := Integer'Value (To_String (Job_Lists.Element (Position).Slot_Number));
       begin
-         Tasks (State) := Tasks (State) + 1;
-         Slots (State) := Slots (State) + Slot_Number;
+         for Flag in State_Array'Range loop
+            if State_Array (Flag) then
+               Tasks (Flag) := Tasks (Flag) + 1;
+               Slots (Flag) := Slots (Flag) + Slot_Number;
+            end if;
+         end loop;
       end Count;
 
    begin
@@ -499,6 +544,17 @@ package body SGE.Jobs is
          raise Constraint_Error;
       end if;
    end Get_Last_Reduction;
+
+   function Get_Last_Extension (J : Job) return Time is
+      Last_Ext : constant Unbounded_String := To_Unbounded_String ("LASTEXT");
+   begin
+      if J.Context.Contains (Last_Ext) then
+         return Ada.Calendar.Conversions.To_Ada_Time
+           (Interfaces.C.long'Value (To_String (J.Context.Element (Last_Ext))));
+      else
+         raise Constraint_Error;
+      end if;
+   end Get_Last_Extension;
 
    function Get_Reduce_Wait (J : Job) return Natural is
       Key : constant Unbounded_String := To_Unbounded_String ("WAITREDUCE");
@@ -564,33 +620,6 @@ package body SGE.Jobs is
       end if;
    end Get_GPU_Range;
 
-   ---------------------
-   -- State_As_String --
-   ---------------------
-
-   function State_As_String (J : Job) return String is
-   begin
-      return To_String (State => J.State);
-   end State_As_String;
-
-   function To_String (State : Job_State) return String is
-   begin
-      case State is
-         when dt => return "dt";
-         when dr => return "dr";
-         when Eqw => return "Eqw";
-         when t => return "t";
-         when r => return "r";
-         when Rr => return "Rr";
-         when Rq => return "Rq";
-         when qw => return "qw";
-         when hqw => return "hqw";
-         when ERq => return "ERq";
-         when hr => return "hr";
-         when unknown => return "unknown";
-      end case;
-   end To_String;
-
    function To_String (Capability : Balancer_Capability) return String is
    begin
       return Ada.Characters.Handling.To_Lower (Capability'Img);
@@ -599,35 +628,6 @@ package body SGE.Jobs is
    --------------
    -- To_State --
    --------------
-
-   function To_State (State : String) return Job_State is
-   begin
-      if State = "dt" then
-         return dt;
-      elsif State = "dr" then
-         return dr;
-      elsif State = "Eqw" then
-         return Eqw;
-      elsif State = "t" then
-         return t;
-      elsif State = "r" then
-         return r;
-      elsif State = "Rr" then
-         return Rr;
-      elsif State = "Rq" then
-         return Rq;
-      elsif State = "qw" then
-         return qw;
-      elsif State = "hqw" then
-         return hqw;
-      elsif State = "ERq" then
-         return ERq;
-      elsif State = "hr" then
-         return hr;
-      else
-         return unknown;
-      end if;
-   end To_State;
 
    function To_Memory (Amount : Usage_Integer) return String is
    begin
@@ -647,11 +647,7 @@ package body SGE.Jobs is
 
    function On_Hold (J : Job) return Boolean is
    begin
-      case J.State is
-         when hqw => return True;
-         when unknown => raise Constraint_Error;
-         when others => return False;
-      end case;
+      return J.State_Array (hold);
    end On_Hold;
 
    ---------------
@@ -660,12 +656,13 @@ package body SGE.Jobs is
 
    function Has_Error (J : Job) return Boolean is
    begin
-      case J.State is
-         when Eqw => return True;
-         when unknown => raise Constraint_Error;
-         when others => return False;
-      end case;
+      return J.State_Array (Error);
    end Has_Error;
+
+   function Is_Running (J : Job) return Boolean is
+   begin
+      return J.State_Array (running);
+   end Is_Running;
 
    function Quota_Inhibited (J : Job) return Boolean is
    begin
@@ -791,7 +788,9 @@ package body SGE.Jobs is
       Field_Nodes : Node_List;
       Field       : Node;
       Number      : Positive;
-      State       : Job_State;
+      State       : String (1 .. 4);
+
+      use Ada.Strings.Fixed;
    begin
       SGE_Out := Parser.Setup (Selector => "-u " & To_String (J.Owner));
 
@@ -807,11 +806,12 @@ package body SGE.Jobs is
             if Name (Field) = "JB_job_number" then
                Number := Integer'Value (Value (First_Child (Field)));
             elsif Name (Field) = "state" then
-               State := To_State (Value (First_Child (Field)));
+               State := Head (Value (First_Child (Field)), State'Length);
             end if;
          end loop Fields;
          if Number = J.Number then
-            J.State := State;
+            J.State_String := State;
+            Update_State_Array (J);
             exit Jobs;
          end if;
       end loop Jobs;
@@ -887,11 +887,11 @@ package body SGE.Jobs is
    begin
       J.Merge_Std_Err := Undecided;
       J.Reserve := Undecided;
-      J.State := unknown;
       J.Mem := 0.0;
       J.IO := 0.0;
       J.CPU := 0.0;
       Update_Job (J => J, List => List);
+      Determine_Balancer_Support (J);
       return J;
    end New_Job;
 
@@ -905,6 +905,8 @@ package body SGE.Jobs is
       Time_Buffer : String (1 .. 19);
       Inserted    : Boolean;
       Inserted_At : Resource_Lists.Cursor;
+
+      use Ada.Strings.Fixed;
    begin
       for Index in 0 .. Length (List) - 1 loop
          begin
@@ -927,7 +929,8 @@ package body SGE.Jobs is
             elsif Name (C) = "JB_owner" then
                J.Owner := To_User_Name (Value (First_Child (C)));
             elsif Name (C) = "state" then
-               J.State := To_State (Value (First_Child (C)));
+               J.State_String := Head (Value (First_Child (C)), J.State_String'Length);
+               Update_State_Array (J);
             elsif Name (C) = "JB_submission_time" then
                if Value (First_Child (C))'Length > 11 and then
                  Value (First_Child (C)) (11) = 'T' then
@@ -1365,7 +1368,7 @@ package body SGE.Jobs is
       for M in 1 .. Length (JG_Nodes) loop
          JG_Entry := Item (JG_Nodes, M - 1);
          if Name (JG_Entry) = "JG_qname" then
-            J.Task_List.Append (To_Unbounded_String (Value (First_Child (JG_Entry))));
+            J.Task_List.Include (To_Unbounded_String (Value (First_Child (JG_Entry))));
          end if;
       end loop Over_JG_Nodes;
    end Parse_PET_Destinations;
@@ -1725,7 +1728,7 @@ package body SGE.Jobs is
 
    function Precedes_By_State (Left, Right : Job) return Boolean is
    begin
-      return Left.State < Right.State;
+      return Left.State_Array < Right.State_Array;
    end Precedes_By_State;
 
    --------------------------
@@ -2055,6 +2058,38 @@ package body SGE.Jobs is
    begin
       J.Error_Log.Iterate (Wrapper'Access);
    end Iterate_Error_Log;
+
+   function To_Abbrev (Flag : State_Flag) return String is
+   begin
+      case Flag is
+         when deletion =>
+            return "d";
+         when Error =>
+            return "E";
+         when waiting =>
+            return "qw";
+         when hold =>
+            return "h";
+         when Threshold =>
+            return "T";
+         when running =>
+            return "r";
+         when transfering =>
+            return "t";
+         when Restarted =>
+            return "R";
+         when suspended =>
+            return "s";
+         when Q_Suspended =>
+            return "S";
+      end case;
+   end To_Abbrev;
+
+   function To_String (Flag : State_Flag) return String is
+   begin
+      return Ada.Characters.Handling.To_Lower (Flag'Img);
+   end To_String;
+
 
 
 end SGE.Jobs;
