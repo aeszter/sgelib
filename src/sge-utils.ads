@@ -6,7 +6,7 @@ with Ada.Containers.Ordered_Sets;
 with POSIX; use POSIX;
 
 package SGE.Utils is
-   Version : String := "develop";
+   Version : String := "v0.5";
    type Tri_State is (False, True, Undecided);
    type User_Name is new String (1 .. 7);
 
