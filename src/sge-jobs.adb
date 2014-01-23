@@ -211,12 +211,14 @@ package body SGE.Jobs is
 
    procedure Update_State_Array (J : in out Job) is
       Flag : State_Flag;
+      Skip : Boolean;
    begin
       for Flag in J.State_Array'Range loop
          J.State_Array (Flag) := False;
       end loop;
 
       for Position in J.State_String'Range loop
+         Skip := False;
          case J.State_String (Position) is
             when 'r' =>
                Flag := running;
@@ -234,18 +236,21 @@ package body SGE.Jobs is
                Flag := Q_Suspended;
             when 't' =>
                Flag := transfering;
-            when 'T' => Flag := Threshold;
+            when 'T' =>
+               Flag := Threshold;
             when 'q' =>
-               null;
+               Skip := True;
             when 'w' =>
                Flag := waiting;
             when ' ' =>
-               null;
+               Skip := True;
             when others =>
                raise Jobs.Other_Error with "Unknown state character " &
                J.State_String (Position) & " found";
          end case;
-         J.State_Array (Flag) := True;
+         if not skip then
+            J.State_Array (Flag) := True;
+         end if;
       end loop;
    end Update_State_Array;
 
