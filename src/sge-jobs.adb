@@ -248,7 +248,7 @@ package body SGE.Jobs is
                raise Jobs.Other_Error with "Unknown state character " &
                J.State_String (Position) & " found";
          end case;
-         if not skip then
+         if not Skip then
             J.State_Array (Flag) := True;
          end if;
       end loop;
