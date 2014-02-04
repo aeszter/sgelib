@@ -77,6 +77,11 @@ package body SGE.Jobs is
                                      Side => Ada.Strings.Left);
    end Get_ID;
 
+   function Get_ID (J : Job) return Positive is
+   begin
+      return J.Number;
+   end Get_ID;
+
    function Get_PE (J : Job) return Unbounded_String is
    begin
       return J.PE;

@@ -52,6 +52,7 @@ package SGE.Jobs is
    function Get_Task_Count (J : Job) return Natural;
    function Get_Task_IDs (J : Job) return Ranges.Step_Range_List;
    function Get_ID (J : Job) return String;
+   function Get_ID (J : Job) return Positive;
    function Get_PE (J : Job) return Unbounded_String;
    function Get_Slot_List (J : Job) return Ranges.Step_Range_List;
    function Get_Slot_Number (J : Job) return Unbounded_String;
