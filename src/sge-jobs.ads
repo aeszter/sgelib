@@ -98,6 +98,7 @@ package SGE.Jobs is
    function Get_Detected_Queues (J : Job) return String_Sets.Set;
    function Get_Context (J : Job; Key : Context.Key_Type) return String;
    function Has_Context (J : Job; Key : Context.Key_Type) return Boolean;
+   function Has_Context (J : Job) return Boolean;
    function Get_Last_Extension (J : Job) return Time;
    function Get_Last_Migration (J : Job) return Time;
    function Get_Last_Reduction (J : Job) return Time;
@@ -259,7 +260,9 @@ package SGE.Jobs is
    procedure Iterate_Slots (J : Job;
                             Process : not null access procedure (R : Step_Range));
    procedure Iterate_Error_Log (J : Job;
-                               Process : not null access procedure (Message : String));
+                                Process : not null access procedure (Message : String));
+   procedure Iterate_Context (J : Job;
+                              Process : not null access procedure (Key, Element : String));
 
 
    Max_Name_Length : constant Positive := 25;

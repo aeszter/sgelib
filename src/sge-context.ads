@@ -31,7 +31,10 @@ package SGE.Context is
 
    function Get (From : List; Key : Key_Type) return String;
    function Contains (Container : List; Key : Key_Type) return Boolean;
-   procedure Include (Container : List; Key : String; New_Item : String);
+   procedure Include (Container : in out List; Key : String; New_Item : String);
+   function Is_Empty (Container : List) return Boolean;
+   procedure Iterate (Container : List;
+                      Process   : not null access procedure (Key, Element : String));
 
 private
    package Lists is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type => String,

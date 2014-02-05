@@ -431,6 +431,11 @@ package body SGE.Jobs is
       return Context.Contains (J.Context, Key);
    end Has_Context;
 
+   function Has_Context (J : Job) return Boolean is
+   begin
+      return not J.Context.Is_Empty;
+   end Has_Context;
+
 
    function Get_Task_IDs (J : Job) return Ranges.Step_Range_List is
    begin
@@ -2043,6 +2048,13 @@ package body SGE.Jobs is
    begin
       J.Error_Log.Iterate (Wrapper'Access);
    end Iterate_Error_Log;
+
+   procedure Iterate_Context (J : Job;
+                              Process : not null access procedure (Key, Element : String))
+   is
+   begin
+      J.Context.Iterate (Process);
+   end Iterate_Context;
 
    function To_Abbrev (Flag : State_Flag) return String is
    begin
