@@ -4,7 +4,7 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 package SGE.Context is
    type Key_Type is (Slots_CPU, Slots_GPU, Slots_Reduce, Slots_Extend,
                      Wait_Reduce, Last_Reduction, Last_Extension, Last_Migration,
-                    Reduced_Runtime);
+                    Reduced_Runtime, Pending_Since);
    type Literal_Type is array (Key_Type) of access constant String;
 
    type List is tagged private;
@@ -18,6 +18,7 @@ package SGE.Context is
    Last_Extension_String  : aliased constant String := "LASTEXT";
    Last_Migration_String  : aliased constant String := "LASTMIG";
    Reduced_Runtime_String : aliased constant String := "RTREDUCE";
+   Pending_Since_String   : aliased constant String := "PENDINGSINCE";
    Literal : Literal_Type :=
                (Slots_CPU       => Slots_CPU_String'Access,
                 Slots_GPU       => Slots_GPU_String'Access,
@@ -27,7 +28,8 @@ package SGE.Context is
                 Last_Reduction  => Last_Reduction_String'Access,
                 Last_Extension  => Last_Extension_String'Access,
                 Last_Migration  => Last_Migration_String'Access,
-                Reduced_Runtime => Reduced_Runtime_String'Access);
+                Reduced_Runtime => Reduced_Runtime_String'Access,
+                Pending_Since   => Pending_Since_String'Access);
 
    function Get (From : List; Key : Key_Type) return String;
    function Contains (Container : List; Key : Key_Type) return Boolean;
