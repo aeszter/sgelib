@@ -128,7 +128,11 @@ package body SGE.Jobs is
                                           --  note leading blank
                                           Test   => Outside);
          begin
-            return Natural'Value (Raw_Range (Raw_Range'First .. Separator - 1));
+            if Separator = 0 then -- Bug #1909
+               return Natural'Value (Raw_Range);
+            else
+               return Natural'Value (Raw_Range (Raw_Range'First .. Separator - 1));
+            end if;
          exception
             when Constraint_Error =>
                raise Constraint_Error with "Cannot extract slots from context """ & Raw_Range & """("
