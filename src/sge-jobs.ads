@@ -6,10 +6,12 @@ with SGE.Resources;
 with SGE.Parser; use SGE.Parser;
 with SGE.Ranges; use SGE.Ranges;
 with SGE.Utils; use SGE.Utils;
+with SGE.Context;
 with Ada.Strings.Bounded;
 
 package SGE.Jobs is
    Other_Error : exception;
+
 
    type State_Flag is (deletion, Error, hold, running, Restarted, suspended,
                        Q_Suspended, transfering, Threshold, waiting);
@@ -95,9 +97,9 @@ package SGE.Jobs is
    function Has_Notify (J : Job) return Tri_State;
    function Get_Task_List (J : Job) return String_Sets.Set;
    function Get_Detected_Queues (J : Job) return String_Sets.Set;
-   function Get_Context (J : Job) return Utils.String_Pairs.Map;
-   function Get_Context (J : Job; Key : String) return String;
-   function Has_Context (J : Job; Key : String) return Boolean;
+   function Get_Context (J : Job; Key : Context.Key_Type) return String;
+   function Has_Context (J : Job; Key : Context.Key_Type) return Boolean;
+   function Has_Context (J : Job) return Boolean;
    function Get_Last_Extension (J : Job) return Time;
    function Get_Last_Migration (J : Job) return Time;
    function Get_Last_Reduction (J : Job) return Time;
@@ -158,7 +160,7 @@ package SGE.Jobs is
                             List_Nodes  : Node_List);
    procedure Extract_Args (J : in out Job;
                            Arg_Nodes : Node_List);
-   procedure Extract_Context (Context       : in out Utils.String_Pairs.Map;
+   procedure Extract_Context (Context       : in out SGE.Context.List;
                               Context_Nodes : Node_List);
 
    -----------------
@@ -259,7 +261,9 @@ package SGE.Jobs is
    procedure Iterate_Slots (J : Job;
                             Process : not null access procedure (R : Step_Range));
    procedure Iterate_Error_Log (J : Job;
-                               Process : not null access procedure (Message : String));
+                                Process : not null access procedure (Message : String));
+   procedure Iterate_Context (J : Job;
+                              Process : not null access procedure (Key, Element : String));
 
 
    Max_Name_Length : constant Positive := 25;
@@ -293,7 +297,7 @@ private
       Predecessors         : Utils.ID_List;
       Successors           : Utils.ID_List;
       Predecessor_Request  : Utils.String_List;
-      Context              : Utils.String_Pairs.Map;
+      Context              : SGE.Context.List;
 
 
       --  File related stuff

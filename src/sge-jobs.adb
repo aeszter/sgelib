@@ -14,6 +14,8 @@ with Interfaces.C;
 with Ada.Containers; use Ada.Containers;
 with Ada.Strings.Maps;
 with Ada.Characters.Handling;
+with SGE.Context;
+use SGE.Context;
 
 package body SGE.Jobs is
    use Job_Lists;
@@ -202,17 +204,17 @@ package body SGE.Jobs is
          J.Balancer (Capability) := False;
       end loop;
 
-      if J.Context.Contains (To_Unbounded_String ("SLOTSCPU"))
-        and then J.Context.Contains (To_Unbounded_String ("SLOTSGPU")) then
+      if J.Context.Contains (SGE.Context.Slots_CPU)
+        and then J.Context.Contains (Slots_GPU) then
          J.Balancer (CPU_GPU) := True;
          J.Balancer (Any) := True;
       end if;
-      if J.Context.Contains (To_Unbounded_String ("WAITREDUCE"))
-        and then J.Context.Contains (To_Unbounded_String ("SLOTSREDUCE")) then
+      if J.Context.Contains (Wait_Reduce)
+        and then J.Context.Contains (Slots_Reduce) then
          J.Balancer (Low_Cores) := True;
          J.Balancer (Any) := True;
       end if;
-      if J.Context.Contains (To_Unbounded_String ("SLOTSEXTEND")) then
+      if J.Context.Contains (Slots_Extend) then
          J.Balancer (High_Cores) := True;
          J.Balancer (Any) := True;
       end if;
@@ -363,11 +365,6 @@ package body SGE.Jobs is
       return J.Detected_Queues;
    end Get_Detected_Queues;
 
-   function Get_Context (J : Job) return Utils.String_Pairs.Map is
-   begin
-      return J.Context;
-   end Get_Context;
-
    function Get_Priority (J : Job) return Utils.Fixed is
    begin
       return J.Priority;
@@ -433,19 +430,21 @@ package body SGE.Jobs is
       return J.IO;
    end Get_IO;
 
-   function Get_Context (J : Job; Key : String) return String is
+   function Get_Context (J : Job; Key : Context.Key_Type) return String is
    begin
-      if J.Context.Contains (To_Unbounded_String (Key)) then
-         return To_String (J.Context.Element (To_Unbounded_String (Key)));
-      else
-         return "";
-      end if;
+      return J.Context.Get (Key);
    end Get_Context;
 
-   function Has_Context (J : Job; Key : String) return Boolean is
+   function Has_Context (J : Job; Key : Context.Key_Type) return Boolean is
    begin
-      return J.Context.Contains (To_Unbounded_String (Key));
+      return Context.Contains (J.Context, Key);
    end Has_Context;
+
+   function Has_Context (J : Job) return Boolean is
+   begin
+      return not J.Context.Is_Empty;
+   end Has_Context;
+
 
    function Get_Task_IDs (J : Job) return Ranges.Step_Range_List is
    begin
@@ -538,84 +537,72 @@ package body SGE.Jobs is
    end Get_Summary;
 
    function Get_Last_Migration (J : Job) return Time is
-      Last_Mig : constant Unbounded_String := To_Unbounded_String ("LASTMIG");
    begin
-      if J.Context.Contains (Last_Mig) then
+      if J.Context.Contains (Last_Migration) then
          return Ada.Calendar.Conversions.To_Ada_Time
-           (Interfaces.C.long'Value (To_String (J.Context.Element (Last_Mig))));
+           (Interfaces.C.long'Value (J.Context.Get (Last_Migration)));
       else
          raise Constraint_Error;
       end if;
    end Get_Last_Migration;
 
    function Get_Last_Reduction (J : Job) return Time is
-      Last_Red : constant Unbounded_String := To_Unbounded_String ("LASTRED");
    begin
-      if J.Context.Contains (Last_Red) then
+      if J.Context.Contains (Last_Reduction) then
          return Ada.Calendar.Conversions.To_Ada_Time
-           (Interfaces.C.long'Value (To_String (J.Context.Element (Last_Red))));
+           (Interfaces.C.long'Value (J.Context.Get (Last_Reduction)));
       else
          raise Constraint_Error;
       end if;
    end Get_Last_Reduction;
 
    function Get_Last_Extension (J : Job) return Time is
-      Last_Ext : constant Unbounded_String := To_Unbounded_String ("LASTEXT");
    begin
-      if J.Context.Contains (Last_Ext) then
+      if J.Context.Contains (Last_Extension) then
          return Ada.Calendar.Conversions.To_Ada_Time
-           (Interfaces.C.long'Value (To_String (J.Context.Element (Last_Ext))));
+           (Interfaces.C.long'Value (J.Context.Get (Last_Extension)));
       else
          raise Constraint_Error;
       end if;
    end Get_Last_Extension;
 
    function Get_Reduce_Wait (J : Job) return Natural is
-      Key : constant Unbounded_String := To_Unbounded_String ("WAITREDUCE");
    begin
-      if J.Context.Contains (Key) then
-         return Integer'Value (To_String (J.Context.Element (Key)));
+      if J.Context.Contains (Wait_Reduce) then
+         return Integer'Value (J.Context.Get (Wait_Reduce));
       else
          raise Constraint_Error;
       end if;
    end Get_Reduce_Wait;
 
    function Get_Reduced_Runtime (J : Job) return String is
-      Key : constant Unbounded_String := To_Unbounded_String ("RTREDUCE");
    begin
-      if J.Context.Contains (Key) then
-         return To_String (J.Context.Element (Key));
-      else
-         return "";
-      end if;
+      return J.Context.Get (Reduced_Runtime);
    end Get_Reduced_Runtime;
 
    function Get_Reduced_Slots (J : Job) return String is
-      Key : constant Unbounded_String := To_Unbounded_String ("SLOTSREDUCE");
    begin
-      if J.Context.Contains (Key) then
-         return To_String (J.Context.Element (Key));
+      if J.Context.Contains (Slots_Reduce) then
+         return J.Context.Get (Slots_Reduce);
       else
          raise Constraint_Error;
       end if;
    end Get_Reduced_Slots;
 
    function Get_Extended_Slots (J : Job) return String is
-      Key : constant Unbounded_String := To_Unbounded_String ("SLOTSEXTEND");
    begin
-      if J.Context.Contains (Key) then
-         return To_String (J.Context.Element (Key));
+      if J.Context.Contains (Slots_Extend) then
+         return J.Context.Get (Slots_Extend);
       else
          raise Constraint_Error;
       end if;
    end Get_Extended_Slots;
 
    function Get_CPU_Range (J : Job) return String is
-      CPU_Range : constant Unbounded_String := To_Unbounded_String ("SLOTSCPU");
    begin
-      if J.Context.Contains (CPU_Range) then
+      if J.Context.Contains (Slots_CPU) then
          return Ranges.To_String (Ranges.To_Step_Range_List
-                                  (To_String (J.Context.Element (CPU_Range))),
+                                  (J.Context.Get (Slots_CPU)),
                                  Short => True);
       else
          raise Constraint_Error;
@@ -623,11 +610,10 @@ package body SGE.Jobs is
    end Get_CPU_Range;
 
    function Get_GPU_Range (J : Job) return String is
-      GPU_Range : constant Unbounded_String := To_Unbounded_String ("SLOTSGPU");
    begin
-      if J.Context.Contains (GPU_Range) then
-         return Ranges.To_String (Ranges.To_Step_Range_List (To_String
-                                  (J.Context.Element (GPU_Range))),
+      if J.Context.Contains (Slots_GPU) then
+         return Ranges.To_String (Ranges.To_Step_Range_List (
+                                  J.Context.Get (Slots_GPU)),
                                  Short => True);
       else
          raise Constraint_Error;
@@ -1493,7 +1479,7 @@ package body SGE.Jobs is
    end Extract_Paths;
 
 
-   procedure Extract_Context (Context       : in out Utils.String_Pairs.Map;
+   procedure Extract_Context (Context       : in out SGE.Context.List;
                               Context_Nodes : Node_List) is
       N, Var_Node : Node;
       Context_Entries : Node_List;
@@ -1515,8 +1501,8 @@ package body SGE.Jobs is
                     & Name (Var_Node) & """ found inside <context_list>";
                end if;
             end loop;
-            Context.Include (Key => Variable_Name,
-                             New_Item => Variable_Value);
+            Context.Include (Key => To_String (Variable_Name),
+                             New_Item => To_String (Variable_Value));
          end if;
       end loop;
    end Extract_Context;
@@ -2071,6 +2057,13 @@ package body SGE.Jobs is
    begin
       J.Error_Log.Iterate (Wrapper'Access);
    end Iterate_Error_Log;
+
+   procedure Iterate_Context (J : Job;
+                              Process : not null access procedure (Key, Element : String))
+   is
+   begin
+      J.Context.Iterate (Process);
+   end Iterate_Context;
 
    function To_Abbrev (Flag : State_Flag) return String is
    begin
