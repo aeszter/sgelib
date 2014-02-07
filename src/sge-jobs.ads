@@ -6,9 +6,12 @@ with SGE.Resources;
 with SGE.Parser; use SGE.Parser;
 with SGE.Ranges; use SGE.Ranges;
 with SGE.Utils; use SGE.Utils;
+with SGE.Context;
+with Ada.Strings.Bounded;
 
 package SGE.Jobs is
    Other_Error : exception;
+
 
    type State_Flag is (deletion, Error, hold, running, Restarted, suspended,
                        Q_Suspended, transfering, Threshold, waiting);
@@ -49,6 +52,7 @@ package SGE.Jobs is
    function Get_Task_Count (J : Job) return Natural;
    function Get_Task_IDs (J : Job) return Ranges.Step_Range_List;
    function Get_ID (J : Job) return String;
+   function Get_ID (J : Job) return Positive;
    function Get_PE (J : Job) return Unbounded_String;
    function Get_Slot_List (J : Job) return Ranges.Step_Range_List;
    function Get_Slot_Number (J : Job) return Unbounded_String;
@@ -93,9 +97,9 @@ package SGE.Jobs is
    function Has_Notify (J : Job) return Tri_State;
    function Get_Task_List (J : Job) return String_Sets.Set;
    function Get_Detected_Queues (J : Job) return String_Sets.Set;
-   function Get_Context (J : Job) return Utils.String_Pairs.Map;
-   function Get_Context (J : Job; Key : String) return String;
-   function Has_Context (J : Job; Key : String) return Boolean;
+   function Get_Context (J : Job; Key : Context.Key_Type) return String;
+   function Has_Context (J : Job; Key : Context.Key_Type) return Boolean;
+   function Has_Context (J : Job) return Boolean;
    function Get_Last_Extension (J : Job) return Time;
    function Get_Last_Migration (J : Job) return Time;
    function Get_Last_Reduction (J : Job) return Time;
@@ -156,7 +160,7 @@ package SGE.Jobs is
                             List_Nodes  : Node_List);
    procedure Extract_Args (J : in out Job;
                            Arg_Nodes : Node_List);
-   procedure Extract_Context (Context       : in out Utils.String_Pairs.Map;
+   procedure Extract_Context (Context       : in out SGE.Context.List;
                               Context_Nodes : Node_List);
 
    -----------------
@@ -257,18 +261,23 @@ package SGE.Jobs is
    procedure Iterate_Slots (J : Job;
                             Process : not null access procedure (R : Step_Range));
    procedure Iterate_Error_Log (J : Job;
-                               Process : not null access procedure (Message : String));
+                                Process : not null access procedure (Message : String));
+   procedure Iterate_Context (J : Job;
+                              Process : not null access procedure (Key, Element : String));
 
 
    Max_Name_Length : constant Positive := 25;
 
 private
+   package Job_Names is new Ada.Strings.Bounded.Generic_Bounded_Length (Max => Max_Name_Length);
+   subtype Job_Name is Job_Names.Bounded_String;
+
    type Job is record
       --  basic attributes
       Number               : Integer; -- Job ID
       Task_IDs             : Ranges.Step_Range_List;
       Full_Name            : Unbounded_String; -- Job name
-      Name                 : Unbounded_String; -- Job name, truncated to Max_J_Name_Length
+      Name                 : Job_Name; -- Job name, truncated to Max_J_Name_Length
       Name_Truncated       : Boolean;          -- Whether Full_Name and Name differ
       Owner                : Utils.User_Name; -- User whom this job belongs to
       Group                : Unbounded_String;
@@ -288,7 +297,7 @@ private
       Predecessors         : Utils.ID_List;
       Successors           : Utils.ID_List;
       Predecessor_Request  : Utils.String_List;
-      Context              : Utils.String_Pairs.Map;
+      Context              : SGE.Context.List;
 
 
       --  File related stuff
