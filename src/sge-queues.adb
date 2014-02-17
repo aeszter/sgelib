@@ -318,6 +318,11 @@ package body SGE.Queues is
       return Q.State (suspended);
    end Has_Suspended;
 
+   function Has_Old_Config (Q : Queue) return Boolean is
+   begin
+      return Q.State (old);
+   end Has_Old_Config;
+
    function Is_Batch (Q : Queue) return Boolean is
    begin
       return Q.Q_Type (B);
