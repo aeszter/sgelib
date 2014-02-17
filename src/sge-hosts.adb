@@ -555,6 +555,11 @@ package body SGE.Hosts is
       return H.Slots_Used;
    end Get_Used_Slots;
 
+   function Queue_Count (H : Host) return Natural is
+   begin
+      return Natural (H.Queues.Length);
+   end Queue_Count;
+
    ---------------
    -- Mem_Ratio --
    --  Purpose: Compute the percentage of RAM used

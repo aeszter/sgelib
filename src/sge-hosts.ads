@@ -58,6 +58,7 @@ package SGE.Hosts is
    function Get_Model (H : Host) return String;
    function Get_Cores (H : Host) return Positive;
    function Get_Memory (H : Host) return String;
+   function Queue_Count (H : Host) return Natural;
 
    function Is_Master (J : Job) return Boolean;
    function Has_Slaves (J : Job) return Boolean;
