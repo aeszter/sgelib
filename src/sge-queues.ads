@@ -62,6 +62,7 @@ package SGE.Queues is
    function Has_Disabled (Q : Queue) return Boolean;
    function Has_Unreachable (Q : Queue) return Boolean;
    function Has_Suspended (Q : Queue) return Boolean;
+   function Has_Old_Config (Q : Queue) return Boolean;
    function Is_Batch (Q : Queue) return Boolean;
    function Is_Interactive (Q : Queue) return Boolean;
    function Is_Parallel (Q : Queue) return Boolean;
