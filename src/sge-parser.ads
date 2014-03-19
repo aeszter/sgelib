@@ -40,5 +40,6 @@ package SGE.Parser is
 
 private
    sgeroot : constant String := "/cm/shared/apps/sge/current";
+   pragma Compile_Time_Warning (True, "hardcoded config");
 
 end SGE.Parser;
