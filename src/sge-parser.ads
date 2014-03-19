@@ -1,5 +1,6 @@
 with DOM.Core; with DOM.Core.Documents;
 with DOM.Core.Nodes;
+with POSIX.Process_Environment;
 with SGE.Spread_Sheets;
 
 
@@ -8,6 +9,8 @@ package SGE.Parser is
    subtype Attr is DOM.Core.Attr;
    subtype Node is DOM.Core.Node;
    subtype Node_List is DOM.Core.Node_List;
+
+   package Env renames POSIX.Process_Environment;
 
    Parser_Error : exception;
 
@@ -39,7 +42,6 @@ package SGE.Parser is
                                            return DOM.Core.Node_List;
 
 private
-   sgeroot : constant String := "/cm/shared/apps/sge/current";
-   pragma Compile_Time_Warning (True, "hardcoded config");
+   sgeroot : constant String := POSIX.To_String (Env.Environment_Value_Of ("SGE_ROOT"));
 
 end SGE.Parser;
