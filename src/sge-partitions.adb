@@ -65,8 +65,6 @@ package body SGE.Partitions is
    --  Purpose: Build a partition list from a queue list.
    --           This totals all slots (available, used, reserved, ...) for the
    --           for all matching queues.
-   --  Parameter Q_List: List of queues to work on.
-   --  Parameter Part_List: The new partition list.
    --  Side Effect: Q_List is sorted by resources.
    -------------------
 

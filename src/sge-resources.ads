@@ -13,7 +13,9 @@ package SGE.Resources is
    end record;
 
    type Network is (none, eth, ib, ibswitch);
+      pragma Compile_Time_Warning (True, "hardcoded config");
    type CPU_Model is (none, italy, woodcrest, clovertown, harpertown, magnycours, interlagos, sandybridge, ivybridge);
+      pragma Compile_Time_Warning (True, "hardcoded config");
    type Gigs is delta 0.001 digits 7;
 
    Resource_Error : exception;
