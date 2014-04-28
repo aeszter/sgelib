@@ -11,6 +11,18 @@ package body SGE.Advance_Reservations is
    -- Append_List --
    -----------------
    procedure Update_State_Array (R : in out Reservation);
+   procedure Extract_Resource_List (R              : in out Reservation;
+                                    Resource_Nodes : Node_List;
+                                    Soft           : Boolean := False);
+   procedure Extract_Slots_List (R : in out Reservation; Children : Node_List);
+
+   procedure Extract_Resource_List (R              : in out Reservation;
+                                    Resource_Nodes : Node_List;
+                                    Soft           : Boolean := False) is
+      pragma Unreferenced (R, Resource_Nodes, Soft);
+   begin
+      Ada.Text_IO.Put_Line ("Bug #2018: Extract_Resource_List unimplemented");
+   end Extract_Resource_List;
 
    procedure Append_List (Node_Tree : SGE.Parser.Tree) is
       Nodes : Parser.Node_List := Parser.Get_Elements_By_Tag_Name (Doc => Node_Tree,
@@ -52,6 +64,20 @@ package body SGE.Advance_Reservations is
                R.Time_Span := Ada.Real_Time.To_Duration
                  (Ada.Real_Time.Seconds
                     (Integer'Value (Value (First_Child (C)))));
+            elsif Name (C) = "submission_time" then
+               R.Submission_Time := To_Time (Value (First_Child (C)));
+            elsif Name (C) = "group" then
+               R.Group := To_Unbounded_String (Value (First_Child (C)));
+            elsif Name (C) = "account" then
+               R.Account := To_Unbounded_String (Value (First_Child (C)));
+            elsif Name (C) = "granted_parallel_environment" then
+               null;  -- Bug #2017
+            elsif Name (C) = "granted_slots_list" then
+               Extract_Slots_List (R, Child_Nodes (C));
+            elsif Name (C) = "resource_list" then
+               Extract_Resource_List (R, Child_Nodes (C));
+            elsif Name (C) = "mail_options" then
+               null; -- ignore
             elsif Name (C) /= "#text" then
                Ada.Text_IO.Put_Line ("Unknown Field: " & Name (C));
             end if;
@@ -177,5 +203,12 @@ package body SGE.Advance_Reservations is
          end if;
       end loop;
    end Update_State_Array;
+
+   procedure Extract_Slots_List (R : in out Reservation; Children : Node_List) is
+      pragma Unreferenced (R, Children);
+   begin
+      Ada.Text_IO.Put_Line ("Extract_Slots_List unimplemented");
+   end Extract_Slots_List;
+
 
 end SGE.Advance_Reservations;

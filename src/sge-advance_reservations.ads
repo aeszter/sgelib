@@ -31,10 +31,13 @@ private
       Number               : Integer; -- Job ID
       Name                 : Unbounded_String; -- Job name
       Owner                : Utils.User_Name; -- User whom this job belongs to
+      Group                : Unbounded_String;
+      Account              : Unbounded_String;
       State_Array          : State;
       State_String         : String (1 .. 4);
       Start_Time, End_Time : Time;
       Time_Span            : Duration;
+      Submission_Time      : Time;    -- when submitted
       Error_Log            : Utils.String_List;
 
    end record;
