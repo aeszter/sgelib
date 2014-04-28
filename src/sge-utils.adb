@@ -1,6 +1,9 @@
 with Ada.Strings;
 with Ada.Strings.Fixed;
 with SGE.Utils; use SGE.Utils.String_Lists;
+with GNAT.Calendar.Time_IO;
+with Ada.Calendar.Conversions;
+with Interfaces.C;
 
 package body SGE.Utils is
 
@@ -69,5 +72,18 @@ package body SGE.Utils is
       return String (User);
    end To_String;
 
+   function To_Time (Time_String : String) return Ada.Calendar.Time is
+      Time_Buffer : String (1 .. 19);
+   begin
+      if Time_String'Length > 11 and then
+        Time_String (Time_String'First + 10) = 'T' then
+         Time_Buffer := Time_String;
+         Time_Buffer (11) := ' ';
+         return GNAT.Calendar.Time_IO.Value (Time_Buffer);
+      else
+         return Ada.Calendar.Conversions.To_Ada_Time
+           (Interfaces.C.long'Value (Time_Buffer));
+      end if;
+   end To_Time;
 
 end SGE.Utils;
