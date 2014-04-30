@@ -33,6 +33,8 @@ package SGE.Advance_Reservations is
 
    procedure Iterate_Queues (R       : Reservation;
                              Process : not null access procedure (Q : Queue));
+   procedure Iterate_Messages (R : Reservation;
+                               Process : not null access procedure (Message : String));
 
    function Has_Error_Log_Entries (R : Reservation) return Boolean;
    procedure Iterate_Error_Log (R       : Reservation;
@@ -74,6 +76,7 @@ private
       Submission_Time      : Time;    -- when submitted
       Queues               : Queue_Lists.Map;
       Resource_List        : Resources.Hashed_List;
+      Message_List         : Utils.String_List;
       Error_Log            : Utils.String_List;
 
    end record;

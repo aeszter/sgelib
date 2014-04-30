@@ -100,6 +100,8 @@ package body SGE.Advance_Reservations is
                Extract_Resource_List (R, Child_Nodes (C));
             elsif Name (C) = "mail_options" then
                null; -- ignore
+            elsif Name (C) = "message" then
+               R.Message_List.Append (To_Unbounded_String (Value (First_Child (C))));
             elsif Name (C) /= "#text" then
                Ada.Text_IO.Put_Line ("Unknown Field: " & Name (C));
             end if;
@@ -155,6 +157,18 @@ package body SGE.Advance_Reservations is
    begin
       R.Error_Log.Iterate (Wrapper'Access);
    end Iterate_Error_Log;
+
+   procedure Iterate_Messages (R : Reservation;
+                               Process : not null access procedure (Message : String))
+   is
+      procedure Wrapper (Position : Utils.String_Lists.Cursor) is
+      begin
+         Process (To_String (Element (Position)));
+      end Wrapper;
+
+   begin
+      R.Message_List.Iterate (Wrapper'Access);
+   end Iterate_Messages;
 
    procedure Iterate_Queues (R       : Reservation;
                              Process : not null access procedure (Q : Queue)) is
