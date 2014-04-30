@@ -248,6 +248,10 @@ package SGE.Jobs is
    function Find_Job (ID : Natural) return Job;
 
 
+   -------------
+   -- Iterate --
+   -------------
+
    procedure Iterate (Process : not null access procedure (J : Job));
    procedure Iterate_Predecessors (J       : Job;
                                    Process : not null access procedure (ID : Natural));
