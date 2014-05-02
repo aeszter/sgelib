@@ -93,5 +93,6 @@ private
 
    --  Purpose: unconditionally compute the List's hash value
    procedure Rehash (List : in out Step_Range_List);
+   procedure Condense (List : in out Step_Range_List);
 
 end SGE.Ranges;
