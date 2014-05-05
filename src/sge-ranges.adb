@@ -4,7 +4,6 @@ with Ada.Strings.Unbounded.Hash;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with SGE.Utils; use SGE.Utils; use SGE.Utils.Hash_Strings;
 with Ada.Strings.Maps; use Ada.Strings.Maps;
-with Ada.Text_IO;
 
 package body SGE.Ranges is
 
@@ -319,14 +318,8 @@ package body SGE.Ranges is
       end Append_New;
 
       procedure Trace (Message : String) is
-         use Ada.Text_IO;
       begin
          null;
---         if Has_Element (Pos) then
---            Put_Line (Message & Element (Pos).Min'Img);
---         else
---            Put_Line (Message & "[none]");
---         end if;
       end Trace;
 
    begin
