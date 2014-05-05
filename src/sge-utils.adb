@@ -82,7 +82,7 @@ package body SGE.Utils is
          return GNAT.Calendar.Time_IO.Value (Time_Buffer);
       else
          return Ada.Calendar.Conversions.To_Ada_Time
-           (Interfaces.C.long'Value (Time_Buffer));
+           (Interfaces.C.long'Value (Time_String));
       end if;
    end To_Time;
 
