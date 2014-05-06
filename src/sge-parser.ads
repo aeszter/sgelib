@@ -37,7 +37,9 @@ package SGE.Parser is
       renames DOM.Core.Documents.Get_Elements_By_Tag_Name;
 
    function Get_Job_Nodes_From_Qstat_J (Doc : DOM.Core.Document)
-                                           return DOM.Core.Node_List;
+                                        return DOM.Core.Node_List;
+   function Get_Message_Nodes_From_Qstat_J (Doc : DOM.Core.Document)
+                                        return DOM.Core.Node_List;
    function Get_Job_Nodes_From_Qstat_U (Doc : DOM.Core.Document)
                                            return DOM.Core.Node_List;
 

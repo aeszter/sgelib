@@ -10,7 +10,8 @@ with SGE.Context;
 with Ada.Strings.Bounded;
 
 package SGE.Jobs is
-   Other_Error : exception;
+   Other_Error : exception; -- generic error
+   Too_Many_Jobs_Error : exception; -- Operation usupported if Length (List) > 1
 
 
    type State_Flag is (deletion, Error, hold, running, Restarted, suspended,
@@ -162,6 +163,7 @@ package SGE.Jobs is
                            Arg_Nodes : Node_List);
    procedure Extract_Context (Context       : in out SGE.Context.List;
                               Context_Nodes : Node_List);
+   procedure Add_Message (J : in out Job; Number : Natural; Message : Unbounded_String);
 
    -----------------
    -- Append_List --
@@ -170,6 +172,18 @@ package SGE.Jobs is
    -----------------
 
    procedure Append_List (Nodes : Node_List);
+
+   -----------------
+   -- Update_Messages --
+   --  Purpose: Read Scheduler Messages from a given list of (DOM) Nodes and
+   --  update the List accordingly
+   --  Note: Since there is no direct association between messages and jobs,
+   --  this will not work properly unless there is only a single job in the List.
+   --  Apparently, qstat -j -xml will only output a single job, too, so this should not pose a problem.
+   --  Raise: Too_Many_Jobs_Error if there is more than one entry in the List.
+   -----------------
+
+   procedure Update_Messages (Nodes : Node_List);
 
    --------------------
    -- Create_Overlay --

@@ -713,6 +713,41 @@ package body SGE.Jobs is
       end loop;
    end Append_List;
 
+   procedure Update_Messages (Nodes : Node_List) is
+      MES_Part : Node;
+      Number : Natural;
+      Message : Unbounded_String;
+      Message_Nodes : Node_List;
+
+      procedure Store_Message (Item : in out Job) is
+      begin
+         Add_Message (Item, Number, Message);
+      end Store_Message;
+
+   begin
+      if Length (List) = 1 then
+         Elements :
+         for Index in 1 .. Length (Nodes) loop
+            if Name (Item (Nodes, Index - 1)) = "element" then
+               Message_Nodes := Child_Nodes (Item (Nodes, Index - 1));
+               MES_Parts :
+               for Part_Index in 1 .. Length (Message_Nodes) loop
+                  MES_Part := Item (Message_Nodes, Part_Index - 1);
+                  if Name (MES_Part) = "MES_message_number" then
+                     Number := Integer'Value (Value (First_Child (MES_Part)));
+                  elsif Name (MES_Part) = "MES_message" then
+                     Message := To_Unbounded_String (Value (First_Child (MES_Part)));
+                  end if;
+               end loop MES_Parts;
+               List.Update_Element (Position => List.First,
+                                    Process  => Store_Message'Access);
+            end if;
+         end loop Elements;
+      elsif not Is_Empty (List) then
+         raise Too_Many_Jobs_Error;
+      end if;
+   end Update_Messages;
+
 
    procedure Prune_List (PE, Queue, Hard_Requests,
                          Soft_Requests,
@@ -2081,6 +2116,10 @@ package body SGE.Jobs is
       return Ada.Characters.Handling.To_Lower (Flag'Img);
    end To_String;
 
-
+   procedure Add_Message (J : in out Job; Number : Natural; Message : Unbounded_String) is
+   begin
+      J.Message_List.Append (Number'Img & ": " & Message);
+      --  FIXME: can we use and store the message number seperately?
+   end Add_Message;
 
 end SGE.Jobs;
