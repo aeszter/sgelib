@@ -247,7 +247,7 @@ package body SGE.Queues is
 
    function Get_Free_Slots (Q : Queue) return Natural is
    begin
-      return Q.Total - Q.Used - Q.Reserved;
+      return Q.Total - Q.Used; -- see Bug #2000
    end Get_Free_Slots;
 
    function Is_Offline (Q : Queue) return Boolean is
