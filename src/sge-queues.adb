@@ -72,6 +72,7 @@ package body SGE.Queues is
             N                     : Node;
             A                     : Attr;
             Used, Reserved, Total : Natural := 0;
+            Slots                 : Natural := 0;
             State, Q_Type         : Unbounded_String;
             Mem, Runtime          : Unbounded_String;
             Cores                 : Natural := 0;
@@ -80,6 +81,7 @@ package body SGE.Queues is
             Model, Queue_Name     : Unbounded_String := Null_Unbounded_String;
             Long_Queue_Name       : Unbounded_String := Null_Unbounded_String;
             type small is digits 4 range 0.0 .. 1.0;
+            type large is digits 4 range 0.0 .. 100.0;
          begin
             for Index in 1 .. Length (Queue_Nodes) loop
                N := Item (Queue_Nodes, Index - 1);
@@ -111,6 +113,8 @@ package body SGE.Queues is
                      Network := eth;
                   elsif Value (A) = "h_rt" then
                      Runtime := To_Unbounded_String (Value (First_Child (N)));
+                  elsif Value (A) = "slots" then
+                     Slots := Integer (large'Value (Value (First_Child (N))));
                   elsif Value (A) = "cpu_model" then
                      Model := To_Unbounded_String (Value (First_Child (N)));
                   elsif Value (A) = "qname" then
@@ -130,6 +134,7 @@ package body SGE.Queues is
                                     Total    => Total,
                                     Memory   => To_String (Mem),
                                     Cores    => Cores,
+                                    Slots    => Slots,
                                     Network  => Network,
                                     Model    => To_Model (Model),
                                     SSD      => SSD,
@@ -161,7 +166,7 @@ package body SGE.Queues is
      (Used, Reserved, Total : Natural;
       State, Q_Type         : String;
       Memory                : String;
-      Cores                 : Natural;
+      Cores, Slots          : Natural;
       Network               : Resources.Network;
       SSD                   : Boolean;
       GPU                   : Boolean;
@@ -210,6 +215,7 @@ package body SGE.Queues is
       else
          Set_Cores (Q.Properties, Cores);
       end if;
+      Set_Slots (Q.Properties, Slots);
       if SSD then
          Set_SSD (Q.Properties);
       end if;
@@ -247,7 +253,8 @@ package body SGE.Queues is
 
    function Get_Free_Slots (Q : Queue) return Natural is
    begin
-      return Q.Total - Q.Used; -- see Bug #2000
+      --  return Q.Total - Q.Used; -- see Bug #2000
+      return Get_Slots (Q.Properties);
    end Get_Free_Slots;
 
    function Is_Offline (Q : Queue) return Boolean is
