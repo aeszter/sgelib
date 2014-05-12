@@ -61,6 +61,16 @@ package body SGE.Host_Properties is
       return Props.Model;
    end Get_Model;
 
+   function Get_Slots (Props : Set_Of_Properties) return Natural is
+   begin
+      return Props.Available_Slots;
+   end Get_Slots;
+
+   procedure Set_Slots (Props : in out Set_Of_Properties; Slots : Natural) is
+   begin
+      Props.Available_Slots := Slots;
+   end Set_Slots;
+
    procedure Set_Cores (Props : in out Set_Of_Properties; Cores : Positive) is
    begin
       Props.Cores := Cores;
@@ -250,6 +260,8 @@ package body SGE.Host_Properties is
          Props.Model := To_Model (Value (First_Child (N)));
       elsif Value (A) = "mem_total" then
          Props.Memory := To_Gigs (Value (First_Child (N)));
+      elsif Value (A) = "slots" then
+         Props.Available_Slots := Integer (Fixed'Value (Value (First_Child (N))));
       elsif Value (A) = "gpu" then
          Props.GPU := True;
       elsif Value (A) = "ssd" then

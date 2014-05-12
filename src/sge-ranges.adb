@@ -81,6 +81,7 @@ package body SGE.Ranges is
                                                 To   => ","));
          if Comma = 0 then
             List.Append (New_Item => To_Step_Range (From (Prev + 1 .. From'Last)));
+            Condense (List);
             return List;
          else
             List.Append (New_Item => To_Step_Range (From (Prev + 1 .. Comma - 1)));
@@ -284,5 +285,95 @@ package body SGE.Ranges is
       end loop;
       return To_String (S);
    end To_String;
+
+   --  procedure Condense
+   --  Purpose: look for "runs" of condensed step ranges of the form
+   --          a, a+d, a+2d, ..., a+nd
+   --          and replace them with a non-condensed range
+   --          min => a, step => d, max => a+nd
+   procedure Condense (List : in out Step_Range_List) is
+      First     : Range_Lists.Cursor := List.First;
+      --  earliest possible start of a run; always well-defined
+      Pos       : Range_Lists.Cursor;
+      Item      : Step_Range;
+      --  step range under consideration
+      Last      : Range_Lists.Cursor;
+      --  possible end of a run; No_Element if undefined
+      Step      : Natural := 0;
+      --  step size of current (possibly incomplete) run;
+      --  zero if undetermined
+      Target    : Step_Range_List;
+
+      procedure Trace (Message : String);
+
+      procedure Append_New is
+         Condensate : Step_Range;
+      begin
+         Trace ("Appending accumulated list");
+         Condensate := New_Range (Min  => Element (First).Min,
+                                  Step => Step,
+                                  Max  => Element (Last).Max);
+         Step := 0;
+         Target.Append (Condensate);
+      end Append_New;
+
+      procedure Trace (Message : String) is
+      begin
+         null;
+      end Trace;
+
+   begin
+      Pos := First;
+      Last := No_Element;
+      while Pos /= Range_Lists.No_Element loop
+         Item := Element (Pos);
+         if not Is_Collapsed (Item) then
+            Trace ("Complex entry");
+            if Last /= No_Element then
+               Append_New;
+               Last := No_Element;
+            end if;
+            Target.Append (Item);
+            Next (Pos);
+            First := Pos;
+         else
+            if Pos = First then
+               Trace ("Singleton");
+               Next (Pos);
+            else
+               if Last = No_Element then
+                  Step := Element (Pos).Min - Element (First).Max;
+                  Trace ("Setting Step to" & Step'Img);
+                  if Step = 0 then
+                     raise Program_Error
+                       with "zero step size while condensing range list";
+                  end if;
+                  Last := Pos;
+                  Next (Pos);
+                  if Pos = No_Element then
+                     Append_New;
+                  end if;
+               elsif Step = Element (Pos).Min - Element (Last).Max then
+                  Trace ("Step fits");
+                  Last := Pos;
+                  Next (Pos);
+                  if Pos = No_Element then
+                     Append_New;
+                  end if;
+               else
+                  Trace ("Default: step does not fit");
+                  Append_New;
+                  Last := No_Element;
+                  First := Pos;
+                  Next (Pos);
+                  if Pos = No_Element then
+                     Target.Append (Element (First));
+                  end if;
+               end if;
+            end if;
+         end if;
+      end loop;
+      List := Target;
+   end Condense;
 
 end SGE.Ranges;

@@ -87,6 +87,16 @@ package body SGE.Parser is
       return Elements;
    end Get_Job_Nodes_From_Qstat_J;
 
+   function Get_Message_Nodes_From_Qstat_J (Doc : Document)
+                                           return Node_List is
+      Messages, Elements : Node_List;
+   begin
+      Messages := Get_Elements_By_Tag_Name (Doc => Doc, Tag_Name => "SME_global_message_list");
+      Elements := Child_Nodes (Item (Messages, 0));
+      --  Elements may contain #text nodes. It is the caller's
+      --  responsibility to remove these
+      return Elements;
+   end Get_Message_Nodes_From_Qstat_J;
 
 
    -----------------------------------

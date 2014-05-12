@@ -1,6 +1,5 @@
 with Ada.Text_IO;
 with Ada.Calendar;   use Ada.Calendar;
-with GNAT.Calendar.Time_IO;
 with Ada.Calendar.Conversions;
 with SGE.Resources;      use SGE.Resources; use SGE.Resources.Resource_Lists;
 with SGE.Ranges;          use SGE.Ranges; use SGE.Ranges.Range_Lists;
@@ -714,6 +713,41 @@ package body SGE.Jobs is
       end loop;
    end Append_List;
 
+   procedure Update_Messages (Nodes : Node_List) is
+      MES_Part : Node;
+      Number : Natural;
+      Message : Unbounded_String;
+      Message_Nodes : Node_List;
+
+      procedure Store_Message (Item : in out Job) is
+      begin
+         Add_Message (Item, Number, Message);
+      end Store_Message;
+
+   begin
+      if Length (List) = 1 then
+         Elements :
+         for Index in 1 .. Length (Nodes) loop
+            if Name (Item (Nodes, Index - 1)) = "element" then
+               Message_Nodes := Child_Nodes (Item (Nodes, Index - 1));
+               MES_Parts :
+               for Part_Index in 1 .. Length (Message_Nodes) loop
+                  MES_Part := Item (Message_Nodes, Part_Index - 1);
+                  if Name (MES_Part) = "MES_message_number" then
+                     Number := Integer'Value (Value (First_Child (MES_Part)));
+                  elsif Name (MES_Part) = "MES_message" then
+                     Message := To_Unbounded_String (Value (First_Child (MES_Part)));
+                  end if;
+               end loop MES_Parts;
+               List.Update_Element (Position => List.First,
+                                    Process  => Store_Message'Access);
+            end if;
+         end loop Elements;
+      elsif not Is_Empty (List) then
+         raise Too_Many_Jobs_Error;
+      end if;
+   end Update_Messages;
+
 
    procedure Prune_List (PE, Queue, Hard_Requests,
                          Soft_Requests,
@@ -902,7 +936,6 @@ package body SGE.Jobs is
    procedure Update_Job (J : in out Job; List : Node_List) is
       C           : Node;
       A           : Attr;
-      Time_Buffer : String (1 .. 19);
       Inserted    : Boolean;
       Inserted_At : Resource_Lists.Cursor;
 
@@ -931,23 +964,10 @@ package body SGE.Jobs is
                J.State_String := Head (Value (First_Child (C)), J.State_String'Length);
                Update_State_Array (J);
             elsif Name (C) = "JB_submission_time" then
-               if Value (First_Child (C))'Length > 11 and then
-                 Value (First_Child (C)) (11) = 'T' then
-                  Time_Buffer := Value (First_Child (C));
-                  Time_Buffer (11) := ' ';
-                  J.Submission_Time := GNAT.Calendar.Time_IO.Value (Time_Buffer);
-               else
-                  J.Submission_Time := Ada.Calendar.Conversions.To_Ada_Time
-                    (Interfaces.C.long'Value (Value (First_Child (C))));
-               end if;
+               J.Submission_Time := To_Time (Value (First_Child (C)));
 
             elsif Name (C) = "JAT_start_time" then
-               Time_Buffer := Value (First_Child (C));
-               if Time_Buffer (11) /= 'T' then
-                  raise Time_Error;
-               end if;
-               Time_Buffer (11) := ' ';
-               J.Submission_Time := GNAT.Calendar.Time_IO.Value (Time_Buffer);
+               J.Submission_Time := To_Time (Value (First_Child (C)));
             elsif Name (C) = "queue_name" then
                null; -- ignore
             elsif Name (C) = "slots" then
@@ -2096,6 +2116,10 @@ package body SGE.Jobs is
       return Ada.Characters.Handling.To_Lower (Flag'Img);
    end To_String;
 
-
+   procedure Add_Message (J : in out Job; Number : Natural; Message : Unbounded_String) is
+   begin
+      J.Message_List.Append (Number'Img & ": " & Message);
+      --  FIXME: can we use and store the message number seperately?
+   end Add_Message;
 
 end SGE.Jobs;

@@ -30,7 +30,7 @@ package SGE.Queues is
    function New_Queue (Used, Reserved, Total : Natural;
       State, Q_Type         : String;
       Memory                : String;
-      Cores                 : Natural;
+      Cores, Slots          : Natural;
       Network               : Resources.Network;
       SSD                   : Boolean;
       GPU                   : Boolean;
