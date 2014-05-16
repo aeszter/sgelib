@@ -1288,7 +1288,8 @@ package body SGE.Jobs is
    begin
       for I in 1 .. Length (Children) loop
          N := Item (Children, I - 1);
-         if Name (N) = "ranges" then
+         if Name (N) = "ranges" or else
+         Name (N) = "element" then
             Range_Nodes := Child_Nodes (N);
             for J in 1 .. Length (Range_Nodes) loop
                R := Item (Range_Nodes, J - 1);
