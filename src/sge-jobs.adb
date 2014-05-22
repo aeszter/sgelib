@@ -1,4 +1,3 @@
-with Ada.Text_IO;
 with Ada.Calendar;   use Ada.Calendar;
 with Ada.Calendar.Conversions;
 with SGE.Resources;      use SGE.Resources; use SGE.Resources.Resource_Lists;
@@ -723,7 +722,6 @@ package body SGE.Jobs is
       begin
          Add_Message (Item, Number, Message);
       end Store_Message;
-
    begin
       if Length (List) = 1 then
          Elements :
@@ -823,6 +821,7 @@ package body SGE.Jobs is
       Field       : Node;
       Number      : Positive;
       State       : String (1 .. 4);
+      Found       : Boolean := False;
 
       use Ada.Strings.Fixed;
    begin
@@ -841,8 +840,12 @@ package body SGE.Jobs is
                Number := Integer'Value (Value (First_Child (Field)));
             elsif Name (Field) = "state" then
                State := Head (Value (First_Child (Field)), State'Length);
+               Found := True;
             end if;
          end loop Fields;
+         if not Found then
+            raise Missing_Tag_Error with "No state found for Job" & Number'Img;
+         end if;
          if Number = J.Number then
             J.State_String := State;
             Update_State_Array (J);
@@ -865,6 +868,7 @@ package body SGE.Jobs is
       Pos                    : Job_Lists.Cursor;
       Number_Found           : Natural;
       The_Queue              : Unbounded_String;
+      Found                  : Boolean := False;
 
       procedure Record_Queue (Element : in out Job) is
          Success : Boolean;
@@ -902,9 +906,13 @@ package body SGE.Jobs is
                   A := Get_Attr (Value_Node, "name");
                   if Value (A) = "qinstance_name" then
                      The_Queue := To_Unbounded_String (Value (First_Child (Value_Node)));
+                     Found := True;
                   end if;
                end if;
             end loop;
+            if not Found then
+               raise Missing_Tag_Error with "no qinstance_name";
+            end if;
             List.Update_Element (Position => Pos,
                                  Process  => Record_Queue'Access);
          end if;
@@ -1106,7 +1114,7 @@ package body SGE.Jobs is
                null;
 
             elsif Name (C) /= "#text" then
-               Ada.Text_IO.Put_Line ("Unknown Field: " & Name (C));
+               raise Other_Error with "Unknown Field: " & Name (C);
             end if;
          exception
                when E : Parser_Error =>
@@ -1148,56 +1156,68 @@ package body SGE.Jobs is
 
    begin
       for I in 1 .. Length (Resource_Nodes) loop
-         N := Item (Resource_Nodes, I - 1);
-         if Name (N) = "qstat_l_requests"
-         or else Name (N) = "element" then
-            Res_Bool := False;
-            Res_State := Undecided;
-            Resource_Tags := Child_Nodes (N);
-            for J in 1 .. Length (Resource_Tags) loop
-               R := Item (Resource_Tags, J - 1);
-               if Name (R) = "CE_name" then
-                  Res_Name := To_Unbounded_String (Value (First_Child (R)));
-               elsif Name (R) = "CE_stringval" then
-                  Res_Value := To_Unbounded_String (Value (First_Child (R)));
-               elsif Name (R) = "CE_valtype" and then
-                  Value (First_Child (R)) = "5" then
-                  Res_Bool := True;
-                  --  maybe check for relop here?
+         declare
+            Found_Name, Found_Value : Boolean := False;
+         begin
+            N := Item (Resource_Nodes, I - 1);
+            if Name (N) = "qstat_l_requests"
+            or else Name (N) = "element" then
+               Res_Bool := False;
+               Res_State := Undecided;
+               Resource_Tags := Child_Nodes (N);
+               for J in 1 .. Length (Resource_Tags) loop
+                  R := Item (Resource_Tags, J - 1);
+                  if Name (R) = "CE_name" then
+                     Res_Name := To_Unbounded_String (Value (First_Child (R)));
+                     Found_Name := True;
+                  elsif Name (R) = "CE_stringval" then
+                     Res_Value := To_Unbounded_String (Value (First_Child (R)));
+                     Found_Value := True;
+                  elsif Name (R) = "CE_valtype" and then
+                     Value (First_Child (R)) = "5" then
+                     Res_Bool := True;
+                     --  maybe check for relop here?
+                  end if;
+               end loop;
+               if Res_Bool then
+                  if Res_Value = "TRUE" or else
+                    Res_Value = "true" or else
+                    Res_Value = "1" then
+                     Res_State := True;
+                  elsif Res_Value = "FALSE" or else
+                    Res_Value = "false" or else
+                     Res_Value = "0" then
+                     Res_State := False;
+                  else
+                     raise Constraint_Error
+                       with  """" & To_String (Res_Value) & """ is not boolean";
+                  end if;
                end if;
-            end loop;
-            if Res_Bool then
-               if Res_Value = "TRUE" or else
-                 Res_Value = "true" or else
-                 Res_Value = "1" then
-                  Res_State := True;
-               elsif Res_Value = "FALSE" or else
-                 Res_Value = "false" or else
-                  Res_Value = "0" then
-                  Res_State := False;
+               if not Found_Name then
+                  raise Missing_Tag_Error with "resource name not found";
+               end if;
+               if not Found_Value then
+                  raise Missing_Tag_Error with "resource value not found";
+               end if;
+               if Soft then
+                  J.Soft.Insert (Key      => Res_Name,
+                              New_Item => New_Resource (Name  => To_String (Res_Name),
+                                                        Value => Res_Value,
+                                                        Boolean_Valued => Res_Bool,
+                                                        State => Res_State),
+                              Position => Inserted_At,
+                              Inserted => Inserted);
                else
-                  raise Constraint_Error
-                    with  """" & To_String (Res_Value) & """ is not boolean";
+                  J.Hard.Insert (Key      => Res_Name,
+                              New_Item => New_Resource (Name  => To_String (Res_Name),
+                                                        Value => Res_Value,
+                                                        Boolean_Valued => Res_Bool,
+                                                        State => Res_State),
+                              Position => Inserted_At,
+                              Inserted => Inserted);
                end if;
             end if;
-            if Soft then
-               J.Soft.Insert (Key      => Res_Name,
-                           New_Item => New_Resource (Name  => To_String (Res_Name),
-                                                     Value => Res_Value,
-                                                     Boolean_Valued => Res_Bool,
-                                                     State => Res_State),
-                           Position => Inserted_At,
-                           Inserted => Inserted);
-            else
-               J.Hard.Insert (Key      => Res_Name,
-                           New_Item => New_Resource (Name  => To_String (Res_Name),
-                                                     Value => Res_Value,
-                                                     Boolean_Valued => Res_Bool,
-                                                     State => Res_State),
-                           Position => Inserted_At,
-                           Inserted => Inserted);
-            end if;
-         end if;
+         end;
       end loop;
    end Extract_Resource_List;
 

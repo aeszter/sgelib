@@ -12,6 +12,7 @@ with Ada.Strings.Bounded;
 package SGE.Jobs is
    Other_Error : exception; -- generic error
    Too_Many_Jobs_Error : exception; -- Operation usupported if Length (List) > 1
+   Missing_Tag_Error : exception; -- an expected XML tag was not found
 
 
    type State_Flag is (deletion, Error, hold, running, Restarted, suspended,
