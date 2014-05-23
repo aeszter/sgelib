@@ -1,0 +1,38 @@
+sgelib
+======
+
+An Ada frontend to Grid Engine
+
+By Ansgar Esztermann <aeszter@mpibpc.mpg.de>
+
+1. Goal
+This library began its life as part of qview (by the same author).
+When the Balancer was started, it soon became apparent that massive
+amounts of code would need to be duplicated or reused.
+Thus, the code that calls qstat, qhost etc and stores their output in
+suitable data structures was extracted from qview, becoming 
+sgelib 0.1.
+
+2. Requirements
+The following libraries are needed:
+
+  * Florist (POSIX API)
+  * ADAcgi
+  * XMLAda
+
+Of course, a working Grid Engine installation is also necessary.
+
+3. Shortcomings/Bugs
+For an up-to-date list of bugs, see the issue tracker on GitHub.
+Here, let it just be noted that sgelib does not strive to provide a
+consistent API, or full access to every bit of data output by qstat.
+Instead, it evolves along with qview and the Balancer, serving as a
+collection of common data and code. This has been hinted at by keeping
+the major version at 0.
+Moreover, ome values (e.g. available network types, CPU categories) are
+hard-coded in the source. This means that all the advantages that
+Ada enumeration types have over a dynamic array are available; but
+users will have to edit the source code in order to adapt the program to
+their environment.
+Site-specifics have been marked with 
+pragma Compile_time_Warning ("hardcoded config")
