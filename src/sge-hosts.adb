@@ -24,6 +24,23 @@ package body SGE.Hosts is
       return Get_Cores (H.Properties) - H.Slots_Used;
    end Get_Free_Slots;
 
+   function Get_Reserved_Slots (H : Host) return Natural is
+      Count : Natural := 0;
+      procedure Count_Reserved (Position : Queue_Pointer) is
+      begin
+         Count := Count + Get_Reserved_Slots (Position);
+      end Count_Reserved;
+
+   begin
+      Hosts.Iterate_Queues (H => H, Process => Count_Reserved'Access);
+      return Count;
+   end Get_Reserved_Slots;
+
+   function Get_Reserved_Slots (Q : Queue_Pointer) return Natural is
+   begin
+      return Element (Q).Reserved;
+   end Get_Reserved_Slots;
+
    function Get_Name (H : Host) return String is
    begin
       return To_String (H.Name);
@@ -296,18 +313,21 @@ package body SGE.Hosts is
    procedure Append_Queue (H    : out Host;
                            Name  : String;
                            State : String := "";
-                           Slots : Natural := 0) is
+                           Slots : Natural := 0;
+                           Reserved : Natural := 0) is
    begin
       H.Queues.Insert (Key      => To_Unbounded_String (Name),
                        New_Item => (State => Queue_States.To_Bounded_String (State),
-                       Slots => Slots)
+                                    Slots => Slots,
+                                   Reserved => Reserved)
                       );
    end Append_Queue;
 
    procedure Update_Or_Append_Queue (H    : out Host;
                            Name  : String;
                            State : String := "";
-                                     Slots : Natural := 0) is
+                                     Slots : Natural := 0;
+                                     Reserved : Natural := 0) is
       Pos : Queue_Maps.Cursor := H.Queues.Find (Key => To_Unbounded_String (Name));
 
       procedure Update (Name : Unbounded_String; Q : in out Queue) is
@@ -318,6 +338,9 @@ package body SGE.Hosts is
          end if;
          if Slots /= 0 then
             Q.Slots := Slots;
+         end if;
+         if Reserved /= 0 then
+            Q.Reserved := Reserved;
          end if;
       end Update;
 
@@ -434,6 +457,12 @@ package body SGE.Hosts is
                   Update_Or_Append_Queue (H     => H,
                                           Name  => Value (Q_Name),
                                           Slots => Integer'Value (Value (First_Child (Q_Value))));
+               end if;
+            elsif Value (A) = "slots_resv" then
+               if Has_Child_Nodes (Q_Value) then
+                  Update_Or_Append_Queue (H     => H,
+                                          Name  => Value (Q_Name),
+                                          Reserved => Integer'Value (Value (First_Child (Q_Value))));
                end if;
             end if;
          end if;
