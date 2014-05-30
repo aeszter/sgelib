@@ -2005,11 +2005,6 @@ package body SGE.Jobs is
       List.Iterate (Quota_For_Job'Access);
    end Update_Quota;
 
-   procedure Record_Error (J : in out Job; Message : String) is
-   begin
-      J.Error_Log.Append (To_Unbounded_String (Message));
-   end Record_Error;
-
    procedure Iterate (Process : not null access procedure (J : Job)) is
       procedure Wrapper (Position : Job_Lists.Cursor) is
       begin

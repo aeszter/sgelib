@@ -8,6 +8,7 @@ with SGE.Ranges; use SGE.Ranges;
 with SGE.Utils; use SGE.Utils;
 with SGE.Context;
 with Ada.Strings.Bounded;
+with SGE.Loggers; use SGE.Loggers;
 
 package SGE.Jobs is
    Other_Error : exception; -- generic error
@@ -29,7 +30,7 @@ package SGE.Jobs is
    type Balancer_Support is array (Balancer_Capability) of Boolean;
 
 
-   type Job is private;
+   type Job is new Logger with private;
 
    function To_Abbrev (Flag : State_Flag) return String;
    function To_String (Flag : State_Flag) return String;
@@ -291,7 +292,11 @@ private
    package Job_Names is new Ada.Strings.Bounded.Generic_Bounded_Length (Max => Max_Name_Length);
    subtype Job_Name is Job_Names.Bounded_String;
 
-   type Job is record
+   procedure Update_Status (J : in out Job);
+   --  Purpose: Read the job's status from an appropriate source
+   --  (such as a qstat -u call)
+
+   type Job is new Logger with record
       --  basic attributes
       Number               : Integer; -- Job ID
       Task_IDs             : Ranges.Step_Range_List;
@@ -426,11 +431,4 @@ private
    Overlay : Job_Maps.Map;
    List_Cursor : Job_Lists.Cursor := Job_Lists.No_Element;
 
-   procedure Update_Status (J : in out Job);
-   --  Purpose: Read the job's status from an appropriate source
-   --  (such as a qstat -u call)
-
-   procedure Record_Error (J : in out Job; Message : String);
-   --  Purpose: store an error message for retrieval by the calling application
-   --  without raising an exception (so we can resume Library oprations)
 end SGE.Jobs;

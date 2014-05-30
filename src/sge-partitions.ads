@@ -5,7 +5,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Bounded;
 with SGE.Queues; use SGE.Queues;
 with SGE.Host_Properties; use SGE.Host_Properties;
-with SGE.Utils;
+with SGE.Loggers; use SGE.Loggers;
 
 package SGE.Partitions is
 
@@ -21,31 +21,22 @@ package SGE.Partitions is
 
    type Countable_Map is new Countable_Maps.Map with null record;
 
+   type Partition is new Logger with private;
    function Sum (Over : Countable_Map) return Natural;
-
-   type Partition is record
-      Used_Slots,
-      Reserved_Slots,
-      Suspended_Slots : Natural := 0;
-      Total_Slots     : Countable_Map;
-      Available_Hosts,
-      Total_Hosts,
-      Offline_Hosts,
-      Reserved_Hosts,
-      Used_Hosts,
-      Disabled_Hosts  : Countable_Sets.Set;
-      Available_Slots,
-      Disabled_Slots,
-      Offline_Slots   : Countable_Map;
-      Name            : Unbounded_String;
-      Properties      : Set_Of_Properties;
-      Error_Log       : Utils.String_List;
-   end record;
 
    function Get_Available_Hosts (P : Partition) return Natural;
    function Get_Available_Slots (P : Partition) return Natural;
+   function Get_Offline_Hosts (P : Partition) return Natural;
    function Get_Offline_Slots (P : Partition) return Natural;
+   function Get_Suspended_Slots (P : Partition) return Natural;
    function Get_Total_Slots (P : Partition) return Natural;
+   function Get_Total_Hosts (P : Partition) return Natural;
+   function Get_Used_Slots (P : Partition) return Natural;
+   function Get_Used_Hosts (P : Partition) return Natural;
+   function Get_Reserved_Slots (P : Partition) return Natural;
+   function Get_Reserved_Hosts (P : Partition) return Natural;
+   function Get_Disabled_Slots (P : Partition) return Natural;
+   function Get_Disabled_Hosts (P : Partition) return Natural;
    function Get_Network (P : Partition) return String;
    function Get_Runtime (P : Partition) return String;
    function Get_Cores (P : Partition) return Natural;
@@ -53,6 +44,7 @@ package SGE.Partitions is
    function Get_Memory (P : Partition) return String;
    function Has_GPU (P : Partition) return Boolean;
    function Has_SSD (P : Partition) return Boolean;
+   function Get_Name (P : Partition) return String;
 
 
    type State is (total, available, used, reserved, disabled, offline);
@@ -68,13 +60,6 @@ package SGE.Partitions is
       New_Item  : Natural);
 
 
-   package Partition_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Element_Type => Partition);
-
-   type Summarized_List is new Partition_Lists.List with
-   record
-     Summary : State_Count;
-   end record;
    function To_String (Source : State) return String;
 
    procedure Build_List;
@@ -83,11 +68,34 @@ package SGE.Partitions is
 
    function "=" (Left : Partition; Right : Queue) return Boolean;
    function "=" (Left : Queue; Right : Partition) return Boolean;
-private
-   List : Summarized_List;
 
-   procedure Record_Error (P : in out Partition; Message : String);
-   --  Purpose: store an error message for retrieval by the calling application
-   --  without raising an exception (so we can resume Library oprations)
+private
+   type Partition is new Logger with record
+      Used_Slots,
+      Reserved_Slots,
+      Suspended_Slots : Natural := 0;
+      Total_Slots     : Countable_Map;
+      Available_Hosts,
+      Total_Hosts,
+      Offline_Hosts,
+      Reserved_Hosts,
+      Used_Hosts,
+      Disabled_Hosts  : Countable_Sets.Set;
+      Available_Slots,
+      Disabled_Slots,
+      Offline_Slots   : Countable_Map;
+      Name            : Unbounded_String;
+      Properties      : Set_Of_Properties;
+   end record;
+
+   package Partition_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Element_Type => Partition);
+
+   type Summarized_List is new Partition_Lists.List with
+   record
+     Summary : State_Count;
+   end record;
+
+   List : Summarized_List;
 
 end SGE.Partitions;
