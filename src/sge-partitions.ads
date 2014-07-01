@@ -24,6 +24,9 @@ package SGE.Partitions is
    type Partition is new Logger with private;
    function Sum (Over : Countable_Map) return Natural;
 
+   procedure Iterate_Available_Slots (P       : Partition;
+                                      Process : not null access procedure (Position : Countable_Maps.Cursor));
+   function Get_Properties (P : Partition) return Set_Of_Properties;
    function Get_Available_Hosts (P : Partition) return Natural;
    function Get_Available_Slots (P : Partition) return Natural;
    function Get_Offline_Hosts (P : Partition) return Natural;

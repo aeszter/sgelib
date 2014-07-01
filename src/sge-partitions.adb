@@ -298,5 +298,15 @@ package body SGE.Partitions is
       return Sum (List.Summary (From));
    end Get_Summary;
 
+   procedure Iterate_Available_Slots (P       : Partition;
+                                      Process : not null access procedure (Position : Countable_Maps.Cursor)) is
+   begin
+      P.Available_Slots.Iterate (Process);
+   end Iterate_Available_Slots;
+
+   function Get_Properties (P : Partition) return Set_Of_Properties is
+   begin
+      return P.Properties;
+   end Get_Properties;
 
 end SGE.Partitions;
