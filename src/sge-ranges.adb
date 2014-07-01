@@ -340,6 +340,9 @@ package body SGE.Ranges is
             if Pos = First then
                Trace ("Singleton");
                Next (Pos);
+               if Pos = No_Element then
+                  Target.Append (Element (First));
+               end if;
             else
                if Last = No_Element then
                   Step := Element (Pos).Min - Element (First).Max;
