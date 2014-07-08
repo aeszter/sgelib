@@ -39,6 +39,8 @@ package body SGE.Jobs is
       Cumulative : Boolean);
 
    procedure Update_Job_From_Overlay (J : in out Job);
+   procedure Extract_Generic_Range (Range_Nodes    : Node_List;
+                                    Min, Step, Max : out Natural);
 
    -------------
    --  accessors
@@ -63,6 +65,22 @@ package body SGE.Jobs is
       List.Iterate (Wrapper'Access);
       return Counter;
    end Count;
+
+   procedure Extract_Generic_Range (Range_Nodes    : Node_List;
+                                    Min, Step, Max : out Natural) is
+      R : Node;
+   begin
+      for J in 1 .. Length (Range_Nodes) loop
+         R := Item (Range_Nodes, J - 1);
+         if Name (R) = "RN_min" then
+            Min := Integer'Value (Value (First_Child (R)));
+         elsif Name (R) = "RN_max" then
+            Max := Integer'Value (Value (First_Child (R)));
+         elsif Name (R) = "RN_step" then
+            Step := Integer'Value (Value (First_Child (R)));
+         end if;
+      end loop;
+   end Extract_Generic_Range;
 
    function Get_Task_Count (J : Job) return Natural is
    begin
@@ -1049,7 +1067,7 @@ package body SGE.Jobs is
             elsif Name (C) = "JB_ar" then
                J.Job_Advance_Reservation := To_Unbounded_String (Value (First_Child (C)));
             elsif            Name (C) = "JB_ja_structure" then
-               null;  -- to array
+               Extract_Array (J, Child_Nodes (C));  -- to array
             elsif Name (C) = "JB_exec_file" then
                J.Exec_File := To_Unbounded_String (Value (First_Child (C)));
             elsif Name (C) = "JB_group" then
@@ -1297,30 +1315,42 @@ package body SGE.Jobs is
       end loop;
    end Extract_Queue_List;
 
+   procedure Extract_Array (J : in out Job; Task_Nodes : Node_List) is
+      Task_Min, Task_Max, Task_Step  : Natural;
+      N  : Node;
+   begin
+      for I in 1 .. Length (Task_Nodes) loop
+         N := Item (Task_Nodes, I - 1);
+         if Name (N) = "task_id_range" then
+            Extract_Generic_Range (Range_Nodes => Child_Nodes (N),
+                                   Min         => Task_Min,
+                                   Max         => Task_Max,
+                                   Step        => Task_Step);
+            J.Array_Tasks.Append (Ranges.New_Range (Min => Task_Min,
+                                                    Max => Task_Max,
+                                                    Step => Task_Step));
+         elsif Name (N) /= "#text" then
+            raise Missing_Tag_Error with "found """ & Name (N) & """ instead of task_id_range";
+         end if;
+      end loop;
+   end Extract_Array;
+
    ----------------------
    -- Extract_PE_Range --
    ----------------------
 
    procedure Extract_PE_Range (J : in out Job; Children : Node_List) is
-      Range_Nodes                      : Node_List;
-      N, R                             : Node;
+      N                             : Node;
       Slots_Min, Slots_Step, Slots_Max : Natural;
    begin
       for I in 1 .. Length (Children) loop
          N := Item (Children, I - 1);
          if Name (N) = "ranges" or else
-         Name (N) = "element" then
-            Range_Nodes := Child_Nodes (N);
-            for J in 1 .. Length (Range_Nodes) loop
-               R := Item (Range_Nodes, J - 1);
-               if Name (R) = "RN_min" then
-                  Slots_Min := Integer'Value (Value (First_Child (R)));
-               elsif Name (R) = "RN_max" then
-                  Slots_Max := Integer'Value (Value (First_Child (R)));
-               elsif Name (R) = "RN_step" then
-                  Slots_Step := Integer'Value (Value (First_Child (R)));
-               end if;
-            end loop;
+              Name (N) = "element" then
+               Extract_Generic_Range (Range_Nodes => Child_Nodes (N),
+                                      Min         => Slots_Min,
+                                      Max         => Slots_Max,
+                                      Step        => Slots_Step);
             J.Slot_List.Append (Ranges.New_Range (Min  => Slots_Min,
                                                        Max  => Slots_Max,
                                                        Step => Slots_Step));
@@ -2082,17 +2112,16 @@ package body SGE.Jobs is
       J.Slot_List.Iterate (Wrapper'Access);
    end Iterate_Slots;
 
-   procedure Iterate_Error_Log (J : Job;
-                               Process : not null access procedure (Message : String))
-   is
-      procedure Wrapper (Position : Utils.String_Lists.Cursor) is
+   procedure Iterate_Tasks (J : Job;
+                            Process : not null access procedure (R : Step_Range)) is
+      procedure Wrapper (Position : Range_Lists.Cursor) is
       begin
-         Process (To_String (Element (Position)));
+         Process (Element (Position));
       end Wrapper;
 
    begin
-      J.Error_Log.Iterate (Wrapper'Access);
-   end Iterate_Error_Log;
+      J.Array_Tasks.Iterate (Wrapper'Access);
+   end Iterate_Tasks;
 
    procedure Iterate_Context (J : Job;
                               Process : not null access procedure (Key, Element : String))
