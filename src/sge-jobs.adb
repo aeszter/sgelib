@@ -670,7 +670,7 @@ package body SGE.Jobs is
 
    function Has_Error_Log_Entries (J : Job) return Boolean is
    begin
-      return not J.Error_Log.Is_Empty;
+      return Has_Errors (J);
    end Has_Error_Log_Entries;
 
    --------------

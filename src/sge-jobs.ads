@@ -159,6 +159,7 @@ package SGE.Jobs is
                                        Sub_Nodes : Node_List);
    procedure Extract_Tasks (J : in out Job; Task_Nodes : Node_List);
    procedure Extract_PE_Range (J : in out Job; Children : Node_List);
+   procedure Extract_Array (J : in out Job; Task_Nodes : Node_List);
    procedure Extract_Paths (Path_List  : in out String_Lists.List;
                             List_Nodes  : Node_List);
    procedure Extract_Args (J : in out Job;
@@ -280,8 +281,8 @@ package SGE.Jobs is
                              Process : not null access procedure (Queue : String));
    procedure Iterate_Slots (J : Job;
                             Process : not null access procedure (R : Step_Range));
-   procedure Iterate_Error_Log (J : Job;
-                                Process : not null access procedure (Message : String));
+   procedure Iterate_Tasks (J : Job;
+                            Process : not null access procedure (R : Step_Range));
    procedure Iterate_Context (J : Job;
                               Process : not null access procedure (Key, Element : String));
 
@@ -322,6 +323,7 @@ private
       Successors           : Utils.ID_List;
       Predecessor_Request  : Utils.String_List;
       Context              : SGE.Context.List;
+      Array_Tasks          : Ranges.Step_Range_List;
 
 
       --  File related stuff
@@ -362,7 +364,6 @@ private
       Std_Out_Paths    : String_Lists.List;
       Std_Err_Paths    : String_Lists.List;
 
-      Error_Log        : Utils.String_List;
       RQS_Reached      : Boolean;
       Balancer         : Balancer_Support;
    end record;
