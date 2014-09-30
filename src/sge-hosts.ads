@@ -77,8 +77,8 @@ private
    type Job is record
       Master  : Boolean;
       ID      : Positive;
-      Task_ID : Natural;
-      Slaves  : Natural;
+      Task_ID : Natural := 0;
+      Slaves  : Natural := 0;
       Start_Time : Time;
    end record;
 
