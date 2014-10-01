@@ -8,6 +8,7 @@ with SGE.Ranges; use SGE.Ranges;
 with SGE.Utils; use SGE.Utils;
 with SGE.Context;
 with Ada.Strings.Bounded;
+with SGE.Loggers; use SGE.Loggers;
 
 package SGE.Jobs is
    Other_Error : exception; -- generic error
@@ -29,7 +30,7 @@ package SGE.Jobs is
    type Balancer_Support is array (Balancer_Capability) of Boolean;
 
 
-   type Job is private;
+   type Job is new Logger with private;
 
    function To_Abbrev (Flag : State_Flag) return String;
    function To_String (Flag : State_Flag) return String;
@@ -158,6 +159,7 @@ package SGE.Jobs is
                                        Sub_Nodes : Node_List);
    procedure Extract_Tasks (J : in out Job; Task_Nodes : Node_List);
    procedure Extract_PE_Range (J : in out Job; Children : Node_List);
+   procedure Extract_Array (J : in out Job; Task_Nodes : Node_List);
    procedure Extract_Paths (Path_List  : in out String_Lists.List;
                             List_Nodes  : Node_List);
    procedure Extract_Args (J : in out Job;
@@ -279,8 +281,8 @@ package SGE.Jobs is
                              Process : not null access procedure (Queue : String));
    procedure Iterate_Slots (J : Job;
                             Process : not null access procedure (R : Step_Range));
-   procedure Iterate_Error_Log (J : Job;
-                                Process : not null access procedure (Message : String));
+   procedure Iterate_Tasks (J : Job;
+                            Process : not null access procedure (R : Step_Range));
    procedure Iterate_Context (J : Job;
                               Process : not null access procedure (Key, Element : String));
 
@@ -291,7 +293,11 @@ private
    package Job_Names is new Ada.Strings.Bounded.Generic_Bounded_Length (Max => Max_Name_Length);
    subtype Job_Name is Job_Names.Bounded_String;
 
-   type Job is record
+   procedure Update_Status (J : in out Job);
+   --  Purpose: Read the job's status from an appropriate source
+   --  (such as a qstat -u call)
+
+   type Job is new Logger with record
       --  basic attributes
       Number               : Integer; -- Job ID
       Task_IDs             : Ranges.Step_Range_List;
@@ -317,6 +323,7 @@ private
       Successors           : Utils.ID_List;
       Predecessor_Request  : Utils.String_List;
       Context              : SGE.Context.List;
+      Array_Tasks          : Ranges.Step_Range_List;
 
 
       --  File related stuff
@@ -357,7 +364,6 @@ private
       Std_Out_Paths    : String_Lists.List;
       Std_Err_Paths    : String_Lists.List;
 
-      Error_Log        : Utils.String_List;
       RQS_Reached      : Boolean;
       Balancer         : Balancer_Support;
    end record;
@@ -426,11 +432,4 @@ private
    Overlay : Job_Maps.Map;
    List_Cursor : Job_Lists.Cursor := Job_Lists.No_Element;
 
-   procedure Update_Status (J : in out Job);
-   --  Purpose: Read the job's status from an appropriate source
-   --  (such as a qstat -u call)
-
-   procedure Record_Error (J : in out Job; Message : String);
-   --  Purpose: store an error message for retrieval by the calling application
-   --  without raising an exception (so we can resume Library oprations)
 end SGE.Jobs;

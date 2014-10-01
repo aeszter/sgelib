@@ -173,11 +173,6 @@ package body SGE.Partitions is
       end case;
    end To_String;
 
-   procedure Record_Error (P : in out Partition; Message : String) is
-   begin
-      P.Error_Log.Append (To_Unbounded_String (Message));
-   end Record_Error;
-
    procedure Iterate (Process : not null access procedure (P : Partition)) is
       procedure Wrapper (Position : Partition_Lists.Cursor) is
       begin
@@ -203,10 +198,55 @@ package body SGE.Partitions is
       return Sum (P.Offline_Slots);
    end Get_Offline_Slots;
 
+   function Get_Offline_Hosts (P : Partition) return Natural is
+   begin
+      return Natural (P.Offline_Hosts.Length);
+   end Get_Offline_Hosts;
+
+   function Get_Suspended_Slots (P : Partition) return Natural is
+   begin
+      return P.Suspended_Slots;
+   end Get_Suspended_Slots;
+
    function Get_Total_Slots (P : Partition) return Natural is
    begin
       return Sum (P.Total_Slots);
    end Get_Total_Slots;
+
+   function Get_Total_Hosts (P : Partition) return Natural is
+   begin
+      return Natural (P.Total_Hosts.Length);
+   end Get_Total_Hosts;
+
+   function Get_Used_Slots (P : Partition) return Natural is
+   begin
+      return P.Used_Slots;
+   end Get_Used_Slots;
+
+   function Get_Used_Hosts (P : Partition) return Natural is
+   begin
+      return Natural (P.Used_Hosts.Length);
+   end Get_Used_Hosts;
+
+   function Get_Reserved_Slots (P : Partition) return Natural is
+   begin
+      return P.Reserved_Slots;
+   end Get_Reserved_Slots;
+
+   function Get_Reserved_Hosts (P : Partition) return Natural is
+   begin
+      return Natural (P.Reserved_Hosts.Length);
+   end Get_Reserved_Hosts;
+
+   function Get_Disabled_Slots (P : Partition) return Natural is
+   begin
+      return Sum (P.Disabled_Slots);
+   end Get_Disabled_Slots;
+
+   function Get_Disabled_Hosts (P : Partition) return Natural is
+   begin
+      return Natural (P.Disabled_Hosts.Length);
+   end Get_Disabled_Hosts;
 
    function Get_Network (P : Partition) return String is
    begin
@@ -233,6 +273,11 @@ package body SGE.Partitions is
       return Has_SSD (P.Properties);
    end Has_SSD;
 
+   function Get_Name (P : Partition) return String is
+   begin
+      return To_String (P.Name);
+   end Get_Name;
+
    function Get_Runtime (P : Partition) return String is
    begin
       return Get_Runtime (P.Properties);
@@ -253,5 +298,15 @@ package body SGE.Partitions is
       return Sum (List.Summary (From));
    end Get_Summary;
 
+   procedure Iterate_Available_Slots (P       : Partition;
+                                      Process : not null access procedure (Position : Countable_Maps.Cursor)) is
+   begin
+      P.Available_Slots.Iterate (Process);
+   end Iterate_Available_Slots;
+
+   function Get_Properties (P : Partition) return Set_Of_Properties is
+   begin
+      return P.Properties;
+   end Get_Properties;
 
 end SGE.Partitions;

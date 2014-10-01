@@ -7,10 +7,11 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Bounded;
 with Ada.Containers.Ordered_Maps;
 with SGE.Resources;
+with SGE.Loggers; use SGE.Loggers;
 
 package SGE.Advance_Reservations is
    Other_Error : exception;
-   type Reservation is private;
+   type Reservation is new Logger with private;
    type Queue is private;
 
    function Get_Name (Q : Queue) return String;
@@ -36,9 +37,6 @@ package SGE.Advance_Reservations is
    procedure Iterate_Messages (R : Reservation;
                                Process : not null access procedure (Message : String));
 
-   function Has_Error_Log_Entries (R : Reservation) return Boolean;
-   procedure Iterate_Error_Log (R       : Reservation;
-                                Process : not null access procedure (Message : String));
    procedure Iterate (Process : not null access procedure (R : Reservation));
    function Same (Left, Right : Reservation) return Boolean;
 
@@ -56,14 +54,10 @@ private
 
    function To_Key (S : String) return Queue_Key;
 
-   procedure Record_Error (R : in out Reservation; Message : String);
-   --  Purpose: store an error message for retrieval by the calling application
-   --  without raising an exception (so we can resume Library oprations)
-
    package Queue_Lists is
       new Ada.Containers.Ordered_Maps (Key_Type => Queue_Key, Element_Type => Queue);
 
-   type Reservation is tagged record
+   type Reservation is new Logger with record
       Number               : Integer; -- Job ID
       Name                 : Unbounded_String; -- Job name
       Owner                : Utils.User_Name; -- User whom this job belongs to
@@ -77,8 +71,6 @@ private
       Queues               : Queue_Lists.Map;
       Resource_List        : Resources.Hashed_List;
       Message_List         : Utils.String_List;
-      Error_Log            : Utils.String_List;
-
    end record;
 
    package AR_Lists is

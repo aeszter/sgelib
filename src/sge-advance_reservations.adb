@@ -142,22 +142,6 @@ package body SGE.Advance_Reservations is
       return R.Time_Span;
    end Get_Duration;
 
-   function Has_Error_Log_Entries (R : Reservation) return Boolean is
-   begin
-      return not R.Error_Log.Is_Empty;
-   end Has_Error_Log_Entries;
-
-   procedure Iterate_Error_Log (R       : Reservation;
-                                Process : not null access procedure (Message : String)) is
-      procedure Wrapper (Position : Utils.String_Lists.Cursor) is
-      begin
-         Process (To_String (Element (Position)));
-      end Wrapper;
-
-   begin
-      R.Error_Log.Iterate (Wrapper'Access);
-   end Iterate_Error_Log;
-
    procedure Iterate_Messages (R : Reservation;
                                Process : not null access procedure (Message : String))
    is
@@ -195,11 +179,6 @@ package body SGE.Advance_Reservations is
    begin
       return Left.Number = Right.Number;
    end Same;
-
-   procedure Record_Error (R : in out Reservation; Message : String) is
-   begin
-      R.Error_Log.Append (To_Unbounded_String (Message));
-   end Record_Error;
 
    procedure Update_State_Array (R : in out Reservation) is
       Flag : State_Flag;

@@ -51,6 +51,7 @@ package SGE.Hosts is
    function Color_Class (P : Percent) return String;
    function Color_Class (Load : Host_Properties.Load) return String;
    function Get_Free_Slots (H : Host) return Natural;
+   function Get_Reserved_Slots (H : Host) return Natural;
    function Get_Used_Slots (H : Host) return Natural;
    function Get_Name (H : Host) return String;
    function Has_Unreachable_Queue (H : Host) return Boolean;
@@ -69,14 +70,15 @@ package SGE.Hosts is
    function Get_State (Q : Queue_Pointer) return String;
    function Get_Slots (Q : Queue_Pointer) return Natural;
    function Get_Name (Q : Queue_Pointer) return String;
+   function Get_Reserved_Slots (Q : Queue_Pointer) return Natural;
 
 private
 
    type Job is record
       Master  : Boolean;
       ID      : Positive;
-      Task_ID : Natural;
-      Slaves  : Natural;
+      Task_ID : Natural := 0;
+      Slaves  : Natural := 0;
       Start_Time : Time;
    end record;
 
@@ -107,6 +109,7 @@ private
    type Queue is record
       State : Queue_States.Bounded_String;
       Slots : Natural;
+      Reserved : Natural;
    end record;
 
    package Queue_Maps is
@@ -126,12 +129,14 @@ private
    procedure Append_Queue (H    : out Host;
                            Name  : String;
                            State : String := "";
-                           Slots : Natural := 0);
+                           Slots : Natural := 0;
+                           Reserved : Natural := 0);
 
    procedure Update_Or_Append_Queue (H    : out Host;
                            Name  : String;
                            State : String := "";
-                           Slots : Natural := 0);
+                                     Slots : Natural := 0;
+                                    Reserved : Natural := 0);
 
 
    type Host is record
