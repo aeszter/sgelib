@@ -103,6 +103,11 @@ package body SGE.Jobs is
       return J.PE;
    end Get_PE;
 
+   function Get_Granted_PE (J : Job) return Unbounded_String is
+   begin
+      return J.Granted_PE;
+   end Get_Granted_PE;
+
    function Get_Slot_List (J : Job) return Ranges.Step_Range_List is
    begin
       return J.Slot_List;
@@ -1095,7 +1100,7 @@ package body SGE.Jobs is
             elsif Name (C) = "tasks" then
                J.Task_IDs := To_Step_Range_List (Value (First_Child (C)));
             elsif Name (C) = "granted_pe" then
-               null;
+               J.Granted_PE := To_Unbounded_String (Value (First_Child (C)));
             elsif Name (C) = "JB_jid_predecessor_list" then
                Extract_Hold_ID_List (J.Predecessors, Child_Nodes (C));
             elsif Name (C) = "JB_jid_successor_list" then
