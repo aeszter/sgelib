@@ -1018,7 +1018,7 @@ package body SGE.Jobs is
             elsif Name (C) = "JB_wtcontr" then
                J.Waiting_Contrib := Integer'Value (Value (First_Child (C)));
             elsif Name (C) = "JB_rrcontr" then
-               J.Resource_Contrib := Integer'Value (Value (First_Child (C)));
+               J.Resource_Contrib := Integer (Float'Value (Value (First_Child (C))));
             elsif Name (C) = "JB_nurg" then
                J.Urgency := Fixed'Value (Value (First_Child (C)));
             elsif Name (C) = "JB_priority" then
