@@ -626,7 +626,7 @@ package body SGE.Jobs is
                                   (J.Context.Get (Slots_CPU)),
                                  Short => True);
       else
-         raise Constraint_Error;
+         raise Unsupported_Error;
       end if;
    end Get_CPU_Range;
 

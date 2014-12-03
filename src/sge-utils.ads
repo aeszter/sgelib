@@ -12,6 +12,8 @@ package SGE.Utils is
    type User_Name is new String (1 .. 8);
 
    Assumption_Error : exception;
+   Operator_Error   : exception;
+   Unsupported_Error : exception;
 
    type Fixed is delta 0.0001 digits 5;
    --  a general fixed type, especially useful for SGE resources
