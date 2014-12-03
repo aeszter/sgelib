@@ -199,6 +199,39 @@ package body SGE.Resources is
       end case;
    end To_String;
 
+   function To_GPU (S : String) return GPU_Model is
+   begin
+      if S = "" then
+         return none;
+      elsif Equal_Case_Insensitive (S, "gtx580") then
+         return gtx580;
+      elsif Equal_Case_Insensitive (S, "gtx680") then
+         return gtx680;
+      elsif Equal_Case_Insensitive (S, "gtx770") then
+         return gtx770;
+      elsif Equal_Case_Insensitive (S, "gtx780") then
+         return gtx780;
+      elsif Equal_Case_Insensitive (S, "gtx780ti") then
+         return gtx780ti;
+      elsif Equal_Case_Insensitive (S, "gtx980") then
+         return gtx980;
+      else
+         raise Constraint_Error with "Unknown GPU " & S;
+      end if;
+   end To_GPU;
+
+   function To_GPU (S : Unbounded_String) return GPU_Model is
+   begin
+      return To_GPU (To_String (S));
+   end To_GPU;
+
+   function To_String (GPU : GPU_Model) return String is
+   begin
+      return Ada.Strings.Fixed.Translate (Source  => GPU'Img,
+                                          Mapping => Ada.Strings.Maps.Constants.Lower_Case_Map);
+   end To_String;
+
+
    ----------------
    -- To_Network --
    --  Purpose : Convert from a String to a Network type

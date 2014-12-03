@@ -44,6 +44,7 @@ package SGE.Partitions is
    function Get_Runtime (P : Partition) return String;
    function Get_Cores (P : Partition) return Natural;
    function Get_Model (P : Partition) return String;
+   function Get_GPU (P : Partition) return String;
    function Get_Memory (P : Partition) return String;
    function Has_GPU (P : Partition) return Boolean;
    function Has_SSD (P : Partition) return Boolean;

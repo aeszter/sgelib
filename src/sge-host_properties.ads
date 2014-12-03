@@ -13,6 +13,7 @@ package SGE.Host_Properties is
    function Get_Cores (Props : Set_Of_Properties) return Positive;
    function Get_Network (Props : Set_Of_Properties) return Network;
    function Get_Model (Props : Set_Of_Properties) return CPU_Model;
+   function Get_GPU (Props : Set_Of_Properties) return GPU_Model;
    function Get_Runtime (Props : Set_Of_Properties) return String;
    function Get_Load_One (Props : Set_Of_Properties) return Load;
    function Has_SSD (Props : Set_Of_Properties) return Boolean;
@@ -27,7 +28,8 @@ package SGE.Host_Properties is
    procedure Set_Model (Props : in out Set_Of_Properties; Model : CPU_Model);
    procedure Set_Runtime (Props : in out Set_Of_Properties; Runtime : Unbounded_String);
    procedure Set_SSD (Props : in out Set_Of_Properties);
-   procedure Set_GPU (Props : in out Set_Of_Properties);
+   procedure Set_GPU (Props : in out Set_Of_Properties; Model : GPU_Model);
+   procedure Set_GPU (Props : in out Set_Of_Properties; Model : String);
 
    procedure Init (Props : out Set_Of_Properties;
                    Net, Memory, Cores, Model, SSD, GPU : String);
@@ -53,10 +55,12 @@ private
    type Set_Of_Properties is record
       Network               : Resources.Network := none;
       Model                 : Resources.CPU_Model := none;
+      GPU                   : Resources.GPU_Model := none;
+      GPU_present           : Boolean := False;
       Memory                : Resources.Gigs := 0.0;
       Cores                 : Positive := 1;
       Runtime               : Unbounded_String;
-      SSD, GPU              : Boolean := False;
+      SSD                   : Boolean := False;
       Load_One, Load_Five   : Load := 0.0;
       Available_Slots       : Natural := 0;
    end record;
