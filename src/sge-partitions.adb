@@ -1,6 +1,6 @@
 with Ada.Containers.Doubly_Linked_Lists;
-with SGE.Queues;
 with Ada.Exceptions; use Ada.Exceptions;
+with SGE.Queues;
 with SGE.Resources; use SGE.Resources;
 
 package body SGE.Partitions is
