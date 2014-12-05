@@ -64,6 +64,11 @@ package body SGE.Hosts is
       return Get_Model (H.Properties)'Img;
    end Get_Model;
 
+   function Get_GPU (H : Host) return String is
+   begin
+      return Get_GPU (H.Properties)'Img;
+   end Get_GPU;
+
    function Get_Cores (H : Host) return Positive is
    begin
       return Get_Cores (H.Properties);

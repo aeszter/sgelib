@@ -13,7 +13,8 @@ package body SGE.Host_Properties is
 
    function Has_GPU (Props : Set_Of_Properties) return Boolean is
    begin
-      if (Props.GPU = none) /= Props.GPU_present then
+      if (Props.GPU = none and then Props.GPU_present)
+      or else (Props.GPU /= none and then not Props.GPU_present) then
          raise SGE.Utils.Operator_Error with "inconsistent GPU config";
       end if;
       return Props.GPU_present;
@@ -117,10 +118,13 @@ package body SGE.Host_Properties is
 
    procedure Set_GPU (Props : in out Set_Of_Properties; Model : String) is
    begin
-      Props.GPU := GPU_Model'Value (Model);
+      Props.GPU := To_GPU (Model);
    end Set_GPU;
 
-
+   procedure Set_GPU (Props : in out Set_Of_Properties) is
+   begin
+      Props.GPU_present := True;
+   end Set_GPU;
 
    procedure Init (Props : out Set_Of_Properties;
                    Net, Memory, Cores, Model, SSD, GPU : String) is
@@ -154,6 +158,10 @@ package body SGE.Host_Properties is
          return True;
       elsif Left.Network > Right.Network then
          return False;
+      elsif Left.GPU < Right.GPU then
+            return True;
+      elsif Left.GPU > Right.GPU then
+            return False;
       elsif Left.Model < Right.Model then
          return True;
       elsif Left.Model > Right.Model then
@@ -278,6 +286,8 @@ package body SGE.Host_Properties is
          Props.Available_Slots := Integer (Fixed'Value (Value (First_Child (N))));
       elsif Value (A) = "gpu_model" then
          Props.GPU := To_GPU (Value (First_Child (N)));
+      elsif Value (A) = "gpu" then
+         Props.GPU_present := True;
       elsif Value (A) = "ssd" then
          Props.SSD := True;
       else
