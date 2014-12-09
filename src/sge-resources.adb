@@ -201,7 +201,8 @@ package body SGE.Resources is
 
    function To_GPU (S : String) return GPU_Model is
    begin
-      if S = "" then
+      if S = "" or else
+       Equal_Case_Insensitive (S, "none") then
          return none;
       elsif Equal_Case_Insensitive (S, "gtx580") then
          return gtx580;
