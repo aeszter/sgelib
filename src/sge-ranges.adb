@@ -196,6 +196,21 @@ package body SGE.Ranges is
       end if;
    end To_String;
 
+   function To_SGE_Input (What : Step_Range) return String is
+      use Ada.Strings;
+
+      Count : Integer := What.Min;
+      S : Unbounded_String;
+   begin
+      S := To_Unbounded_String (Trim (Count'Img, Left));
+      Count := Count + What.Step;
+      while Count <= What.Max loop
+         S := S & ',' & Trim (Count'Img, Left);
+         Count := Count + What.Step;
+      end loop;
+      return To_String (S);
+   end To_SGE_Input;
+
    function To_Unbounded_String (What : Step_Range; Short : Boolean) return Unbounded_String is
    begin
       return To_Unbounded_String (To_String (What => What, Short => Short));
@@ -285,6 +300,20 @@ package body SGE.Ranges is
       end loop;
       return To_String (S);
    end To_String;
+
+   function To_SGE_Input (What : Step_Range_List) return String is
+      Pos : Range_Lists.Cursor := What.First;
+      S   : Unbounded_String;
+   begin
+      while Pos /= Range_Lists.No_Element loop
+         S := S & To_SGE_Input (What => Element (Pos));
+         Next (Pos);
+         if Pos /= Range_Lists.No_Element then
+            S := S & ",";
+         end if;
+      end loop;
+      return To_String (S);
+   end To_SGE_Input;
 
    --  procedure Condense
    --  Purpose: look for "runs" of condensed step ranges of the form

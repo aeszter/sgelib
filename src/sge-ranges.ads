@@ -63,6 +63,8 @@ package SGE.Ranges is
 
    function To_String (What : Step_Range; Short : Boolean) return String;
    function To_String (What : Step_Range_List; Short : Boolean) return String;
+   function To_SGE_Input (What : Step_Range) return String;
+   function To_SGE_Input (What : Step_Range_List) return String;
 
    ---------------
    -- To_Unbounded_String --
