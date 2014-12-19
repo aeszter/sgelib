@@ -7,6 +7,69 @@ with Ada.Strings.Maps; use Ada.Strings.Maps;
 
 package body SGE.Ranges is
 
+   function Is_Subset (Subset, Of_Set : Step_Range_List) return Boolean is
+      procedure Check_Contained (Number : Natural);
+      Result : Boolean := True;
+
+      procedure Check_Contained (Number : Natural) is
+      begin
+         Result := Result and then Is_Contained (Element => Number,
+                                                 Contained_In => Of_Set);
+      end Check_Contained;
+
+   begin
+      Subset.Iterate (Check_Contained'Access);
+      return Result;
+   end Is_Subset;
+
+   function Intersects (Left, Right : Step_Range_List) return Boolean is
+      procedure Check_Contained (Number : Natural);
+      Result : Boolean := False;
+
+      procedure Check_Contained (Number : Natural) is
+      begin
+         Result := Result or else Is_Contained (Element => Number,
+                                           Contained_In => Right);
+      end Check_Contained;
+
+   begin
+      Left.Iterate (Check_Contained'Access);
+      return Result;
+   end Intersects;
+
+   function Is_Contained (Element : Natural; Contained_In : Step_Range_List) return Boolean is
+      procedure Check_Equal (Number : Natural);
+      Result : Boolean := False;
+
+      procedure Check_Equal (Number : Natural) is
+      begin
+         if Element = Number then
+            Result := True;
+         end if;
+      end Check_Equal;
+
+   begin
+      Contained_In.Iterate (Check_Equal'Access);
+      return Result;
+   end Is_Contained;
+
+   procedure Iterate (Container : Step_Range_List;
+                      Process   : not null access procedure (Number : Natural)) is
+      procedure Wrapper (Position : Range_Lists.Cursor) is
+         Count : Natural;
+         Item  : Step_Range := Element (Position);
+      begin
+         Count := Item.Min;
+         while Count <= Item.Max loop
+            Process.all (Count);
+            Count := Count + Item.Step;
+         end loop;
+      end Wrapper;
+
+   begin
+      Range_Lists.Iterate (Range_Lists.List (Container), Wrapper'Access);
+   end Iterate;
+
    ---------------
    -- New_Range --
    --  Purpose: Create a new slot range with given values
