@@ -7,11 +7,13 @@ with POSIX; use POSIX;
 with Ada.Calendar;
 
 package SGE.Utils is
-   Version : String := "v0.11";
+   Version : String := "v0.12";
    type Tri_State is (False, True, Undecided);
    type User_Name is new String (1 .. 8);
 
    Assumption_Error : exception;
+   Operator_Error   : exception;
+   Unsupported_Error : exception;
 
    type Fixed is delta 0.0001 digits 5;
    --  a general fixed type, especially useful for SGE resources

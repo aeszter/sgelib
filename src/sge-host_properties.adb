@@ -1,5 +1,6 @@
 with SGE.Parser; use SGE.Parser;
 with Ada.Exceptions; use Ada.Exceptions;
+with SGE.Utils;
 
 
 package body SGE.Host_Properties is
@@ -12,7 +13,11 @@ package body SGE.Host_Properties is
 
    function Has_GPU (Props : Set_Of_Properties) return Boolean is
    begin
-      return Props.GPU;
+      if (Props.GPU = none and then Props.GPU_present)
+      or else (Props.GPU /= none and then not Props.GPU_present) then
+         raise SGE.Utils.Operator_Error with "inconsistent GPU config";
+      end if;
+      return Props.GPU_present;
    end Has_GPU;
 
 
@@ -61,6 +66,11 @@ package body SGE.Host_Properties is
       return Props.Model;
    end Get_Model;
 
+   function Get_GPU (Props : Set_Of_Properties) return GPU_Model is
+   begin
+      return Props.GPU;
+   end Get_GPU;
+
    function Get_Slots (Props : Set_Of_Properties) return Natural is
    begin
       return Props.Available_Slots;
@@ -101,11 +111,20 @@ package body SGE.Host_Properties is
       Props.SSD := True;
    end Set_SSD;
 
-   procedure Set_GPU (Props : in out Set_Of_Properties) is
+   procedure Set_GPU (Props : in out Set_Of_Properties; Model : GPU_Model) is
    begin
-      Props.GPU := True;
+      Props.GPU := Model;
    end Set_GPU;
 
+   procedure Set_GPU (Props : in out Set_Of_Properties; Model : String) is
+   begin
+      Props.GPU := To_GPU (Model);
+   end Set_GPU;
+
+   procedure Set_GPU (Props : in out Set_Of_Properties) is
+   begin
+      Props.GPU_present := True;
+   end Set_GPU;
 
    procedure Init (Props : out Set_Of_Properties;
                    Net, Memory, Cores, Model, SSD, GPU : String) is
@@ -116,9 +135,8 @@ package body SGE.Host_Properties is
                  Cores => Positive'Value (Cores));
       Set_Model (Props => Props,
                  Model => Model);
-      if GPU = "TRUE" then
-         Set_GPU (Props => Props);
-      end if;
+      Set_GPU (Props => Props,
+               Model => GPU);
       if SSD = "TRUE" then
          Set_SSD (Props => Props);
       end if;
@@ -140,6 +158,10 @@ package body SGE.Host_Properties is
          return True;
       elsif Left.Network > Right.Network then
          return False;
+      elsif Left.GPU < Right.GPU then
+            return True;
+      elsif Left.GPU > Right.GPU then
+            return False;
       elsif Left.Model < Right.Model then
          return True;
       elsif Left.Model > Right.Model then
@@ -262,8 +284,10 @@ package body SGE.Host_Properties is
          Props.Memory := To_Gigs (Value (First_Child (N)));
       elsif Value (A) = "slots" then
          Props.Available_Slots := Integer (Fixed'Value (Value (First_Child (N))));
+      elsif Value (A) = "gpu_model" then
+         Props.GPU := To_GPU (Value (First_Child (N)));
       elsif Value (A) = "gpu" then
-         Props.GPU := True;
+         Props.GPU_present := True;
       elsif Value (A) = "ssd" then
          Props.SSD := True;
       else

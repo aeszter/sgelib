@@ -32,8 +32,8 @@ package SGE.Queues is
       Memory                : String;
       Cores, Slots          : Natural;
       Network               : Resources.Network;
-      SSD                   : Boolean;
-      GPU                   : Boolean;
+      SSD, GPU_Present      : Boolean;
+      GPU                   : Resources.GPU_Model;
       Model                 : Resources.CPU_Model;
       Runtime               : Unbounded_String;
       Name                  : Unbounded_String;

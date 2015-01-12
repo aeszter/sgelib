@@ -3,6 +3,8 @@ with SGE.Resources; use SGE.Resources;
 with Ada.Strings.Bounded; use Ada.Strings.Bounded;
 with Calendar.Conversions;
 with Interfaces.C;
+with SGE.Utils;
+
 
 package body SGE.Hosts is
 
@@ -20,8 +22,14 @@ package body SGE.Hosts is
    end Precedes_By_Free;
 
    function Get_Free_Slots (H : Host) return Natural is
+      Available : Natural := Get_Cores (H.Properties);
+      Used : Natural := H.Slots_Used;
    begin
-      return Get_Cores (H.Properties) - H.Slots_Used;
+      if Used > Available then
+         raise SGE.Utils.Operator_Error with "more slots used than available";
+      else
+         return Available - Used;
+      end if;
    end Get_Free_Slots;
 
    function Get_Reserved_Slots (H : Host) return Natural is
@@ -55,6 +63,11 @@ package body SGE.Hosts is
    begin
       return Get_Model (H.Properties)'Img;
    end Get_Model;
+
+   function Get_GPU (H : Host) return String is
+   begin
+      return Get_GPU (H.Properties)'Img;
+   end Get_GPU;
 
    function Get_Cores (H : Host) return Positive is
    begin

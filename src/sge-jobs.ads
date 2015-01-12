@@ -57,6 +57,7 @@ package SGE.Jobs is
    function Get_ID (J : Job) return String;
    function Get_ID (J : Job) return Positive;
    function Get_PE (J : Job) return Unbounded_String;
+   function Get_Granted_PE (J : Job) return Unbounded_String;
    function Get_Slot_List (J : Job) return Ranges.Step_Range_List;
    function Get_Slot_Number (J : Job) return Unbounded_String;
 
@@ -312,7 +313,7 @@ private
       State_Array          : State;
       State_String         : String (1 .. 4);
       Slot_Number          : Unbounded_String; -- how many slots/CPUs to use
-      PE                   : Unbounded_String; -- Parallel environment
+      PE, Granted_PE       : Unbounded_String; -- Parallel environment
       Submission_Time      : Time;    -- when submitted
       Project              : Unbounded_String;
       Department           : Unbounded_String;

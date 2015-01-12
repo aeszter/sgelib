@@ -1,6 +1,6 @@
 with Ada.Containers.Doubly_Linked_Lists;
-with SGE.Queues;
 with Ada.Exceptions; use Ada.Exceptions;
+with SGE.Queues;
 with SGE.Resources; use SGE.Resources;
 
 package body SGE.Partitions is
@@ -257,6 +257,11 @@ package body SGE.Partitions is
    begin
       return Get_Model (P.Properties)'Img;
    end Get_Model;
+
+   function Get_GPU (P : Partition) return String is
+   begin
+      return Get_GPU (P.Properties)'Img;
+   end Get_GPU;
 
    function Get_Memory (P : Partition) return String is
    begin
