@@ -22,6 +22,15 @@ package body SGE.Utils is
       end if;
    end To_Tri_State;
 
+   function To_Tri_State (Truth : Boolean) return Tri_State is
+   begin
+      if Truth then
+         return True;
+      else
+         return False;
+      end if;
+   end;
+
    --------------------
    -- To_Hash_String --
    --------------------

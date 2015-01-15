@@ -23,6 +23,7 @@ package SGE.Utils is
 
 
    function To_Tri_State (Truth : String) return Tri_State;
+   function To_Tri_State (Truth : Boolean) return Tri_State;
 
    package String_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Unbounded_String);
