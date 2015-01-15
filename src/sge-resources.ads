@@ -30,6 +30,7 @@ package SGE.Resources is
    function To_String (GPU : GPU_Model) return String;
    function To_Network (S : String) return Network;
    function Format_Duration (Secs : Natural) return String;
+   function Unformat_Duration (Dur : String) return Natural;
    function To_Gigs (Memory : String) return Gigs;
    function To_String (Memory : Gigs) return String;
 
