@@ -28,9 +28,12 @@ package SGE.Ranges is
 
    type Step_Range_List is new Range_Lists.List with private;
 
-   overriding   procedure Append (Container : in out Step_Range_List;
-                                  New_Item  : Step_Range;
-                                  Count     : Count_Type := 1);
+   overriding procedure Append (Container : in out Step_Range_List;
+                                New_Item  : Step_Range;
+                                Count     : Count_Type := 1);
+   procedure Iterate (Container : Step_Range_List;
+                      Process   : not null access procedure (Number : Natural));
+
 
 
    function To_Step_Range_List (From : String) return Step_Range_List;
@@ -52,6 +55,9 @@ package SGE.Ranges is
    --  Degenerate cases are not handled correctly: multiple identical entries,
    --  or multiple entries, all but one being empty, are not recognized as collapsed.
 
+   function Is_Subset (Subset, Of_Set : Step_Range_List) return Boolean;
+   function Intersects (Left, Right : Step_Range_List) return Boolean;
+   function Is_Contained (Element : Natural; Contained_In : Step_Range_List) return Boolean;
 
    ---------------
    -- To_String --
@@ -63,6 +69,8 @@ package SGE.Ranges is
 
    function To_String (What : Step_Range; Short : Boolean) return String;
    function To_String (What : Step_Range_List; Short : Boolean) return String;
+   function To_SGE_Input (What : Step_Range) return String;
+   function To_SGE_Input (What : Step_Range_List) return String;
 
    ---------------
    -- To_Unbounded_String --

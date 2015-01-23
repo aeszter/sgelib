@@ -28,7 +28,12 @@ package body SGE.Resources is
       R : Resource;
    begin
       if Name = "h_rt" then
-         R.Numerical := Integer'Value (To_String (Value));
+         begin
+            R.Numerical := Integer'Value (To_String (Value));
+         exception
+            when Constraint_Error -- Value is not a number of seconds
+               => R.Numerical := Unformat_Duration (To_String (Value));
+         end;
          R.Value := To_Unbounded_String (Format_Duration (R.Numerical));
       else
          R.Value := Value;
@@ -394,5 +399,37 @@ package body SGE.Resources is
       List.Hash_Value := Temp;
    end Rehash;
 
+   function Unformat_Duration (Dur : String) return Natural is
+      Seconds : Natural := 0;
+
+      procedure Extract_HMS (Time : String) is
+         T : String (1 .. 8);
+      begin
+         T (1 .. Time'Length) := Time;
+         Seconds := Seconds + Integer'Value (T (7 .. 8));
+         Seconds := Seconds + 60 * Integer'Value (T (4 .. 5));
+         Seconds := Seconds + 3_600 * Integer'Value (T (1 .. 2));
+      end Extract_HMS;
+
+   begin
+      if Dur'Length = 8 then
+         Extract_HMS (Dur);
+      elsif Dur'Length = 10 then
+         if Dur (Dur'First + 1) /= ':' then
+            raise Constraint_Error with "':' expected at second position of " & Dur;
+         end if;
+         Extract_HMS (Dur (Dur'First + 2 .. Dur'Last));
+         Seconds := Seconds + 86_400 * Integer'Value (Dur (Dur'First .. Dur'First));
+      elsif Dur'Length = 11 then
+         if Dur (Dur'First + 2) /= ':' then
+            raise Constraint_Error with "':' expected at third position of " & Dur;
+         end if;
+         Extract_HMS (Dur (Dur'First + 3 .. Dur'Last));
+         Seconds := Seconds + 86_400 * Integer'Value (Dur (Dur'First .. Dur'First + 1));
+      else
+         raise Constraint_Error with Dur & " has unexpected length";
+      end if;
+      return Seconds;
+   end Unformat_Duration;
 
 end SGE.Resources;

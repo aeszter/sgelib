@@ -7,7 +7,7 @@ with POSIX; use POSIX;
 with Ada.Calendar;
 
 package SGE.Utils is
-   Version : String := "v0.12";
+   Version : String := "v0.13";
    type Tri_State is (False, True, Undecided);
    type User_Name is new String (1 .. 8);
 
@@ -23,6 +23,7 @@ package SGE.Utils is
 
 
    function To_Tri_State (Truth : String) return Tri_State;
+   function To_Tri_State (Truth : Boolean) return Tri_State;
 
    package String_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Unbounded_String);
