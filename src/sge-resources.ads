@@ -51,6 +51,9 @@ package SGE.Resources is
                                       Key_Type     => Unbounded_String);
 
    type Hashed_List is new Resource_Lists.Map with private;
+
+   Empty_List : constant Hashed_List;
+
    overriding procedure Insert
      (Container : in out Hashed_List;
       Key       : Unbounded_String;
@@ -96,5 +99,9 @@ private
 
    --  Purpose: unconditionally compute the List's hash value
    procedure Rehash (List : in out Hashed_List);
+
+   Empty_List : constant Hashed_List := (Resource_Lists.Empty_Map
+                                         with Hash_Value => 0,
+                                         Hash_String     => Utils.Hash_Strings.Null_Bounded_String);
 
 end SGE.Resources;
