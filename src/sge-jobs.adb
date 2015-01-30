@@ -1701,9 +1701,9 @@ package body SGE.Jobs is
          return True;
       elsif Resources.Precedes (Right.Soft, Left.Soft) then
          return False;
-      elsif Hash (Left.Slot_List) < Hash (Right.Slot_List) then
+      elsif Ranges.Precedes (Left.Slot_List, Right.Slot_List) then
          return True;
-      elsif Hash (Left.Slot_List) > Hash (Right.Slot_List) then
+      elsif Ranges.Precedes (Left.Slot_List, Right.Slot_List) then
          return False;
       else
          return False;

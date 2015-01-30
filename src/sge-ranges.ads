@@ -37,6 +37,7 @@ package SGE.Ranges is
                       Process   : not null access procedure (Number : Natural));
 
 
+   function Precedes (Left, Right : Step_Range_List) return Boolean;
 
    function To_Step_Range_List (From : String) return Step_Range_List;
    --  Create a Step_Range from a string of the form {SR}(,{SR})* where {SR} is

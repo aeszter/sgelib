@@ -149,7 +149,7 @@ package body SGE.Resources is
 
    function Precedes (Left, Right : Hashed_List) return Boolean is
    begin
-      return Left.Hash < Right.Hash;
+      return Left.Hash_Value < Right.Hash_Value;
    end Precedes;
 
    --------------
