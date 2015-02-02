@@ -1,6 +1,8 @@
 with SGE.Resources; use SGE.Resources;
 with SGE.Parser; use SGE.Parser;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with SGE.Loggers;
+with Ada.Exceptions; use Ada.Exceptions;
 
 package body SGE.Queues is
    use Queue_Lists;
@@ -148,6 +150,9 @@ package body SGE.Queues is
                                     State     => To_String (State),
                                     Q_Type => To_String (Q_Type)
                                    ));
+         exception
+            when E : others =>
+               Loggers.Record_Error ("Queue suppressed: " & Exception_Message (E));
          end;
       end loop;
    end Append_List;
