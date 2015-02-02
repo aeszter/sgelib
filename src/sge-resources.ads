@@ -14,9 +14,9 @@ package SGE.Resources is
 
    type Network is (none, eth, ib, ibswitch);
    pragma Compile_Time_Warning (True, "hardcoded config");
-   type CPU_Model is (none, italy, woodcrest, clovertown, harpertown, magnycours, interlagos, sandybridge, ivybridge);
+   type CPU_Model is (none, italy, woodcrest, clovertown, harpertown, magnycours, interlagos, abudhabi, sandybridge, ivybridge);
    pragma Compile_Time_Warning (True, "hardcoded config");
-   type GPU_Model is (none, gtx580, gtx680, gtx770, gtx780, gtx780ti, gtx980);
+   type GPU_Model is (none, gtx580, gtx680, gtx770, gtx780, gtx780ti, gtx980, gtxtitan);
    pragma Compile_Time_Warning (True, "hardcoded config");
    type Gigs is delta 0.001 digits 7;
 
