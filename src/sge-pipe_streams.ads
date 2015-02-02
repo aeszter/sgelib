@@ -14,7 +14,8 @@ package SGE.Pipe_Streams is
    Exception_Error : exception;
    Other_Error : exception;
    overriding procedure Next_Char (From : in out Pipe_Stream;
-      C    : out Unicode.Unicode_Char);
+                                   C    : out Unicode.Unicode_Char);
+   pragma Inline (Next_Char);
 --  Return a single character from From.
    overriding function Eof (From : Pipe_Stream) return Boolean;
    --  Return True if there is no more character to read on the stream

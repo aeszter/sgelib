@@ -28,6 +28,8 @@ package SGE.Ranges is
 
    type Step_Range_List is new Range_Lists.List with private;
 
+   Empty_Range : constant Step_Range_List;
+
    overriding procedure Append (Container : in out Step_Range_List;
                                 New_Item  : Step_Range;
                                 Count     : Count_Type := 1);
@@ -35,6 +37,7 @@ package SGE.Ranges is
                       Process   : not null access procedure (Number : Natural));
 
 
+   function Precedes (Left, Right : Step_Range_List) return Boolean;
 
    function To_Step_Range_List (From : String) return Step_Range_List;
    --  Create a Step_Range from a string of the form {SR}(,{SR})* where {SR} is
@@ -102,5 +105,9 @@ private
    --  Purpose: unconditionally compute the List's hash value
    procedure Rehash (List : in out Step_Range_List);
    procedure Condense (List : in out Step_Range_List);
+
+   Empty_Range : constant Step_Range_List := (Range_Lists.Empty_List
+                                              with Hash_Value => 0,
+                                              Hash_String     => Utils.Hash_Strings.Null_Bounded_String);
 
 end SGE.Ranges;

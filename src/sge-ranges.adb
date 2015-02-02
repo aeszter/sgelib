@@ -91,6 +91,11 @@ package body SGE.Ranges is
       return R;
    end New_Range;
 
+   function Precedes (Left, Right : Step_Range_List) return Boolean is
+   begin
+      return Left.Hash_Value < Right.Hash_Value;
+   end Precedes;
+
    -------------------
    -- To_Step_Range --
    -------------------

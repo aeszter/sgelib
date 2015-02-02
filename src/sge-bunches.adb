@@ -7,6 +7,9 @@ with Ada.Exceptions;
 
 package body SGE.Bunches is
 
+   function Init_CPU_Slots (J : Job) return String;
+   function Init_GPU_Slots (J : Job) return String;
+
    ----------------
    -- Build_List --
    ----------------
@@ -58,6 +61,38 @@ package body SGE.Bunches is
                        & ": " & Ada.Exceptions.Exception_Message (E);
    end Build_List;
 
+   function Get_CPU_Slot_Numbers (B : Bunch) return String is
+   begin
+      return To_String (B.CPU_Slot_List);
+   end Get_CPU_Slot_Numbers;
+
+   function Get_GPU_Slot_Numbers (B : Bunch) return String is
+   begin
+      return To_String (B.GPU_Slot_List);
+   end Get_GPU_Slot_Numbers;
+
+   function Init_CPU_Slots (J : Job) return String is
+   begin
+      if not Get_Hard_Resources (J).Contains (To_Unbounded_String ("gpu")) then
+         return To_String (J.Get_Slot_List, Short => True);
+      elsif Supports_Balancer (J, CPU_GPU) then
+         return J.Get_CPU_Range;
+      else
+         return "";
+      end if;
+   end Init_CPU_Slots;
+
+   function Init_GPU_Slots (J : Job) return String is
+   begin
+      if Get_Hard_Resources (J).Contains (To_Unbounded_String ("gpu")) then
+         return To_String (J.Get_Slot_List, Short => True);
+      elsif Supports_Balancer (J, CPU_GPU) then
+         return J.Get_GPU_Range;
+      else
+         return "";
+      end if;
+   end Init_GPU_Slots;
+
    -------------------
    -- New_Bunch --
    -------------------
@@ -68,6 +103,8 @@ package body SGE.Bunches is
       B.PE          := Get_PE (J);
       B.Slot_List   := Get_Slot_List (J);
       B.Slot_Number := Get_Slot_Number (J);
+      B.CPU_Slot_List := To_Unbounded_String (Init_CPU_Slots (J));
+      B.GPU_Slot_List := To_Unbounded_String (Init_GPU_Slots (J));
       B.Queue       := Get_Queue (J);
       B.Hard        := Get_Hard_Resources (J);
       B.Soft        := Get_Soft_Resources (J);

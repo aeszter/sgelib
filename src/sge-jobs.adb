@@ -965,7 +965,6 @@ package body SGE.Jobs is
    ----------------
 
    procedure Update_Job (J : in out Job; List : Node_List) is
-      C           : Node;
       A           : Attr;
       Inserted    : Boolean;
       Inserted_At : Resource_Lists.Cursor;
@@ -973,14 +972,16 @@ package body SGE.Jobs is
       use Ada.Strings.Fixed;
    begin
       for Index in 0 .. Length (List) - 1 loop
+         declare
+            C : Node := Item (List, Index);
+            Node_Name : String := Name (C);
          begin
-            C := Item (List, Index);
-            if Name (C) = "JB_job_number" then
+            if Node_Name = "JB_job_number" then
                J.Number := Integer'Value (Value (First_Child (C)));
-            elsif Name (C) = "JAT_prio" then
+            elsif Node_Name = "JAT_prio" then
                J.Priority := Fixed'Value (Value (First_Child (C)));
-            elsif Name (C) = "JB_name" or else
-            Name (C) = "JB_job_name" then
+            elsif Node_Name = "JB_name" or else
+                  Node_Name = "JB_job_name" then
                J.Full_Name := To_Unbounded_String (Value (First_Child (C)));
                J.Name := Job_Names.To_Bounded_String (Source => Value (First_Child (C)),
                                                       Drop   => Ada.Strings.Right);
@@ -989,162 +990,162 @@ package body SGE.Jobs is
                else
                   J.Name_Truncated := False;
                end if;
-            elsif Name (C) = "JB_owner" then
+            elsif Node_Name = "JB_owner" then
                J.Owner := To_User_Name (Value (First_Child (C)));
-            elsif Name (C) = "state" then
+            elsif Node_Name = "state" then
                J.State_String := Head (Value (First_Child (C)), J.State_String'Length);
                Update_State_Array (J);
-            elsif Name (C) = "JB_submission_time" then
+            elsif Node_Name = "JB_submission_time" then
                J.Submission_Time := To_Time (Value (First_Child (C)));
 
-            elsif Name (C) = "JAT_start_time" then
+            elsif Node_Name = "JAT_start_time" then
                J.Submission_Time := To_Time (Value (First_Child (C)));
-            elsif Name (C) = "queue_name" then
+            elsif Node_Name = "queue_name" then
                null; -- ignore
-            elsif Name (C) = "slots" then
+            elsif Node_Name = "slots" then
                J.Slot_Number := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "ftickets" then
+            elsif Node_Name = "ftickets" then
                J.Functional_Tickets := Integer'Value (Value (First_Child (C)));
-            elsif Name (C) = "stickets" then
+            elsif Node_Name  = "stickets" then
                J.Share_Tickets := Integer'Value (Value (First_Child (C)));
-            elsif Name (C) = "otickets" then
+            elsif Node_Name  = "otickets" then
                J.Override_Tickets := Integer'Value (Value (First_Child (C)));
-            elsif Name (C) = "cpu_usage" then
+            elsif Node_Name  = "cpu_usage" then
                J.CPU := Float'Value (Value (First_Child (C)));
-            elsif Name (C) = "mem_usage" then
+            elsif Node_Name  = "mem_usage" then
                J.Mem := Float'Value (Value (First_Child (C)));
-            elsif Name (C) = "io_usage" then
+            elsif Node_Name  = "io_usage" then
                J.IO := Float'Value (Value (First_Child (C)));
-            elsif Name (C) = "JB_wtcontr" then
+            elsif Node_Name  = "JB_wtcontr" then
                J.Waiting_Contrib := Integer'Value (Value (First_Child (C)));
-            elsif Name (C) = "JB_rrcontr" then
+            elsif Node_Name  = "JB_rrcontr" then
                J.Resource_Contrib := Integer (Float'Value (Value (First_Child (C))));
-            elsif Name (C) = "JB_nurg" then
+            elsif Node_Name  = "JB_nurg" then
                J.Urgency := Fixed'Value (Value (First_Child (C)));
-            elsif Name (C) = "JB_priority" then
+            elsif Node_Name  = "JB_priority" then
                J.Posix_Priority := Posix_Priority_Type'Value (Value (First_Child (C)));
-            elsif Name (C) = "hard_req_queue" then
+            elsif Node_Name  = "hard_req_queue" then
                J.Queue := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "full_job_name" then
+            elsif Node_Name  = "full_job_name" then
                null; -- ignore
-            elsif Name (C) = "requested_pe" then
+            elsif Node_Name  = "requested_pe" then
                A := Get_Attr (C, "name");
                J.PE := To_Unbounded_String (Value (A));
-            elsif Name (C) = "hard_request" then
+            elsif Node_Name  = "hard_request" then
                A := Get_Attr (C, "name");
                J.Hard.Insert (Key      => To_Unbounded_String (Value (A)),
                               New_Item => New_Resource (Name  => Value (A),
                                                         Value => Value (First_Child (C))),
                               Position => Inserted_At,
                               Inserted => Inserted);
-            elsif Name (C) = "soft_request" then
+            elsif Node_Name = "soft_request" then
                A := Get_Attr (C, "name");
                J.Soft.Insert (Key      => To_Unbounded_String (Value (A)),
                               New_Item => New_Resource (Name  => Value (A),
                                                         Value => Value (First_Child (C))),
                               Position => Inserted_At,
                               Inserted => Inserted);
-            elsif Name (C) = "predecessor_jobs" or else
-               Name (C) = "ad_predecessor_jobs" then
+            elsif Node_Name  = "predecessor_jobs" or else
+               Node_Name  = "ad_predecessor_jobs" then
                J.Predecessors.Include (New_Item => Natural'Value (Value (First_Child (C))));
-            elsif Name (C) = "predecessor_jobs_req" or else
-              Name (C) = "ad_predecessor_jobs_req" then
+            elsif Node_Name = "predecessor_jobs_req" or else
+              Node_Name = "ad_predecessor_jobs_req" then
                J.Predecessor_Request.Append (To_Unbounded_String (Value (First_Child (C))));
-            elsif Name (C) = "JB_hard_resource_list" then
+            elsif Node_Name = "JB_hard_resource_list" then
                Extract_Resource_List (J, Child_Nodes (C));
-            elsif Name (C) = "JB_soft_resource_list" then
+            elsif Node_Name  = "JB_soft_resource_list" then
                Extract_Resource_List (J, Child_Nodes (C), Soft => True);
-            elsif Name (C) = "JB_hard_queue_list" then
+            elsif Node_Name  = "JB_hard_queue_list" then
                Extract_Queue_List (J, Child_Nodes (C));
-            elsif Name (C) = "JB_ja_tasks" then
+            elsif Node_Name  = "JB_ja_tasks" then
                Extract_Tasks (J, Child_Nodes (C));
-            elsif Name (C) = "JB_pe_range" then
+            elsif Node_Name  = "JB_pe_range" then
                Extract_PE_Range (J, Child_Nodes (C));
 
-            elsif Name (C) = "JB_department" then
+            elsif Node_Name  = "JB_department" then
                J.Department := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "JB_project" then
+            elsif Node_Name  = "JB_project" then
                if Length (Child_Nodes (C)) > 0 then
                   J.Project := To_Unbounded_String (Value (First_Child (C)));
                else
                   J.Project := To_Unbounded_String ("none");
                end if;
-            elsif Name (C) = "JB_ar" then
+            elsif Node_Name  = "JB_ar" then
                J.Job_Advance_Reservation := To_Unbounded_String (Value (First_Child (C)));
-            elsif            Name (C) = "JB_ja_structure" then
+            elsif Node_Name = "JB_ja_structure" then
                Extract_Array (J, Child_Nodes (C));  -- to array
-            elsif Name (C) = "JB_exec_file" then
+            elsif Node_Name  = "JB_exec_file" then
                J.Exec_File := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "JB_group" then
+            elsif Node_Name  = "JB_group" then
                J.Group := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "JB_merge_stderr" then
+            elsif Node_Name  = "JB_merge_stderr" then
                J.Merge_Std_Err := To_Tri_State (Value (First_Child (C)));
-            elsif Name (C) = "JB_stdout_path_list" then
+            elsif Node_Name = "JB_stdout_path_list" then
                Extract_Paths (J.Std_Out_Paths, Child_Nodes (C));
-            elsif Name (C) = "JB_stderr_path_list" then
+            elsif Node_Name = "JB_stderr_path_list" then
                Extract_Paths (J.Std_Err_Paths, Child_Nodes (C));
-            elsif Name (C) = "JB_script_file" then
+            elsif Node_Name = "JB_script_file" then
                J.Script_File := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "JB_cwd" then
+            elsif Node_Name = "JB_cwd" then
                J.Directory := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "JB_reserve" then
+            elsif Node_Name = "JB_reserve" then
                J.Reserve := To_Tri_State (Value (First_Child (C)));
-            elsif Name (C) = "JB_pe" then
+            elsif Node_Name = "JB_pe" then
                J.PE := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "JB_notify" then
+            elsif Node_Name = "JB_notify" then
                J.Notify := To_Tri_State (Value (First_Child (C)));
-            elsif Name (C) = "JB_account" then
+            elsif Node_Name = "JB_account" then
                J.Account := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "JB_job_args" then
+            elsif Node_Name = "JB_job_args" then
                Extract_Args (J, Child_Nodes (C));
-            elsif Name (C) = "tasks" then
+            elsif Node_Name = "tasks" then
                J.Task_IDs := To_Step_Range_List (Value (First_Child (C)));
-            elsif Name (C) = "granted_pe" then
+            elsif Node_Name = "granted_pe" then
                J.Granted_PE := To_Unbounded_String (Value (First_Child (C)));
-            elsif Name (C) = "JB_jid_predecessor_list" then
+            elsif Node_Name = "JB_jid_predecessor_list" then
                Extract_Hold_ID_List (J.Predecessors, Child_Nodes (C));
-            elsif Name (C) = "JB_jid_successor_list" then
+            elsif Node_Name = "JB_jid_successor_list" then
                Extract_Hold_ID_List (J.Successors, Child_Nodes (C));
-            elsif Name (C) = "JB_context" then
+            elsif Node_Name = "JB_context" then
                Extract_Context (J.Context, Child_Nodes (C));
-            elsif Name (C) = "JB_urg" or else
-              Name (C) = "JB_dlcontr" or else
-              Name (C) = "JAT_ntix" or else
-              Name (C) = "JAT_share" or else
-              Name (C) = "JB_jobshare" or else
-              Name (C) = "JB_jid_request_list" or else
-              Name (C) = "tickets" or else
-              Name (C) = "JB_nppri" or else
-              Name (C) = "JB_uid" or else
-              Name (C) = "JB_gid" or else
-              Name (C) = "JB_mail_list" or else
-              Name (C) = "JB_mail_options" or else
-              Name (C) = "JB_deadline" or else
-              Name (C) = "JB_shell_list" or else
-              Name (C) = "JB_env_list" or else
-              Name (C) = "JB_checkpoint_attr" or else
-              Name (C) = "JB_checkpoint_interval" or else
-              Name (C) = "JB_verify" or else
-              Name (C) = "JB_restart" or else
-              Name (C) = "JB_soft_wallclock_gmt" or else
-              Name (C) = "JB_hard_wallclock_gmt" or else
-              Name (C) = "JB_execution_time" or else
-              Name (C) = "JB_script_size" or else
-              Name (C) = "JB_version" or else
-              Name (C) = "JB_type" or else
-              Name (C) = "JB_verify_suitable_queues" or else
-              Name (C) = "JB_override_tickets" then
+            elsif Node_Name = "JB_urg" or else
+              Node_Name = "JB_dlcontr" or else
+              Node_Name = "JAT_ntix" or else
+              Node_Name = "JAT_share" or else
+              Node_Name = "JB_jobshare" or else
+              Node_Name = "JB_jid_request_list" or else
+              Node_Name = "tickets" or else
+              Node_Name = "JB_nppri" or else
+              Node_Name = "JB_uid" or else
+              Node_Name = "JB_gid" or else
+              Node_Name = "JB_mail_list" or else
+              Node_Name = "JB_mail_options" or else
+              Node_Name = "JB_deadline" or else
+              Node_Name = "JB_shell_list" or else
+              Node_Name = "JB_env_list" or else
+              Node_Name = "JB_checkpoint_attr" or else
+              Node_Name = "JB_checkpoint_interval" or else
+              Node_Name = "JB_verify" or else
+              Node_Name = "JB_restart" or else
+              Node_Name = "JB_soft_wallclock_gmt" or else
+              Node_Name = "JB_hard_wallclock_gmt" or else
+              Node_Name = "JB_execution_time" or else
+              Node_Name = "JB_script_size" or else
+              Node_Name = "JB_version" or else
+              Node_Name = "JB_type" or else
+              Node_Name = "JB_verify_suitable_queues" or else
+              Node_Name = "JB_override_tickets" then
                null;
 
-            elsif Name (C) /= "#text" then
-               raise Other_Error with "Unknown Field: " & Name (C);
+            elsif Node_Name /= "#text" then
+               raise Other_Error with "Unknown Field: " & Node_Name;
             end if;
          exception
                when E : Parser_Error =>
                   Record_Error (J, "information incomplete: " & Exception_Message (E));
                when E : others =>
                   Record_Error (J, "While parsing job: " & Exception_Message (E)
-                                    & "Node type: """ & Name (C)
+                                    & "Node type: """ & Node_Name
                              & """ Value: """ & Value (First_Child (C)) & """");
          end;
       end loop;
@@ -1155,10 +1156,7 @@ package body SGE.Jobs is
 
    exception
       when E : others =>
-         raise Other_Error with Exception_Message (E)
-          & "Node type: """ & Name (C)
-                     & """ Value: """ & Value (First_Child (C)) & """";
-
+         raise Other_Error with Exception_Message (E);
    end Update_Job;
 
    ---------------------------
@@ -1181,26 +1179,31 @@ package body SGE.Jobs is
       for I in 1 .. Length (Resource_Nodes) loop
          declare
             Found_Name, Found_Value : Boolean := False;
+            N                       : Node := Item (Resource_Nodes, I - 1);
+            Node_Name               : String := Name (N);
          begin
-            N := Item (Resource_Nodes, I - 1);
-            if Name (N) = "qstat_l_requests"
-            or else Name (N) = "element" then
+            if Node_Name = "qstat_l_requests"
+            or else Node_Name = "element" then
                Res_Bool := False;
                Res_State := Undecided;
                Resource_Tags := Child_Nodes (N);
                for J in 1 .. Length (Resource_Tags) loop
-                  R := Item (Resource_Tags, J - 1);
-                  if Name (R) = "CE_name" then
-                     Res_Name := To_Unbounded_String (Value (First_Child (R)));
-                     Found_Name := True;
-                  elsif Name (R) = "CE_stringval" then
-                     Res_Value := To_Unbounded_String (Value (First_Child (R)));
-                     Found_Value := True;
-                  elsif Name (R) = "CE_valtype" and then
-                     Value (First_Child (R)) = "5" then
-                     Res_Bool := True;
-                     --  maybe check for relop here?
-                  end if;
+                  declare
+                     R :Node := Item (Resource_Tags, J - 1);
+                     Subnode_Name : STring := Name (R);
+                     begin
+                        if Subnode_Name = "CE_name" then
+                           Res_Name := To_Unbounded_String (Value (First_Child (R)));
+                           Found_Name := True;
+                        elsif Subnode_Name = "CE_stringval" then
+                           Res_Value := To_Unbounded_String (Value (First_Child (R)));
+                           Found_Value := True;
+                        elsif Subnode_Name = "CE_valtype" and then
+                           Value (First_Child (R)) = "5" then
+                           Res_Bool := True;
+                           --  maybe check for relop here?
+                     end if;
+                  end;
                end loop;
                if Res_Bool then
                   if Res_Value = "TRUE" or else
@@ -1698,9 +1701,9 @@ package body SGE.Jobs is
          return True;
       elsif Resources.Precedes (Right.Soft, Left.Soft) then
          return False;
-      elsif Hash (Left.Slot_List) < Hash (Right.Slot_List) then
+      elsif Ranges.Precedes (Left.Slot_List, Right.Slot_List) then
          return True;
-      elsif Hash (Left.Slot_List) > Hash (Right.Slot_List) then
+      elsif Ranges.Precedes (Left.Slot_List, Right.Slot_List) then
          return False;
       else
          return False;

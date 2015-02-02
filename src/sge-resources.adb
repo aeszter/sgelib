@@ -149,7 +149,7 @@ package body SGE.Resources is
 
    function Precedes (Left, Right : Hashed_List) return Boolean is
    begin
-      return Left.Hash < Right.Hash;
+      return Left.Hash_Value < Right.Hash_Value;
    end Precedes;
 
    --------------
@@ -179,6 +179,9 @@ package body SGE.Resources is
       elsif S = "sandy-bridge" or else
       Equal_Case_Insensitive (S, "sandybridge") then
          return sandybridge;
+      elsif S = "abu-dhabi" or else
+        Equal_Case_Insensitive (S, "abudhabi") then
+         return abudhabi;
       else
          raise Constraint_Error with "Unknown CPU model: " & S;
       end if;
@@ -221,6 +224,8 @@ package body SGE.Resources is
          return gtx780ti;
       elsif Equal_Case_Insensitive (S, "gtx980") then
          return gtx980;
+      elsif Equal_Case_Insensitive (S, "gtxtitan") then
+         return gtxtitan;
       else
          raise Constraint_Error with "Unknown GPU " & S;
       end if;

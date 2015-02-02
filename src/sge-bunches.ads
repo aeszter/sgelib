@@ -25,6 +25,8 @@ package SGE.Bunches is
    function Get_PE (B : Bunch) return String;
    function Get_Slot_Number (B : Bunch) return String;
    function Get_Slot_Numbers (B : Bunch) return String;
+   function Get_CPU_Slot_Numbers (B : Bunch) return String;
+   function Get_GPU_Slot_Numbers (B : Bunch) return String;
    function Get_Queue (B : Bunch) return String;
    function Get_Total_Jobs (B : Bunch) return Natural;
    function Get_Waiting_Jobs (B : Bunch) return Natural;
@@ -43,6 +45,7 @@ private
       PE, Queue       : Unbounded_String;
       Slot_Number     : Unbounded_String;
       Slot_List       : Ranges.Step_Range_List;
+      GPU_Slot_List, CPU_Slot_List : Unbounded_String;
       Hard, Soft      : Resources.Hashed_List;
       Total, On_Hold  : Natural;
       Error, Waiting  : Natural;
