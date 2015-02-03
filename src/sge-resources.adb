@@ -182,6 +182,8 @@ package body SGE.Resources is
       elsif S = "abu-dhabi" or else
         Equal_Case_Insensitive (S, "abudhabi") then
          return abudhabi;
+      elsif Equal_Case_Insensitive (S, "westmere") then
+         return westmere;
       else
          raise Constraint_Error with "Unknown CPU model: " & S;
       end if;
@@ -201,6 +203,8 @@ package body SGE.Resources is
             return "ivy-bridge";
             when magnycours =>
             return "magny-cours";
+         when abudhabi =>
+            return "abu-dhabi";
          when others =>
             return Ada.Strings.Fixed.Translate (Source  => Model'Img,
                                                 Mapping => Ada.Strings.Maps.Constants.Lower_Case_Map);
