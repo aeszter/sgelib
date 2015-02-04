@@ -7,7 +7,7 @@ with Ada.Strings.Maps; use Ada.Strings.Maps;
 
 package body SGE.Ranges is
 
-   function copy (Source : Step_Range_List) return Step_Range_List is
+   overriding function Copy (Source : Step_Range_List) return Step_Range_List is
    begin
       return (Range_Lists.Copy (Range_Lists.List (Source)) with
          Hash_Value => Source.Hash_Value,

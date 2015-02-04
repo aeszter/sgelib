@@ -303,11 +303,11 @@ package body SGE.Host_Properties is
    function To_String (Props : Set_Of_Properties) return String is
    begin
       return "(net=>" & Props.Network'Img
-        &",model=>" & Props.Model'Img
+        & ",model=>" & Props.Model'Img
         & ",mem=>" & Props.Memory'Img
         & ",cores=>" & Props.Cores'Img
         & ",rt=>" & To_String (Props.Runtime)
-      &")";
+      & ")";
    end To_String;
 
 end SGE.Host_Properties;

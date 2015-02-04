@@ -1167,7 +1167,6 @@ package body SGE.Jobs is
                                     Resource_Nodes : Node_List;
                                     Soft : Boolean := False) is
       Resource_Tags      : Node_List;
-      N, R               : Node;
       Res_Value          : Unbounded_String;
       Res_Name           : Unbounded_String;
       Res_Bool           : Boolean;
@@ -1189,19 +1188,19 @@ package body SGE.Jobs is
                Resource_Tags := Child_Nodes (N);
                for J in 1 .. Length (Resource_Tags) loop
                   declare
-                     R :Node := Item (Resource_Tags, J - 1);
-                     Subnode_Name : STring := Name (R);
-                     begin
-                        if Subnode_Name = "CE_name" then
-                           Res_Name := To_Unbounded_String (Value (First_Child (R)));
-                           Found_Name := True;
-                        elsif Subnode_Name = "CE_stringval" then
-                           Res_Value := To_Unbounded_String (Value (First_Child (R)));
-                           Found_Value := True;
-                        elsif Subnode_Name = "CE_valtype" and then
-                           Value (First_Child (R)) = "5" then
-                           Res_Bool := True;
-                           --  maybe check for relop here?
+                     R : Node := Item (Resource_Tags, J - 1);
+                     Subnode_Name : String := Name (R);
+                  begin
+                     if Subnode_Name = "CE_name" then
+                        Res_Name := To_Unbounded_String (Value (First_Child (R)));
+                        Found_Name := True;
+                     elsif Subnode_Name = "CE_stringval" then
+                        Res_Value := To_Unbounded_String (Value (First_Child (R)));
+                        Found_Value := True;
+                     elsif Subnode_Name = "CE_valtype" and then
+                        Value (First_Child (R)) = "5" then
+                        Res_Bool := True;
+                        --  maybe check for relop here?
                      end if;
                   end;
                end loop;

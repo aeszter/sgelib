@@ -29,7 +29,7 @@ package body SGE.Utils is
       else
          return False;
       end if;
-   end;
+   end To_Tri_State;
 
    --------------------
    -- To_Hash_String --

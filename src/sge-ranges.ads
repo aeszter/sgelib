@@ -48,7 +48,7 @@ package SGE.Ranges is
    --  This does not mean the number of Step_Ranges in the list, but rather the
    --  sum of Count(SR) for each entry SR.
 
-   function Is_Empty (What : Step_Range_List) return Boolean;
+   overriding function Is_Empty (What : Step_Range_List) return Boolean;
    --  An empty range list does not represent any number. It contains at most
    --  empty ranges.
 
@@ -95,7 +95,7 @@ package SGE.Ranges is
    --  assumed to be ordered, so the Max of the last SR in the list is returned.
    function Max (List : Step_Range_List) return Natural;
 
-   function Copy (Source : Step_Range_List) return Step_Range_List;
+   overriding function Copy (Source : Step_Range_List) return Step_Range_List;
 
 private
    type Step_Range_List is new Range_Lists.List with
