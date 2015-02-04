@@ -100,6 +100,8 @@ private
      Summary : State_Count;
    end record;
 
+   function Copy (Source : Summarized_List) return Summarized_List;
+
    List : Summarized_List;
 
 end SGE.Partitions;

@@ -7,6 +7,13 @@ with Ada.Strings.Maps; use Ada.Strings.Maps;
 
 package body SGE.Ranges is
 
+   function copy (Source : Step_Range_List) return Step_Range_List is
+   begin
+      return (Range_Lists.Copy (Range_Lists.List (Source)) with
+         Hash_Value => Source.Hash_Value,
+         Hash_String => Source.Hash_String);
+   end Copy;
+
    function Is_Subset (Subset, Of_Set : Step_Range_List) return Boolean is
       procedure Check_Contained (Number : Natural);
       Result : Boolean := True;

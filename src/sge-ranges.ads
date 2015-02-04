@@ -95,6 +95,8 @@ package SGE.Ranges is
    --  assumed to be ordered, so the Max of the last SR in the list is returned.
    function Max (List : Step_Range_List) return Natural;
 
+   function Copy (Source : Step_Range_List) return Step_Range_List;
+
 private
    type Step_Range_List is new Range_Lists.List with
       record

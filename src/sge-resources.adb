@@ -12,6 +12,13 @@ with Ada.Strings.Maps.Constants;
 
 package body SGE.Resources is
 
+   overriding function Copy (Source : Hashed_List) return Hashed_List is
+   begin
+      return (Resource_Lists.Copy (Resource_Lists.Map (Source)) with
+      Hash_Value => Source.Hash_Value,
+      Hash_String => Source.Hash_String);
+   end Copy;
+
    ------------------
    -- New_Resource --
    --  Purpose: Create a new resource with given name and value
@@ -124,7 +131,7 @@ package body SGE.Resources is
       Dur   : Duration;
    begin
          Days := Secs / 86400;
-         Dur := Ada.Real_Time.To_Duration (Ada.Real_Time.Seconds (Secs - Days*86400));
+         Dur := Ada.Real_Time.To_Duration (Ada.Real_Time.Seconds (Secs - Days * 86400));
          if Days > 0 then
             return Days'Img & "d " & Image (Dur);
          else

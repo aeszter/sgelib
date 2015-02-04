@@ -20,6 +20,11 @@ package body SGE.Partitions is
       return Right = Left;
    end "=";
 
+   overriding function Copy (Source : Summarized_List) return Summarized_List is
+   begin
+      return (Partition_Lists.Copy (Partition_Lists.List (Source)) with
+                Summary => Source.Summary);
+   end Copy;
 
    function Sum (Over : Countable_Map) return Natural is
       Total : Natural := 0;
