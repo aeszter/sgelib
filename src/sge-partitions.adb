@@ -129,7 +129,8 @@ package body SGE.Partitions is
                                                New_Item => Get_Free_Slots (Q));
                if Get_Reserved_Slots (Q) = 0 and then
                  Get_Used_Slots (Q) = 0 and then
-                 Get_Free_Slots (Q) = Get_Slot_Count (Q) then
+                 Get_Free_Slots (Q) = Get_Slot_Count (Q)
+               then
                   P.Available_Hosts.Include (Host_Names.To_Bounded_String (Get_Host_Name (Q)));
                end if;
                List.Summary (available).Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),

@@ -230,8 +230,7 @@ package body SGE.Hosts is
    begin
       if PE_Master = "MASTER" then
          J.Master := True;
-      elsif
-        PE_Master = "SLAVE" then
+      elsif PE_Master = "SLAVE" then
          J.Master := False;
       else
          raise Constraint_Error with "Expected ""MASTER"" or ""SLAVE"", found """
@@ -257,7 +256,8 @@ package body SGE.Hosts is
       while Pos /= Job_Lists.No_Element loop
          Orig := Job_Lists.Element (Pos);
          if Short_List.Is_Empty or else
-            not Equal (Short_List.Last_Element, Orig) then
+           not Equal (Short_List.Last_Element, Orig)
+         then
             Short_List.Append (Orig);
          else
             Short_List.Update_Element (Position => Short_List.Last,
@@ -430,7 +430,8 @@ package body SGE.Hosts is
          exit when Pos = Host_Lists.No_Element;
          H := Host_Lists.Element (Pos);
          if H.Properties = Requirements and then
-           H.Queues.Contains (To_Unbounded_String (Queue_Name)) then
+           H.Queues.Contains (To_Unbounded_String (Queue_Name))
+         then
             Temp.Append (H);
          end if;
          Next (Pos);
@@ -669,7 +670,8 @@ package body SGE.Hosts is
       procedure Is_Unreachable (Position : Queue_Maps.Cursor) is
       begin
          if Queue_States.Count (Source  => Element (Position).State,
-                                Pattern => "u") > 0 then
+                                Pattern => "u") > 0
+         then
             Unreachable_Found := True;
          end if;
       end Is_Unreachable;
