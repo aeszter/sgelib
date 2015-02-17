@@ -3,21 +3,33 @@ with POSIX.Process_Primitives; use POSIX.Process_Primitives;
 with POSIX.Process_Identification; use POSIX.Process_Identification;
 with POSIX.IO;
 with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Strings.Fixed;
+with CGI;
 
 package body SGE.Actions is
 
    type Mode is (enable, disable, clear_job, clear_queue);
 
-   procedure Disable_Or_Enable (Object : String; Action : Mode);
+   procedure Disable_Or_Enable (Object : String; Action : Mode; Use_Sudo : Boolean);
 
-   procedure Disable_Or_Enable (Object : String; Action : Mode) is
-
+   procedure Disable_Or_Enable (Object : String; Action : Mode; Use_Sudo : Boolean) is
       PID          : Process_ID;
       Return_Value : Termination_Status;
       Args         : POSIX.POSIX_String_List;
       Template     : Process_Template;
+      Authenticated_User : constant String := CGI.Get_Environment ("REMOTE_USER");
    begin
-      Append (Args, "qmod");
+      if Use_Sudo then
+         if Authenticated_User = "" then
+            raise Subcommand_Error with "unauthorized";
+         end if;
+         Append (Args, "sudo");
+         Append (Args, "-u");
+         Append (Args, To_POSIX_String (Authenticated_User));
+         Append (Args, "/cm/shared/apps/sge/current/bin/linux-x64/qmod");
+      else
+         Append (Args, "qmod");
+      end if;
       case Action is
          when enable =>
          Append (Args, "-e");
@@ -34,13 +46,15 @@ package body SGE.Actions is
                                 File     => POSIX.IO.Standard_Output);
       Start_Process (Child    => PID,
                      Template => Template,
-                     Pathname => "/cm/shared/apps/sge/current/bin/linux-x64/qmod",
+                     Pathname => (if Use_Sudo then "/usr/bin/sudo" else
+                        "/cm/shared/apps/sge/current/bin/linux-x64/qmod"),
                      Arg_List => Args);
       Wait_For_Child_Process (Status => Return_Value, Child => PID);
       case Exit_Status_Of (Return_Value) is
          when Normal_Exit => return;
          when Failed_Creation_Exit => raise Subcommand_Error with "Failed to create qmod process";
          when Unhandled_Exception_Exit => raise Subcommand_Error with "Unhandled exception in qmod";
+         when 1 => return; -- qmod seems to return 1 every time; no documentation found
          when others => raise Subcommand_Error with "qmod exited with status" & Exit_Status_Of (Return_Value)'Img;
       end case;
    exception
@@ -51,26 +65,31 @@ package body SGE.Actions is
 
    procedure Enable (The_Node : String) is
    begin
-      Disable_Or_Enable (Object => The_Node,
-                          Action   => enable);
+      Disable_Or_Enable (Object   => The_Node,
+                         Action   => enable,
+                         Use_Sudo => False);
    end Enable;
 
    procedure Disable (The_Node : String) is
    begin
-      Disable_Or_Enable (Object => The_Node,
-                          Action   => disable);
+      Disable_Or_Enable (Object   => The_Node,
+                         Action   => disable,
+                         Use_Sudo => False);
    end Disable;
 
    procedure Clear_Error (The_Node : String) is
    begin
-      Disable_Or_Enable (Object => The_Node,
-                         Action => clear_queue);
+      Disable_Or_Enable (Object   => The_Node,
+                         Action   => clear_queue,
+                         Use_Sudo => True);
    end Clear_Error;
 
    procedure Clear_Error (The_Job : Positive) is
+      package Str renames Ada.Strings;
    begin
-      Disable_Or_Enable (Object => The_Job'Img,
-                         Action => clear_job);
+      Disable_Or_Enable (Object   => Str.Fixed.Trim (The_Job'Img, Str.Left),
+                         Action   => clear_job,
+                         Use_Sudo => True);
    end Clear_Error;
 
 end SGE.Actions;
