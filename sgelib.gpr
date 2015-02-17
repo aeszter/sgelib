@@ -35,7 +35,7 @@ project SGElib is
       case Library_Type is
 
          when "static" =>
-            for Default_Switches ("ada") use ("-gnaty3bBcxtSOnaihelkr", "-gnato", "-fstack-check", "-g", "-gnat05", "-gnatf", "-gnatwum");
+            for Default_Switches ("ada") use ("-gnaty3bBcxtSOnaihelkr", "-gnato", "-fstack-check", "-g", "-gnatf", "-gnatwum", "-gnat12");
 
          when "relocatable" =>
             for Default_Switches ("ada") use ("-gnato", "-fstack-check", "-g", "-gnat05", "-ftest-coverage", "-fprofile-arcs", "-gnatf");
