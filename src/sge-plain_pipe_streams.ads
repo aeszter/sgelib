@@ -1,6 +1,7 @@
 with POSIX.IO; use POSIX.IO;
 with POSIX.Process_Identification;
 with POSIX; use POSIX;
+with SGE.Taint; use SGE.Taint;
 
 package SGE.Plain_Pipe_Streams is
 --  Stream read from a pipe, inspired by xmlADA,
@@ -19,9 +20,9 @@ package SGE.Plain_Pipe_Streams is
    procedure Close (Input : in out Plain_Pipe_Stream; Exit_Status : out Natural);
 
    procedure Execute (P : in out Plain_Pipe_Stream;
-                      Command : in String;
-                      Arguments : String;
-                      Environment : in String);
+                      Command : Trusted_Command_Name;
+                      Arguments : Trusted_String;
+                      Environment : Trusted_String);
 private
    type Plain_Pipe_Stream is tagged record
       Pipe        : File_Descriptor;

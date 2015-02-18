@@ -5,14 +5,15 @@ with POSIX.IO;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Strings.Fixed;
 with CGI;
+with SGE.Taint; use SGE.Taint;
 
 package body SGE.Actions is
 
    type Mode is (enable, disable, clear_job, clear_queue);
 
-   procedure Call_Qmod (Object : String; Action : Mode; Use_Sudo : Boolean);
+   procedure Call_Qmod (Object : Trusted_String; Action : Mode; Use_Sudo : Boolean);
 
-   procedure Call_Qmod (Object : String; Action : Mode; Use_Sudo : Boolean) is
+   procedure Call_Qmod (Object : Trusted_String; Action : Mode; Use_Sudo : Boolean) is
       PID          : Process_ID;
       Return_Value : Termination_Status;
       Args         : POSIX.POSIX_String_List;
@@ -40,7 +41,7 @@ package body SGE.Actions is
          when clear_queue =>
             Append (Args, "-cq");
       end case;
-      Append (Args, To_POSIX_String (Object));
+      Append (Args, To_POSIX_String (Value (Object)));
       Open_Template (Template);
       Set_File_Action_To_Close (Template => Template,
                                 File     => POSIX.IO.Standard_Output);
@@ -60,36 +61,36 @@ package body SGE.Actions is
    exception
       when E : POSIX_Error =>
          raise Subcommand_Error with "qmod raised error when called with " & Action'Img
-              & Object & ": " & Exception_Message (E);
+              & Value (Object) & ": " & Exception_Message (E);
    end Call_Qmod;
 
    procedure Enable (The_Node : String) is
    begin
-      Call_Qmod (Object   => The_Node,
-                         Action   => enable,
-                         Use_Sudo => False);
+      Call_Qmod (Object   => Sanitise (The_Node),
+                 Action   => enable,
+                 Use_Sudo => False);
    end Enable;
 
    procedure Disable (The_Node : String) is
    begin
-      Call_Qmod (Object   => The_Node,
-                         Action   => disable,
-                         Use_Sudo => False);
+      Call_Qmod (Object   => Sanitise (The_Node),
+                 Action   => disable,
+                 Use_Sudo => False);
    end Disable;
 
    procedure Clear_Error (The_Node : String) is
    begin
-      Call_Qmod (Object   => The_Node,
-                         Action   => clear_queue,
-                         Use_Sudo => True);
+      Call_Qmod (Object   => Sanitise (The_Node),
+                 Action   => clear_queue,
+                 Use_Sudo => True);
    end Clear_Error;
 
    procedure Clear_Error (The_Job : Positive) is
       package Str renames Ada.Strings;
    begin
-      Call_Qmod (Object   => Str.Fixed.Trim (The_Job'Img, Str.Left),
-                         Action   => clear_job,
-                         Use_Sudo => True);
+      Call_Qmod (Object   => Sanitise (Str.Fixed.Trim (The_Job'Img, Str.Left)),
+                 Action   => clear_job,
+                 Use_Sudo => True);
    end Clear_Error;
 
 end SGE.Actions;

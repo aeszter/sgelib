@@ -4,6 +4,7 @@ with Unicode;
 with POSIX.IO; use POSIX.IO;
 with POSIX.Process_Identification;
 with POSIX; use POSIX;
+with SGE.Taint; use SGE.Taint;
 
 package SGE.Pipe_Streams is
 --  Stream read from a pipe, used to interface with xmlADA
@@ -22,9 +23,9 @@ package SGE.Pipe_Streams is
    overriding procedure Close (Input : in out Pipe_Stream);
 
    procedure Execute (P : in out Pipe_Stream;
-                      Command : in String;
-                      Arguments : String;
-                      Environment : in String);
+                      Command : Trusted_Command_Name;
+                      Arguments : Trusted_String;
+                      Environment : Trusted_String);
 private
    type Pipe_Stream is new Input_Source with record
       Pipe        : File_Descriptor;

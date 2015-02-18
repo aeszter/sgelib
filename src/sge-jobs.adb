@@ -14,6 +14,7 @@ with Ada.Strings.Maps;
 with Ada.Characters.Handling;
 with SGE.Context;
 use SGE.Context;
+with SGE.Taint; use SGE.Taint;
 
 package body SGE.Jobs is
    use Job_Lists;
@@ -853,7 +854,8 @@ package body SGE.Jobs is
 
       use Ada.Strings.Fixed;
    begin
-      SGE_Out := Parser.Setup (Selector => "-u " & To_String (J.Owner));
+      SGE_Out := Parser.Setup (Command => Cmd_Qstat,
+                               Selector => Implicit_Trust ("-u ") & Sanitise (To_String (J.Owner)));
 
       --  Fetch Jobs
       Nodes := Parser.Get_Elements_By_Tag_Name (SGE_Out, "job_list");
@@ -908,8 +910,8 @@ package body SGE.Jobs is
       end Record_Queue;
 
    begin
-      SGE_Out := Parser.Setup (Command  => "qhost",
-                               Selector => "-j");
+      SGE_Out := Parser.Setup (Command  => Cmd_Qhost,
+                               Selector => Implicit_Trust ("-j"));
 
       --  Fetch Jobs
       Job_Nodes := Parser.Get_Elements_By_Tag_Name (SGE_Out, "job");

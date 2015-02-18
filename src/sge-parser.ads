@@ -2,6 +2,7 @@ with DOM.Core; with DOM.Core.Documents;
 with DOM.Core.Nodes;
 with POSIX.Process_Environment;
 with SGE.Spread_Sheets;
+with SGE.Taint; use SGE.Taint;
 
 
 package SGE.Parser is
@@ -23,11 +24,11 @@ package SGE.Parser is
    function Child_Nodes (N : Node) return Node_List renames DOM.Core.Nodes.Child_Nodes;
    function Item (List : Node_List; Index : Natural) return Node renames DOM.Core.Nodes.Item;
 
-   function Setup (Command  : String := "qstat";
-                   Selector : String) return DOM.Core.Document;
-   procedure Setup_No_XML (Command  : String;
-                          Selector : String;
-                          Subpath  : String := "/utilbin/linux-x64/";
+   function Setup (Command  : Trusted_Command_Name;
+                   Selector : Trusted_String) return DOM.Core.Document;
+   procedure Setup_No_XML (Command  : Trusted_Command_Name;
+                          Selector : Trusted_String;
+                          Subpath  : Trusted_String := Implicit_Trust ("/utilbin/linux-x64/");
                           Output : out Spread_Sheets.Spread_Sheet;
                           Exit_Status : out Natural);
    procedure Free;
