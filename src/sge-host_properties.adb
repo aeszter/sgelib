@@ -14,7 +14,8 @@ package body SGE.Host_Properties is
    function Has_GPU (Props : Set_Of_Properties) return Boolean is
    begin
       if (Props.GPU = none and then Props.GPU_present)
-      or else (Props.GPU /= none and then not Props.GPU_present) then
+        or else (Props.GPU /= none and then not Props.GPU_present)
+      then
          raise SGE.Utils.Operator_Error with "inconsistent GPU config";
       end if;
       return Props.GPU_present;
@@ -259,17 +260,16 @@ package body SGE.Host_Properties is
          Props.Load_One := Load'Value (Value (First_Child (N)));
       elsif Value (A) = "load_medium" then
          Props.Load_Five := Load'Value (Value (First_Child (N)));
-      elsif
-        Value (A) = "ethernet" then
+      elsif Value (A) = "ethernet" then
          if Fixed'Value (Value (First_Child (N))) = 1.0 then
             --  Fixed'Value is important here, as SGE interprets boolean
             --  resources as rational numbers (0.000000 or 1.000000)
             Props.Network := eth;
          end if;
-      elsif
-         Value (A) = "infiniband" then
+      elsif Value (A) = "infiniband" then
          if Fixed'Value (Value (First_Child (N))) = 1.0 and then
-            Props.Network = none then
+           Props.Network = none
+         then
             --  see above for Fixed'Value
             Props.Network := ib;
          end if;
