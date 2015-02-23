@@ -43,6 +43,9 @@ package body SGE.Taint is
       for Pos in Output'Range loop
          if not Ada.Characters.Handling.Is_Letter (Output (Pos))
            and then not Ada.Characters.Handling.Is_Decimal_Digit (Output (Pos))
+           and then Output (Pos) /= ';' -- does not start a new command when passed to exec()
+           and then Output (Pos) /= ','
+           and then Output (Pos) /= '='
            and then not Is_Harmless_Dash (Char  => Output (Pos), Where => Pos)
          then
             Output (Pos) := '_';
