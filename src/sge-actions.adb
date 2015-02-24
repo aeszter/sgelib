@@ -9,17 +9,21 @@ with SGE.Taint; use SGE.Taint;
 
 package body SGE.Actions is
 
-   type Mode is (enable, disable, clear_job, clear_queue);
+   type Mode is (enable, disable, clear_job, clear_queue, kill_job);
 
    procedure Call_Qmod (Object : Trusted_String; Action : Mode; Use_Sudo : Boolean);
 
    procedure Call_Qmod (Object : Trusted_String; Action : Mode; Use_Sudo : Boolean) is
       PID          : Process_ID;
       Return_Value : Termination_Status;
+      Tool         : String := "qmod";
       Args         : POSIX.POSIX_String_List;
       Template     : Process_Template;
       Authenticated_User : constant String := CGI.Get_Environment ("REMOTE_USER");
    begin
+      if Action = kill_job then
+         Tool := "qdel";
+      end if;
       if Use_Sudo then
          if Authenticated_User = "" then
             raise Subcommand_Error with "unauthorized";
@@ -27,19 +31,21 @@ package body SGE.Actions is
          Append (Args, "sudo");
          Append (Args, "-u");
          Append (Args, To_POSIX_String (Authenticated_User));
-         Append (Args, "/cm/shared/apps/sge/current/bin/linux-x64/qmod");
+         Append (Args, "/cm/shared/apps/sge/current/bin/linux-x64/" & To_POSIX_String (Tool));
       else
-         Append (Args, "qmod");
+         Append (Args, To_POSIX_String (Tool));
       end if;
       case Action is
          when enable =>
-         Append (Args, "-e");
-      when disable =>
+            Append (Args, "-e");
+         when disable =>
             Append (Args, "-d");
          when clear_job =>
             Append (Args, "-cj");
          when clear_queue =>
             Append (Args, "-cq");
+         when kill_job =>
+            null;
       end case;
       Append (Args, To_POSIX_String (Value (Object)));
       Open_Template (Template);
@@ -48,19 +54,19 @@ package body SGE.Actions is
       Start_Process (Child    => PID,
                      Template => Template,
                      Pathname => (if Use_Sudo then "/usr/bin/sudo" else
-                        "/cm/shared/apps/sge/current/bin/linux-x64/qmod"),
+                        "/cm/shared/apps/sge/current/bin/linux-x64/" & To_POSIX_String (Tool)),
                      Arg_List => Args);
       Wait_For_Child_Process (Status => Return_Value, Child => PID);
       case Exit_Status_Of (Return_Value) is
          when Normal_Exit => return;
-         when Failed_Creation_Exit => raise Subcommand_Error with "Failed to create qmod process";
-         when Unhandled_Exception_Exit => raise Subcommand_Error with "Unhandled exception in qmod";
+         when Failed_Creation_Exit => raise Subcommand_Error with "Failed to create " & Tool & " process";
+         when Unhandled_Exception_Exit => raise Subcommand_Error with "Unhandled exception in " & Tool;
          when 1 => return; -- qmod seems to return 1 every time; no documentation found
-         when others => raise Subcommand_Error with "qmod exited with status" & Exit_Status_Of (Return_Value)'Img;
+         when others => raise Subcommand_Error with Tool & " exited with status" & Exit_Status_Of (Return_Value)'Img;
       end case;
    exception
       when E : POSIX_Error =>
-         raise Subcommand_Error with "qmod raised error when called with " & Action'Img
+         raise Subcommand_Error with Tool & " raised error when called with " & Action'Img
               & Value (Object) & ": " & Exception_Message (E);
    end Call_Qmod;
 
@@ -92,5 +98,13 @@ package body SGE.Actions is
                  Action   => clear_job,
                  Use_Sudo => True);
    end Clear_Error;
+
+   procedure Kill_Job (The_Job : Positive) is
+      package Str renames Ada.Strings;
+   begin
+      Call_Q_Tool (Object   => Sanitise (Str.Fixed.Trim (The_Job'Img, Str.Left)),
+                   Action   => kill_job,
+                   Use_Sudo => True);
+   end Kill_Job;
 
 end SGE.Actions;
