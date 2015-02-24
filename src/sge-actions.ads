@@ -3,6 +3,7 @@ package SGE.Actions is
    procedure Disable (The_Node : String);
    procedure Clear_Error (The_Node : String);
    procedure Clear_Error (The_Job : Positive);
+   procedure Kill_Job (The_Job : Positive);
 
    Subcommand_Error : exception;
 private
