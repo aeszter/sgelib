@@ -11,9 +11,9 @@ package body SGE.Actions is
 
    type Mode is (enable, disable, clear_job, clear_queue);
 
-   procedure Call_Qmod (Object : Trusted_String; Action : Mode; Use_Sudo : Boolean);
+   procedure Call_Q_Tool (Object : Trusted_String; Action : Mode; Use_Sudo : Boolean);
 
-   procedure Call_Qmod (Object : Trusted_String; Action : Mode; Use_Sudo : Boolean) is
+   procedure Call_Q_Tool (Object : Trusted_String; Action : Mode; Use_Sudo : Boolean) is
       PID          : Process_ID;
       Return_Value : Termination_Status;
       Args         : POSIX.POSIX_String_List;
@@ -62,25 +62,25 @@ package body SGE.Actions is
       when E : POSIX_Error =>
          raise Subcommand_Error with "qmod raised error when called with " & Action'Img
               & Value (Object) & ": " & Exception_Message (E);
-   end Call_Qmod;
+   end Call_Q_Tool;
 
    procedure Enable (The_Node : String) is
    begin
-      Call_Qmod (Object   => Sanitise (The_Node),
+      Call_Q_Tool (Object   => Sanitise (The_Node),
                  Action   => enable,
                  Use_Sudo => False);
    end Enable;
 
    procedure Disable (The_Node : String) is
    begin
-      Call_Qmod (Object   => Sanitise (The_Node),
+      Call_Q_Tool (Object   => Sanitise (The_Node),
                  Action   => disable,
                  Use_Sudo => False);
    end Disable;
 
    procedure Clear_Error (The_Node : String) is
    begin
-      Call_Qmod (Object   => Sanitise (The_Node),
+      Call_Q_Tool (Object   => Sanitise (The_Node),
                  Action   => clear_queue,
                  Use_Sudo => True);
    end Clear_Error;
@@ -88,7 +88,7 @@ package body SGE.Actions is
    procedure Clear_Error (The_Job : Positive) is
       package Str renames Ada.Strings;
    begin
-      Call_Qmod (Object   => Sanitise (Str.Fixed.Trim (The_Job'Img, Str.Left)),
+      Call_Q_Tool (Object   => Sanitise (Str.Fixed.Trim (The_Job'Img, Str.Left)),
                  Action   => clear_job,
                  Use_Sudo => True);
    end Clear_Error;
