@@ -70,11 +70,11 @@ package body SGE.Actions is
               & Value (Object) & ": " & Exception_Message (E);
    end Call_Q_Tool;
 
-   procedure Enable (The_Node : String) is
+   procedure Enable (The_Node : String; Use_Sudo : Boolean := False) is
    begin
       Call_Q_Tool (Object   => Sanitise (The_Node),
                  Action   => enable,
-                 Use_Sudo => False);
+                 Use_Sudo => Use_Sudo);
    end Enable;
 
    procedure Disable (The_Node : String) is
