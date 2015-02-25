@@ -855,7 +855,8 @@ package body SGE.Jobs is
       use Ada.Strings.Fixed;
    begin
       SGE_Out := Parser.Setup (Command => Cmd_Qstat,
-                               Selector => Implicit_Trust ("-u ") & Sanitise (To_String (J.Owner)));
+                               Selector => Implicit_Trust ("-u ")
+                               & Sanitise (Trim (To_String (J.Owner), Ada.Strings.Right)));
 
       --  Fetch Jobs
       Nodes := Parser.Get_Elements_By_Tag_Name (SGE_Out, "job_list");
