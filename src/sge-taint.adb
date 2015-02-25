@@ -46,6 +46,7 @@ package body SGE.Taint is
            and then Output (Pos) /= ';' -- does not start a new command when passed to exec()
            and then Output (Pos) /= ','
            and then Output (Pos) /= '='
+           and then Output (Pos) /= '*'
            and then not Is_Harmless_Dash (Char  => Output (Pos), Where => Pos)
          then
             Output (Pos) := '_';
