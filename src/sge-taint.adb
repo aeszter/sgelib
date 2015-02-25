@@ -48,6 +48,7 @@ package body SGE.Taint is
            and then Output (Pos) /= '='
            and then Output (Pos) /= '@'
            and then Output (Pos) /= '.'
+           and then Output (Pos) /= '*'
            and then not Is_Harmless_Dash (Char  => Output (Pos), Where => Pos)
          then
             Output (Pos) := '_';
