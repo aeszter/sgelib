@@ -90,6 +90,8 @@ package SGE.Resources is
    function Value (L : Hashed_List; Name : String) return String;
    function Numerical (L : Hashed_List; Name : String) return Integer;
 
+   overriding function Copy (Source : Hashed_List) return Hashed_List;
+
 private
    type Hashed_List is new Resource_Lists.Map with
       record

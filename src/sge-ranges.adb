@@ -7,6 +7,13 @@ with Ada.Strings.Maps; use Ada.Strings.Maps;
 
 package body SGE.Ranges is
 
+   overriding function Copy (Source : Step_Range_List) return Step_Range_List is
+   begin
+      return (Range_Lists.Copy (Range_Lists.List (Source)) with
+         Hash_Value => Source.Hash_Value,
+         Hash_String => Source.Hash_String);
+   end Copy;
+
    function Is_Subset (Subset, Of_Set : Step_Range_List) return Boolean is
       procedure Check_Contained (Number : Natural);
       Result : Boolean := True;
@@ -115,8 +122,7 @@ package body SGE.Ranges is
       else
          if Dash = 0 then
             raise Constraint_Error;
-         elsif
-           Colon = 0 then
+         elsif Colon = 0 then
             raise Constraint_Error;
          elsif Dash <= From'First then
             raise Constraint_Error;
@@ -240,7 +246,8 @@ package body SGE.Ranges is
    function Is_Collapsed (What : Step_Range_List) return Boolean is
    begin
       if What.Length = 1
-        and then Is_Collapsed (What.First_Element) then
+        and then Is_Collapsed (What.First_Element)
+      then
          return True;
       else
          return False;

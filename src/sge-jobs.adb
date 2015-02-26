@@ -14,6 +14,7 @@ with Ada.Strings.Maps;
 with Ada.Characters.Handling;
 with SGE.Context;
 use SGE.Context;
+with SGE.Taint; use SGE.Taint;
 
 package body SGE.Jobs is
    use Job_Lists;
@@ -226,12 +227,14 @@ package body SGE.Jobs is
       end loop;
 
       if J.Context.Contains (SGE.Context.Slots_CPU)
-        and then J.Context.Contains (Slots_GPU) then
+        and then J.Context.Contains (Slots_GPU)
+      then
          J.Balancer (CPU_GPU) := True;
          J.Balancer (Any) := True;
       end if;
       if J.Context.Contains (Wait_Reduce)
-        and then J.Context.Contains (Slots_Reduce) then
+        and then J.Context.Contains (Slots_Reduce)
+      then
          J.Balancer (Low_Cores) := True;
          J.Balancer (Any) := True;
       end if;
@@ -519,7 +522,8 @@ package body SGE.Jobs is
    function At_End return Boolean is
    begin
       if List_Cursor = Job_Lists.No_Element or else
-        List_Cursor = List.Last then
+        List_Cursor = List.Last
+      then
          return True;
       end if;
       return False;
@@ -781,12 +785,14 @@ package body SGE.Jobs is
       J := Current;
       loop
          if J.PE = PE and then
- J.Queue = Queue and then
-         J.Hard.Hash = Hard_Requests and then
-         J.Soft.Hash = Soft_Requests then
+           J.Queue = Queue and then
+           J.Hard.Hash = Hard_Requests and then
+           J.Soft.Hash = Soft_Requests
+         then
             Update_Job_From_Overlay (J);
             if Slot_Ranges = Null_Unbounded_String or else -- Bug #1610
-              Hash_Type'Value (To_String (Slot_Ranges)) = 0 then
+              Hash_Type'Value (To_String (Slot_Ranges)) = 0
+            then
                --  checking against a string (i.e. " 0") would be too brittle,
                --  since any change in leading blanks would break this code
                if J.Slot_Number = Slot_Number then
@@ -848,7 +854,8 @@ package body SGE.Jobs is
 
       use Ada.Strings.Fixed;
    begin
-      SGE_Out := Parser.Setup (Selector => "-u " & To_String (J.Owner));
+      SGE_Out := Parser.Setup (Command => Cmd_Qstat,
+                               Selector => Implicit_Trust ("-u ") & Sanitise (To_String (J.Owner)));
 
       --  Fetch Jobs
       Nodes := Parser.Get_Elements_By_Tag_Name (SGE_Out, "job_list");
@@ -903,8 +910,8 @@ package body SGE.Jobs is
       end Record_Queue;
 
    begin
-      SGE_Out := Parser.Setup (Command  => "qhost",
-                               Selector => "-j");
+      SGE_Out := Parser.Setup (Command  => Cmd_Qhost,
+                               Selector => Implicit_Trust ("-j"));
 
       --  Fetch Jobs
       Job_Nodes := Parser.Get_Elements_By_Tag_Name (SGE_Out, "job");
@@ -981,7 +988,8 @@ package body SGE.Jobs is
             elsif Node_Name = "JAT_prio" then
                J.Priority := Fixed'Value (Value (First_Child (C)));
             elsif Node_Name = "JB_name" or else
-                  Node_Name = "JB_job_name" then
+              Node_Name = "JB_job_name"
+            then
                J.Full_Name := To_Unbounded_String (Value (First_Child (C)));
                J.Name := Job_Names.To_Bounded_String (Source => Value (First_Child (C)),
                                                       Drop   => Ada.Strings.Right);
@@ -1046,10 +1054,12 @@ package body SGE.Jobs is
                               Position => Inserted_At,
                               Inserted => Inserted);
             elsif Node_Name  = "predecessor_jobs" or else
-               Node_Name  = "ad_predecessor_jobs" then
+              Node_Name  = "ad_predecessor_jobs"
+            then
                J.Predecessors.Include (New_Item => Natural'Value (Value (First_Child (C))));
             elsif Node_Name = "predecessor_jobs_req" or else
-              Node_Name = "ad_predecessor_jobs_req" then
+              Node_Name = "ad_predecessor_jobs_req"
+            then
                J.Predecessor_Request.Append (To_Unbounded_String (Value (First_Child (C))));
             elsif Node_Name = "JB_hard_resource_list" then
                Extract_Resource_List (J, Child_Nodes (C));
@@ -1134,7 +1144,8 @@ package body SGE.Jobs is
               Node_Name = "JB_version" or else
               Node_Name = "JB_type" or else
               Node_Name = "JB_verify_suitable_queues" or else
-              Node_Name = "JB_override_tickets" then
+              Node_Name = "JB_override_tickets"
+            then
                null;
 
             elsif Node_Name /= "#text" then
@@ -1167,7 +1178,6 @@ package body SGE.Jobs is
                                     Resource_Nodes : Node_List;
                                     Soft : Boolean := False) is
       Resource_Tags      : Node_List;
-      N, R               : Node;
       Res_Value          : Unbounded_String;
       Res_Name           : Unbounded_String;
       Res_Bool           : Boolean;
@@ -1183,36 +1193,40 @@ package body SGE.Jobs is
             Node_Name               : String := Name (N);
          begin
             if Node_Name = "qstat_l_requests"
-            or else Node_Name = "element" then
+              or else Node_Name = "element"
+            then
                Res_Bool := False;
                Res_State := Undecided;
                Resource_Tags := Child_Nodes (N);
                for J in 1 .. Length (Resource_Tags) loop
                   declare
-                     R :Node := Item (Resource_Tags, J - 1);
-                     Subnode_Name : STring := Name (R);
-                     begin
-                        if Subnode_Name = "CE_name" then
-                           Res_Name := To_Unbounded_String (Value (First_Child (R)));
-                           Found_Name := True;
-                        elsif Subnode_Name = "CE_stringval" then
-                           Res_Value := To_Unbounded_String (Value (First_Child (R)));
-                           Found_Value := True;
-                        elsif Subnode_Name = "CE_valtype" and then
-                           Value (First_Child (R)) = "5" then
-                           Res_Bool := True;
-                           --  maybe check for relop here?
+                     R : Node := Item (Resource_Tags, J - 1);
+                     Subnode_Name : String := Name (R);
+                  begin
+                     if Subnode_Name = "CE_name" then
+                        Res_Name := To_Unbounded_String (Value (First_Child (R)));
+                        Found_Name := True;
+                     elsif Subnode_Name = "CE_stringval" then
+                        Res_Value := To_Unbounded_String (Value (First_Child (R)));
+                        Found_Value := True;
+                     elsif Subnode_Name = "CE_valtype" and then
+                       Value (First_Child (R)) = "5"
+                     then
+                        Res_Bool := True;
+                        --  maybe check for relop here?
                      end if;
                   end;
                end loop;
                if Res_Bool then
                   if Res_Value = "TRUE" or else
                     Res_Value = "true" or else
-                    Res_Value = "1" then
+                    Res_Value = "1"
+                  then
                      Res_State := True;
                   elsif Res_Value = "FALSE" or else
                     Res_Value = "false" or else
-                     Res_Value = "0" then
+                    Res_Value = "0"
+                  then
                      Res_State := False;
                   else
                      raise Constraint_Error
@@ -1286,7 +1300,8 @@ package body SGE.Jobs is
       for I in 0 .. Length (Sub_Nodes) - 1 loop
          N := Item (Sub_Nodes, I);
          if Name (N) = "job_predecessors" or else
-            Name (N) = "ulong_sublist" then
+           Name (N) = "ulong_sublist"
+         then
             ID_Node := Item (Child_Nodes (N), 1);
             if Name (ID_Node) /= "JRE_job_number" then
                raise Assumption_Error with
@@ -1354,7 +1369,8 @@ package body SGE.Jobs is
       for I in 1 .. Length (Children) loop
          N := Item (Children, I - 1);
          if Name (N) = "ranges" or else
-              Name (N) = "element" then
+           Name (N) = "element"
+         then
                Extract_Generic_Range (Range_Nodes => Child_Nodes (N),
                                       Min         => Slots_Min,
                                       Max         => Slots_Max,
@@ -1381,7 +1397,8 @@ package body SGE.Jobs is
       for I in 0 .. Length (Usage_Entries) - 1 loop
          Usage_Entry := Item (Usage_Entries, I);
          if Name (Usage_Entry) = "element" or else
-         Name (Usage_Entry) = "scaled" then
+           Name (Usage_Entry) = "scaled"
+         then
             Quantity_Nodes := Child_Nodes (Usage_Entry);
             begin
                Over_Quantity_Nodes :
@@ -1404,7 +1421,8 @@ package body SGE.Jobs is
                      Quantity : String := Value (First_Child (Quantity_Field));
                   begin
                      if Quantity'Length >= 13
-                       and then Quantity (Quantity'First .. Quantity'First + 12) = "binding_inuse" then
+                       and then Quantity (Quantity'First .. Quantity'First + 12) = "binding_inuse"
+                     then
                         null; -- ignore; binding has nothing to do with usage, and
                               --  the format is utterly insane;
                               --  there is no way we can handle this crappy xml without
@@ -1467,7 +1485,8 @@ package body SGE.Jobs is
       Over_Task_List_Nodes :
       for K in 1 .. Length (Task_List_Nodes) loop
          if Name (Item (Task_List_Nodes, K - 1)) = "pe_tasks" or else
-           Name (Item (Task_List_Nodes, K - 1)) = "element" then
+           Name (Item (Task_List_Nodes, K - 1)) = "element"
+         then
             PE_Task_Nodes := Child_Nodes (Item (Task_List_Nodes, K - 1));
             Over_PE_Task_Nodes :
             for L in 1 .. Length (PE_Task_Nodes) loop
@@ -1517,7 +1536,8 @@ package body SGE.Jobs is
       for H in 1 .. Length (Task_Nodes) loop
          JA_Tasks := Item (Task_Nodes, H - 1);
          if Name (JA_Tasks) = "ja_tasks"
-           or else Name (JA_Tasks) = "ulong_sublist" then
+           or else Name (JA_Tasks) = "ulong_sublist"
+         then
             Children := Child_Nodes (JA_Tasks);
             Task_Entries :
             for I in 1 .. Length (Children) loop
@@ -1653,7 +1673,8 @@ package body SGE.Jobs is
       elsif Field = "Custom" then
          Sorting_By_Posix_Priority.Sort (List);
       elsif Field = "Ends In" or else
-        Field = "Ends At" then
+        Field = "Ends At"
+      then
          Sorting_By_End.Sort (List);
       else
          raise Constraint_Error with "Sorting by " & Field & " unimplemented";

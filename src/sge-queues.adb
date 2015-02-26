@@ -31,7 +31,8 @@ package body SGE.Queues is
    function At_End return Boolean is
    begin
       if List_Cursor = Queue_Lists.No_Element or else
-        List_Cursor = List.Last then
+        List_Cursor = List.Last
+      then
          return True;
       end if;
       return False;
@@ -105,13 +106,16 @@ package body SGE.Queues is
                      Cores := Integer'Value (Value (First_Child (N)));
                   elsif Value (A) = "infiniband" and then
                     small'Value (Value (First_Child (N))) = 1.0 and then
-                    Network = none then
+                    Network = none
+                  then
                      Network := ib;
                   elsif Value (A) = "ib-switch" and then
-                    small'Value (Value (First_Child (N))) = 1.0 then
+                    small'Value (Value (First_Child (N))) = 1.0
+                  then
                      Network := ibswitch;
                   elsif Value (A) = "ethernet" and then
-                    small'Value (Value (First_Child (N))) = 1.0 then
+                    small'Value (Value (First_Child (N))) = 1.0
+                  then
                      Network := eth;
                   elsif Value (A) = "h_rt" then
                      Runtime := To_Unbounded_String (Value (First_Child (N)));

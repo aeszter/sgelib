@@ -29,7 +29,7 @@ package body SGE.Utils is
       else
          return False;
       end if;
-   end;
+   end To_Tri_State;
 
    --------------------
    -- To_Hash_String --
@@ -85,7 +85,8 @@ package body SGE.Utils is
       Time_Buffer : String (1 .. 19);
    begin
       if Time_String'Length > 11 and then
-        Time_String (Time_String'First + 10) = 'T' then
+        Time_String (Time_String'First + 10) = 'T'
+      then
          Time_Buffer := Time_String;
          Time_Buffer (11) := ' ';
          return GNAT.Calendar.Time_IO.Value (Time_Buffer);

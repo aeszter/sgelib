@@ -6,6 +6,7 @@ with SGE.Pipe_Streams; use SGE.Pipe_Streams;
 with Ada.Exceptions; use Ada.Exceptions;
 with SGE.Plain_Pipe_Streams; use SGE.Plain_Pipe_Streams;
 with SGE.Spread_Sheets;
+with SGE.Taint; use SGE.Taint;
 
 package body SGE.Parser is
 
@@ -14,14 +15,15 @@ package body SGE.Parser is
    -----------
    -- Setup --
    -----------
-   function Setup (Command  : String := "qstat";
-                          Selector : String) return Document is
+   function Setup (Command  : Trusted_Command_Name;
+                   Selector : Trusted_String) return DOM.Core.Document is
       SGE_Command : Pipe_Stream;
    begin
-      SGE_Command.Set_Public_Id (Command);
-      SGE_Command.Execute (Command => sgeroot & "/bin/linux-x64/" & Command,
-                           Arguments => Selector & " -xml",
-                           Environment => "SGE_ROOT=" & sgeroot);
+      SGE_Command.Set_Public_Id (Value (Command));
+      SGE_Command.Execute (Command => Trust_As_Command (sgeroot & "/bin/linux-x64/"
+                                      & Value (Command)),
+                           Arguments => Selector & Implicit_Trust (" -xml"),
+                           Environment => Implicit_Trust ("SGE_ROOT=" & sgeroot));
       Reader.Set_Feature (Sax.Readers.Validation_Feature, False);
       Reader.Set_Feature (Sax.Readers.Namespace_Feature, False);
       Reader.Parse (SGE_Command);
@@ -29,41 +31,41 @@ package body SGE.Parser is
       return Reader.Get_Tree;
    exception
       when Pipe_Streams.Failed_Creation_Error =>
-         raise Parser_Error with "Failed to spawn """ & Command
-           & """ with """ & Selector & """";
+         raise Parser_Error with "Failed to spawn """ & Value (Command)
+           & """ with """ & Value (Selector) & """";
       when Pipe_Streams.Exception_Error =>
-         raise Parser_Error with """" & Command
+         raise Parser_Error with """" & Value (Command)
            & """ terminated because of an unhandled exception";
       when E : Sax.Readers.XML_Fatal_Error =>
          raise Parser_Error with "Fatal XML error: " & Exception_Message (E);
       when E : others => raise Parser_Error with "Error when calling "
-           & Command & " with " & Selector & ": "
+           & Value (Command) & " with " & Value (Selector) & ": "
            & Exception_Message (E);
    end Setup;
 
-   procedure Setup_No_XML (Command  : String;
-                          Selector : String;
-                          Subpath  : String := "/utilbin/linux-x64/";
-                          Output : out SGE.Spread_Sheets.Spread_Sheet;
-                          Exit_Status : out Natural) is
+   procedure Setup_No_XML (Command  : Trusted_Command_Name;
+                          Selector : Trusted_String;
+                          Subpath  : Trusted_String := Implicit_Trust ("/utilbin/linux-x64/");
+                          Output : out Spread_Sheets.Spread_Sheet;
+                           Exit_Status : out Natural) is
       SGE_Command : Plain_Pipe_Stream;
    begin
-      SGE_Command.Execute (Command => sgeroot & Subpath & Command,
+      SGE_Command.Execute (Command => Trust_As_Command (sgeroot & Value (Subpath) & Value (Command)),
                            Arguments => Selector,
-                           Environment => "SGE_ROOT=" & sgeroot);
+                           Environment => Implicit_Trust ("SGE_ROOT=" & sgeroot));
 
       Table.Parse (SGE_Command);
       SGE_Command.Close (Exit_Status);
       Output := Table;
    exception
          when Plain_Pipe_Streams.Failed_Creation_Error =>
-            raise Parser_Error with "Failed to spawn """ & Command
-              & """ with """ & Selector & """";
+            raise Parser_Error with "Failed to spawn """ & Value (Command)
+              & """ with """ & Value (Selector) & """";
          when Plain_Pipe_Streams.Exception_Error =>
-            raise Parser_Error with """" & Command
+            raise Parser_Error with """" & Value (Command)
               & """ terminated because of an unhandled exception";
          when E : others => raise Parser_Error with "Error when calling "
-              & Command & " with " & Selector & ": "
+              & Value (Command) & " with " & Value (Selector) & ": "
               & Exception_Message (E);
    end Setup_No_XML;
 

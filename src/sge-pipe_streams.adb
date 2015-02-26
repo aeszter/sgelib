@@ -66,15 +66,16 @@ package body SGE.Pipe_Streams is
    -- execute --
    -------------
 
-   procedure Execute (P           : in out Pipe_Stream;
-                      Command     : in String;
-                      Arguments   : String;
-                      Environment : in String)
+   procedure Execute (P : in out Pipe_Stream;
+                      Command : Trusted_Command_Name;
+                      Arguments : Trusted_String;
+                      Environment : Trusted_String)
    is
       To_QView : POSIX.IO.File_Descriptor;
       Template : Process_Template;
       Arg_List : POSIX_String_List;
-      Separator : Natural := Ada.Strings.Fixed.Index (Environment, "=");
+      Trusted_Environment : String := Value (Environment);
+      Separator : Natural := Ada.Strings.Fixed.Index (Trusted_Environment, "=");
       Env : POSIX.Process_Environment.Environment;
    begin
       POSIX.IO.Create_Pipe (Read_End  => P.Pipe,
@@ -86,15 +87,15 @@ package body SGE.Pipe_Streams is
                                     File      => Standard_Output,
                                     From_File => To_QView);
 
-      Utils.To_String_List (Source => Command & " " & Arguments,
+      Utils.To_String_List (Source => Value (Command) & " " & Value (Arguments),
                             Dest   => Arg_List);
       Set_Environment_Variable
-        (Name  => To_POSIX_String (Environment (Environment'First .. Separator - 1)),
-         Value => To_POSIX_String (Environment (Separator + 1 .. Environment'Last)),
+        (Name  => To_POSIX_String (Trusted_Environment (Trusted_Environment'First .. Separator - 1)),
+         Value => To_POSIX_String (Trusted_Environment (Separator + 1 .. Trusted_Environment'Last)),
          Env   => Env);
 
       Start_Process (Child    => P.PID,
-                     Pathname => To_POSIX_String (Command),
+                     Pathname => To_POSIX_String (Value (Command)),
                      Template => Template,
                      Arg_List => Arg_List,
                      Env_List => Env);

@@ -12,6 +12,13 @@ with Ada.Strings.Maps.Constants;
 
 package body SGE.Resources is
 
+   overriding function Copy (Source : Hashed_List) return Hashed_List is
+   begin
+      return (Resource_Lists.Copy (Resource_Lists.Map (Source)) with
+      Hash_Value => Source.Hash_Value,
+      Hash_String => Source.Hash_String);
+   end Copy;
+
    ------------------
    -- New_Resource --
    --  Purpose: Create a new resource with given name and value
@@ -124,7 +131,7 @@ package body SGE.Resources is
       Dur   : Duration;
    begin
          Days := Secs / 86400;
-         Dur := Ada.Real_Time.To_Duration (Ada.Real_Time.Seconds (Secs - Days*86400));
+         Dur := Ada.Real_Time.To_Duration (Ada.Real_Time.Seconds (Secs - Days * 86400));
          if Days > 0 then
             return Days'Img & "d " & Image (Dur);
          else
@@ -169,18 +176,22 @@ package body SGE.Resources is
       elsif Equal_Case_Insensitive (S, "harpertown") then
          return harpertown;
       elsif Equal_Case_Insensitive (S, "magny-cours") or else
-      Equal_Case_Insensitive (S, "magnycours") then
+        Equal_Case_Insensitive (S, "magnycours")
+      then
          return magnycours;
       elsif Equal_Case_Insensitive (S, "interlagos") then
          return interlagos;
       elsif Equal_Case_Insensitive (S, "ivy-bridge") or else
-      Equal_Case_Insensitive (S, "ivybridge") then
+        Equal_Case_Insensitive (S, "ivybridge")
+      then
          return ivybridge;
       elsif S = "sandy-bridge" or else
-      Equal_Case_Insensitive (S, "sandybridge") then
+        Equal_Case_Insensitive (S, "sandybridge")
+      then
          return sandybridge;
       elsif S = "abu-dhabi" or else
-        Equal_Case_Insensitive (S, "abudhabi") then
+        Equal_Case_Insensitive (S, "abudhabi")
+      then
          return abudhabi;
       elsif Equal_Case_Insensitive (S, "westmere") then
          return westmere;
@@ -214,7 +225,8 @@ package body SGE.Resources is
    function To_GPU (S : String) return GPU_Model is
    begin
       if S = "" or else
-       Equal_Case_Insensitive (S, "none") then
+        Equal_Case_Insensitive (S, "none")
+      then
          return none;
       elsif Equal_Case_Insensitive (S, "gtx580") then
          return gtx580;
