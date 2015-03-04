@@ -7,7 +7,7 @@ with POSIX; use POSIX;
 with Ada.Calendar;
 
 package SGE.Utils is
-   Version : String := "develop";
+   Version : String := "v0.17";
    type Tri_State is (False, True, Undecided);
    type User_Name is new String (1 .. 8);
 
