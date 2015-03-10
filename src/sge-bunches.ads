@@ -39,6 +39,7 @@ package SGE.Bunches is
    function Get_Slot_Hash (B : Bunch) return String;
    function Get_Hard_Hash (B : Bunch) return String;
    function Get_Soft_Hash (B : Bunch) return String;
+   function Is_Queued_For_GPU (B : Bunch) return Boolean;
 
 private
    type Bunch is record

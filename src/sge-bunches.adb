@@ -93,6 +93,11 @@ package body SGE.Bunches is
       end if;
    end Init_GPU_Slots;
 
+   function Is_Queued_For_GPU (B : Bunch) return Boolean is
+   begin
+      return B.Hard.Contains (To_Unbounded_String ("gpu"));
+   end Is_Queued_For_GPU;
+
    -------------------
    -- New_Bunch --
    -------------------
