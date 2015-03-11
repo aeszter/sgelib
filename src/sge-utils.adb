@@ -4,6 +4,9 @@ with SGE.Utils; use SGE.Utils.String_Lists;
 with GNAT.Calendar.Time_IO;
 with Ada.Calendar.Conversions;
 with Interfaces.C;
+with SGE.Parser;
+with SGE.Spread_Sheets;
+with SGE.Taint; use SGE.Taint;
 
 package body SGE.Utils is
 
@@ -95,5 +98,33 @@ package body SGE.Utils is
            (Interfaces.C.long'Value (Time_String));
       end if;
    end To_Time;
+
+   function User_Is_Operator (User : String) return Boolean is
+      use SGE.Spread_Sheets;
+
+      Exit_Status : Natural;
+      Result : Spread_Sheet;
+   begin
+      if User = "" then
+         return False;
+      end if;
+      SGE.Parser.Setup_No_XML (Command     => Trust_As_Command ("qconf"),
+                               Subpath     => Implicit_Trust ("/bin/linux-x64/"),
+                               Selector    => Implicit_Trust ("-so"),
+                               Output      => Result,
+                               Exit_Status => Exit_Status);
+      if Exit_Status /= 0 then
+         return False;
+      end if;
+      Result.Rewind;
+      while not Result.At_End loop
+         if Result.Current = User then
+            return True;
+         end if;
+         Result.Next;
+      end loop;
+
+      return False;
+   end User_Is_Operator;
 
 end SGE.Utils;
