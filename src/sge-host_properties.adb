@@ -1,10 +1,37 @@
 with SGE.Parser; use SGE.Parser;
 with Ada.Exceptions; use Ada.Exceptions;
 with SGE.Utils;
+with Ada.Strings.Fixed;
 
 
 package body SGE.Host_Properties is
 
+   overriding function "<" (Left, Right : Host_Name) return Boolean is
+   begin
+      return Names."<" (Names.Bounded_String (Left), Names.Bounded_String (Right));
+   end "<";
+
+   pragma Inline ("<");
+   overriding function "=" (Left, Right : Host_Name) return Boolean is
+   begin
+      return Names."=" (Names.Bounded_String (Left), Names.Bounded_String (Right));
+   end "=";
+
+   pragma Inline ("=");
+
+   function To_Host_Name (S : String) return Host_Name is
+      Separator : constant Natural := Ada.Strings.Fixed.Index (Source => S,
+                                                                Pattern => ".");
+      Short_Name : constant String := (if Separator = 0 then S
+                                       else S (S'First .. Separator - 1));
+   begin
+      return Host_Name (Names.To_Bounded_String (Source => Short_Name));
+   end To_Host_Name;
+
+   function Value (Host : Host_Name) return String is
+   begin
+      return Names.To_String (Names.Bounded_String (Host));
+   end Value;
 
    function Has_SSD (Props : Set_Of_Properties) return Boolean is
    begin

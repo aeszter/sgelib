@@ -2,21 +2,18 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Strings.Bounded;
 with SGE.Queues; use SGE.Queues;
 with SGE.Host_Properties; use SGE.Host_Properties;
 with SGE.Loggers; use SGE.Loggers;
 
 package SGE.Partitions is
 
-   package Host_Names is new Ada.Strings.Bounded.Generic_Bounded_Length (Max => 12);
-   subtype Host_Name is Host_Names.Bounded_String;
    package Countable_Sets is new Ada.Containers.Ordered_Sets (Element_Type => Host_Name,
-                                                              "<"          => Host_Names."<",
-                                                              "="          => Host_Names."=");
+                                                              "<"          => Host_Properties."<",
+                                                              "="          => Host_Properties."=");
    package Countable_Maps is new Ada.Containers.Ordered_Maps (Key_Type     => Host_Name,
                                                               Element_Type => Natural,
-                                                              "<"          => Host_Names."<",
+                                                              "<"          => Host_Properties."<",
                                                               "="          => "=");
 
    type Countable_Map is new Countable_Maps.Map with null record;

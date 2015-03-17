@@ -53,7 +53,7 @@ package SGE.Hosts is
    function Get_Free_Slots (H : Host) return Natural;
    function Get_Reserved_Slots (H : Host) return Natural;
    function Get_Used_Slots (H : Host) return Natural;
-   function Get_Name (H : Host) return String;
+   function Get_Name (H : Host) return Host_Name;
    function Has_Unreachable_Queue (H : Host) return Boolean;
    function Get_Network (H : Host) return String;
    function Get_Model (H : Host) return String;
@@ -141,7 +141,7 @@ private
 
 
    type Host is record
-      Name       : Unbounded_String;
+      Name       : Host_Name;
       Jobs       : Job_List;
       Properties : Set_Of_Properties;
       Load       : SGE.Host_Properties.Load;

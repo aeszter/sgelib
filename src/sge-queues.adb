@@ -150,7 +150,7 @@ package body SGE.Queues is
                                     GPU_Present => GPU_Present,
                                     Runtime  => Runtime,
                                     Name     => Queue_Name,
-                                    Long_Name => Long_Queue_Name,
+                                    Long_Name => To_String (Long_Queue_Name),
                                     State     => To_String (State),
                                     Q_Type => To_String (Q_Type)
                                    ));
@@ -185,7 +185,7 @@ package body SGE.Queues is
       Model                 : Resources.CPU_Model;
       Runtime               : Unbounded_String;
       Name                  : Unbounded_String;
-      Long_Name             : Unbounded_String
+      Long_Name             : String
      )
       return Queue
    is
@@ -194,7 +194,7 @@ package body SGE.Queues is
       Q.Used     := Used;
       Q.Reserved := Reserved;
       Q.Total    := Total;
-      Q.Long_Name := Long_Name;
+      Set_Host_Name (Q, Long_Name);
       for Pos in State'Range loop
          case State (Pos) is
             when 'a' => Q.State (alarm) := True;
@@ -221,7 +221,9 @@ package body SGE.Queues is
       Set_Network (Q.Properties, Network);
       Set_Model (Q.Properties, Model);
       Set_Runtime (Q.Properties, Runtime);
-      Q.Name     := Name;
+      if Name /= Null_Unbounded_String then
+         Q.Name     := Name;
+      end if;
       if Cores = 0 then
          Set_Cores (Q.Properties, Q.Total);
       else
@@ -302,21 +304,17 @@ package body SGE.Queues is
       return To_String (Q.Name);
    end Get_Name;
 
-   function Get_Long_Name (Q : Queue) return String is
+   function Get_Host_Name (Q : Queue) return Host_Name is
    begin
-      return To_String (Q.Long_Name);
-   end Get_Long_Name;
-
-   function Get_Host_Name (Q : Queue) return String is
-      Src : String := To_String (Q.Long_Name);
-      Start : Positive := Index (Source  => Src,
-                                 Pattern => "@");
-      Stop  : Positive := Index (Source  => Src,
-                                    From => Start,
-                                 Pattern => ".");
-   begin
-      return Src (Start .. Stop);
+      return Q.Host;
    end Get_Host_Name;
+
+   procedure Set_Host_Name (Q : in out Queue; Long_Name : String) is
+   begin
+      Decompose_Long_Name (Long_Name => Long_Name,
+                           Queue     => Q.Name,
+                           Host      => Q.Host);
+   end Set_Host_Name;
 
    function Has_Error (Q : Queue) return Boolean is
    begin
@@ -373,6 +371,15 @@ package body SGE.Queues is
       return Type_String;
    end Get_Type;
 
-
+   procedure Decompose_Long_Name (Long_Name : String; Queue : out Unbounded_String; Host : out Host_Name) is
+      Start : Positive := Index (Source  => Long_Name,
+                                 Pattern => "@");
+      Stop  : Positive := Index (Source  => Long_Name,
+                                    From => Start,
+                                 Pattern => ".");
+   begin
+      Host := To_Host_Name (Long_Name (Start + 1 .. Stop - 1));
+      Queue := To_Unbounded_String (Long_Name (Long_Name'First .. Start - 1));
+   end Decompose_Long_Name;
 
 end SGE.Queues;

@@ -37,18 +37,18 @@ package SGE.Queues is
       Model                 : Resources.CPU_Model;
       Runtime               : Unbounded_String;
       Name                  : Unbounded_String;
-      Long_Name             : Unbounded_String
+      Long_Name             : String
      )
                        return Queue;
-
+   procedure Set_Host_Name (Q : in out Queue; Long_Name : String);
+   procedure Decompose_Long_Name (Long_Name : String; Queue : out Unbounded_String; Host : out Host_Name);
 
    function Precedes_By_Resources (Left, Right : Queue) return Boolean;
 
    function Get_Properties (Q : Queue) return Set_Of_Properties;
    function Get_Name (Q : Queue) return Unbounded_String;
    function Get_Name (Q : Queue) return String;
-   function Get_Long_Name (Q : Queue) return String;
-   function Get_Host_Name (Q : Queue) return String;
+   function Get_Host_Name (Q : Queue) return Host_Properties.Host_Name;
    function Get_Slot_Count (Q : Queue) return Natural;
    function Get_Used_Slots (Q : Queue) return Natural;
    function Get_Reserved_Slots (Q : Queue) return Natural;
@@ -76,7 +76,8 @@ private
 
    type Queue is record
       Used, Reserved, Total : Natural;
-      Name, Long_Name       : Unbounded_String;
+      Name                  : Unbounded_String;
+      Host                  : Host_Properties.Host_Name;
       Properties            : Set_Of_Properties;
       State                 : State_Array := (others => False);
       Q_Type                : Type_Array := (others => False);

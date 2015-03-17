@@ -1,6 +1,7 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with SGE.Resources; use SGE.Resources;
 with SGE.Parser;
+with Ada.Strings.Bounded;
 
 package SGE.Host_Properties is
 
@@ -8,6 +9,16 @@ package SGE.Host_Properties is
    type Set_Of_Properties is private;
    type Fixed is delta 0.01 digits 6 range 0.0 .. 1000.0;
    type Load is new Fixed range 0.0 .. 1000.0;
+
+   package Names is new Ada.Strings.Bounded.Generic_Bounded_Length (Max => 12);
+   type Host_Name is new Names.Bounded_String;
+   overriding function "<" (Left, Right : Host_Name) return Boolean;
+   pragma Inline ("<");
+   overriding function "=" (Left, Right : Host_Name) return Boolean;
+   pragma Inline ("=");
+
+   function To_Host_Name (S : String) return Host_Name;
+   function Value (Host : Host_Name) return String;
 
    function Get_Memory (Props :  Set_Of_Properties) return Gigs;
    function Get_Cores (Props : Set_Of_Properties) return Positive;

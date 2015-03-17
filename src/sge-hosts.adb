@@ -49,9 +49,9 @@ package body SGE.Hosts is
       return Element (Q).Reserved;
    end Get_Reserved_Slots;
 
-   function Get_Name (H : Host) return String is
+   function Get_Name (H : Host) return Host_Name is
    begin
-      return To_String (H.Name);
+      return H.Name;
    end Get_Name;
 
    function Get_Network (H : Host) return String is
@@ -386,7 +386,7 @@ package body SGE.Hosts is
          begin
             N := Item (Host_Nodes, I - 1);
             A := Get_Attr (N, "name");
-            H.Name := To_Unbounded_String (Value (A));
+            H.Name := To_Host_Name (Value (A));
             if Value (A) /= "global" then
                Value_Nodes := Child_Nodes (N);
                Host_Attributes :
