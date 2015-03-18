@@ -1324,7 +1324,9 @@ package body SGE.Jobs is
    begin
       for I in 1 .. Length (Destin_Nodes) loop
          N := Item (Destin_Nodes, I - 1);
-         if Name (N) = "destin_ident_list" then
+         if Name (N) = "destin_ident_list" or else
+           Name (N) = "element"
+         then
             QR_Nodes := Child_Nodes (N);
             for K in 1 .. Length (QR_Nodes) loop
                Q := Item (QR_Nodes, K - 1);
