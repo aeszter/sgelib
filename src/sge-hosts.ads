@@ -66,6 +66,7 @@ package SGE.Hosts is
    function Has_Slaves (J : Job) return Boolean;
    function Get_Slaves (J : Job) return Natural;
    function Get_ID (J  : Job) return Positive;
+   function Get_Full_ID (J : Job) return String;
    function Get_Start_Time (J  : Job) return Ada.Calendar.Time;
 
    function Get_State (Q : Queue_Pointer) return String;

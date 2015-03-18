@@ -4,6 +4,7 @@ with Ada.Strings.Bounded; use Ada.Strings.Bounded;
 with Calendar.Conversions;
 with Interfaces.C;
 with SGE.Utils;
+with Ada.Strings.Fixed;
 
 
 package body SGE.Hosts is
@@ -778,5 +779,18 @@ package body SGE.Hosts is
       H.Queues.Iterate (Wrapper'Access);
    end Iterate_Queues;
 
+   function Get_Full_ID (J : Job) return String is
+      use Ada.Strings.Fixed;
+      use Ada.Strings;
+
+      Main : constant String := Trim (J.ID'Img, Left);
+      Suffix : constant String := Trim (J.Task_ID'Img, Left);
+   begin
+      if J.Task_ID = 0 then
+         return Main;
+      else
+         return Main & "." & Suffix;
+      end if;
+   end Get_Full_ID;
 
 end SGE.Hosts;
