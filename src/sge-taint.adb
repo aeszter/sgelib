@@ -57,6 +57,20 @@ package body SGE.Taint is
       return Trusted_String (Output);
    end Sanitise;
 
+   function Sanitise_Job_List (S : String) return Trusted_String is
+      Output : String := S;
+   begin
+      for Pos in Output'Range loop
+         if not Ada.Characters.Handling.Is_Decimal_Digit (Output (Pos))
+           and then Output (Pos) /= '.' -- starts a task id
+           and then Output (Pos) /= ',' -- separates job ids
+         then
+            Output (Pos) := '_'; -- illegal but harmless in a job id
+         end if;
+      end loop;
+      return Trusted_String (Output);
+   end Sanitise_Job_List;
+
    function Implicit_Trust (S : String) return Trusted_String is
    begin
       return Trusted_String (S);

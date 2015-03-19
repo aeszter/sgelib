@@ -19,6 +19,12 @@ package SGE.Taint is
    --  any offending characters
    function Sanitise (S : String) return Trusted_String;
 
+   --  convert untrusted user data to a trusted string by removing/replacing
+   --  any offending characters;
+   --  This function specialises in job id lists and can therefore be
+   --  more agressive.
+   function Sanitise_Job_List (S : String) return Trusted_String;
+
    --  convert an implicitly trusted String to a Trusted_String;
    --  Never!! pass untrusted user data to this function.
    --  It is meant for program-internal data only.
