@@ -9,7 +9,7 @@ with SGE.Taint; use SGE.Taint;
 
 package body SGE.Actions is
 
-   type Mode is (enable, disable, clear_job, clear_queue, kill_job);
+   type Mode is (enable, disable, clear_job, clear_queue, kill_job, delete_job);
 
    procedure Call_Q_Tool (Object : Trusted_String; Action : Mode; Use_Sudo : Boolean);
 
@@ -21,7 +21,9 @@ package body SGE.Actions is
       Template     : Process_Template;
       Authenticated_User : constant String := CGI.Get_Environment ("REMOTE_USER");
    begin
-      if Action = kill_job then
+      if Action = kill_job or else
+        Action = delete_job
+      then
          Tool := "qdel";
       end if;
       if Use_Sudo then
@@ -46,6 +48,8 @@ package body SGE.Actions is
             Append (Args, "-cq");
          when kill_job =>
             null;
+         when delete_job =>
+            Append (Args, "-f");
       end case;
       Append (Args, To_POSIX_String (Value (Object)));
       Open_Template (Template);
@@ -106,5 +110,12 @@ package body SGE.Actions is
                    Action   => kill_job,
                    Use_Sudo => True);
    end Kill_Job;
+
+   procedure Force_Kill (Job_List : String) is
+   begin
+      Call_Q_Tool (Object   => Sanitise_Job_List (Job_List),
+                   Action   => delete_job,
+                   Use_Sudo => True);
+   end Force_Kill;
 
 end SGE.Actions;
