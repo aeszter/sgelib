@@ -55,6 +55,7 @@ package SGE.Utils is
    function To_String (User : User_Name) return String;
 
    function To_Time (Time_String : String) return Ada.Calendar.Time;
+   function User_Is_Manager (User : String) return Boolean;
    function User_Is_Operator (User : String) return Boolean;
 
 end SGE.Utils;

@@ -99,7 +99,7 @@ package body SGE.Utils is
       end if;
    end To_Time;
 
-   function User_Is_Operator (User : String) return Boolean is
+   function User_Is_In_List (User : String; List_Selector : Trusted_String) return Boolean is
       use SGE.Spread_Sheets;
 
       Exit_Status : Natural;
@@ -110,7 +110,7 @@ package body SGE.Utils is
       end if;
       SGE.Parser.Setup_No_XML (Command     => Trust_As_Command ("qconf"),
                                Subpath     => Implicit_Trust ("/bin/linux-x64/"),
-                               Selector    => Implicit_Trust ("-so"),
+                               Selector    => List_Selector,
                                Output      => Result,
                                Exit_Status => Exit_Status);
       if Exit_Status /= 0 then
@@ -125,6 +125,16 @@ package body SGE.Utils is
       end loop;
 
       return False;
+   end User_Is_In_List;
+
+   function User_Is_Operator (User : String) return Boolean is
+   begin
+      return User_Is_In_List (User, Implicit_Trust ("-so"));
    end User_Is_Operator;
+
+   function User_Is_Manager (User : String) return Boolean is
+   begin
+      return User_Is_In_List (User, Implicit_Trust ("-sm"));
+   end User_Is_Manager;
 
 end SGE.Utils;
