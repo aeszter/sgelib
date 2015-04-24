@@ -7,10 +7,29 @@ with Ada.Exceptions; use Ada.Exceptions;
 package body SGE.Queues is
    use Queue_Lists;
 
+   procedure Occupy_Slots (Q : in out Queue; How_Many : Natural) is
+   begin
+      if How_Many > Q.Total - Q.Used - Q.Reserved then
+         raise Constraint_Error with "Not enough free slots";
+      end if;
+      Q.Used := Q.Used + How_Many;
+   end Occupy_Slots;
+
+   procedure Update_Current (Process : not null access procedure (Q : in out Queue)) is
+   begin
+      List.Update_Element (List_Cursor, Process);
+   end Update_Current;
+
+
    procedure Sort is
    begin
       Sorting_By_Resources.Sort (List);
    end Sort;
+
+   procedure Sort_By_Sequence is
+   begin
+      Sorting_By_Sequence.Sort (List);
+   end Sort_By_Sequence;
 
    procedure Rewind is
    begin
@@ -249,6 +268,11 @@ package body SGE.Queues is
    begin
       return Left.Properties < Right.Properties;
    end Precedes_By_Resources;
+
+   function Precedes_By_Sequence (Left, Right : Queue) return Boolean is
+   begin
+      return Left.Sequence < Right.Sequence;
+   end Precedes_By_Sequence;
 
 
    function Get_Slot_Count (Q : Queue) return Natural is
