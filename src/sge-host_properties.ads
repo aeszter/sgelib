@@ -26,6 +26,7 @@ package SGE.Host_Properties is
    function Get_Model (Props : Set_Of_Properties) return CPU_Model;
    function Get_GPU (Props : Set_Of_Properties) return GPU_Model;
    function Get_Runtime (Props : Set_Of_Properties) return String;
+   function Get_Runtime (Props : Set_Of_Properties) return Natural;
    function Get_Load_One (Props : Set_Of_Properties) return Load;
    function Has_SSD (Props : Set_Of_Properties) return Boolean;
    function Has_GPU (Props : Set_Of_Properties) return Boolean;

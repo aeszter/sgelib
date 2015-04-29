@@ -337,4 +337,12 @@ package body SGE.Host_Properties is
       & ")";
    end To_String;
 
+   function Get_Runtime (Props : Set_Of_Properties) return Natural is
+   begin
+      return Integer'Value (To_String (Props.Runtime));
+   exception
+      when Constraint_Error -- Value is not a number of seconds
+         => return Unformat_Duration (To_String (Props.Runtime));
+   end Get_Runtime;
+
 end SGE.Host_Properties;
