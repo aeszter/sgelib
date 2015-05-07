@@ -77,6 +77,8 @@ package SGE.Resources is
       Key       : Unbounded_String;
       New_Item  : Resource);
 
+   function Contains (Container : Hashed_List; Key : String) return Boolean;
+
    function "<" (Left, Right : Resource) return Boolean;
 
 
