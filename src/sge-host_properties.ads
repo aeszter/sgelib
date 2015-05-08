@@ -30,6 +30,7 @@ package SGE.Host_Properties is
    function Get_Load_One (Props : Set_Of_Properties) return Load;
    function Has_SSD (Props : Set_Of_Properties) return Boolean;
    function Has_GPU (Props : Set_Of_Properties) return Boolean;
+   function Has_Exclusive (Props : Set_Of_Properties) return Boolean;
    function Get_Slots (Props : Set_Of_Properties) return Natural;
    procedure Set_Slots (Props : in out Set_Of_Properties; Slots : Natural);
    procedure Set_Memory (Props : in out Set_Of_Properties;
@@ -43,6 +44,7 @@ package SGE.Host_Properties is
    procedure Set_GPU (Props : in out Set_Of_Properties; Model : GPU_Model);
    procedure Set_GPU (Props : in out Set_Of_Properties; Model : String);
    procedure Set_GPU (Props : in out Set_Of_Properties);
+   procedure Set_Exclusive (Props : in out Set_Of_Properties);
 
    procedure Init (Props : out Set_Of_Properties;
                    Net, Memory, Cores, Model, SSD, GPU : String);
@@ -70,6 +72,7 @@ private
       Model                 : Resources.CPU_Model := none;
       GPU                   : Resources.GPU_Model := none;
       GPU_present           : Boolean := False;
+      Exclusive             : Boolean := False;
       Memory                : Resources.Gigs := 0.0;
       Cores                 : Positive := 1;
       Runtime               : Unbounded_String;

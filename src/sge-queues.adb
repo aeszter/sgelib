@@ -99,6 +99,7 @@ package body SGE.Queues is
             Mem, Runtime          : Unbounded_String;
             Cores                 : Natural := 0;
             SSD, GPU_Present      : Boolean := False;
+            Supports_Exclusive    : Boolean := False;
             Network               : Resources.Network := none;
             Model, GPU, Queue_Name : Unbounded_String := Null_Unbounded_String;
             Long_Queue_Name       : Unbounded_String := Null_Unbounded_String;
@@ -150,6 +151,8 @@ package body SGE.Queues is
                      GPU := To_Unbounded_String (Value (First_Child (N)));
                   elsif Value (A) = "gpu" then
                      GPU_Present := True;
+                  elsif Value (A) = "exclusive" then
+                        Supports_Exclusive := True;
                   end if;
                elsif Name (N) = "name" then
                   Long_Queue_Name := To_Unbounded_String (Value (First_Child (N)));
@@ -167,6 +170,7 @@ package body SGE.Queues is
                                     SSD      => SSD,
                                     GPU      => To_GPU (GPU),
                                     GPU_Present => GPU_Present,
+                                    Exclusive => Supports_Exclusive,
                                     Runtime  => Runtime,
                                     Name     => Queue_Name,
                                     Long_Name => To_String (Long_Queue_Name),
@@ -200,6 +204,7 @@ package body SGE.Queues is
       Cores, Slots          : Natural;
       Network               : Resources.Network;
       SSD, GPU_Present      : Boolean;
+      Exclusive             : Boolean;
       GPU                   : Resources.GPU_Model;
       Model                 : Resources.CPU_Model;
       Runtime               : Unbounded_String;
@@ -255,6 +260,9 @@ package body SGE.Queues is
       Set_GPU (Q.Properties, GPU);
       if GPU_Present then
          Set_GPU (Q.Properties);
+      end if;
+      if Exclusive then
+         Set_Exclusive (Q.Properties);
       end if;
 
       return Q;

@@ -33,6 +33,11 @@ package body SGE.Host_Properties is
       return Names.To_String (Names.Bounded_String (Host));
    end Value;
 
+   function Has_Exclusive (Props : Set_Of_Properties) return Boolean is
+   begin
+      return Props.Exclusive;
+   end Has_Exclusive;
+
    function Has_SSD (Props : Set_Of_Properties) return Boolean is
    begin
       return Props.SSD;
@@ -133,6 +138,11 @@ package body SGE.Host_Properties is
    begin
       Props.Runtime := Runtime;
    end Set_Runtime;
+
+   procedure Set_Exclusive (Props : in out Set_Of_Properties) is
+   begin
+      Props.Exclusive := True;
+   end Set_Exclusive;
 
    procedure Set_SSD (Props : in out Set_Of_Properties) is
    begin

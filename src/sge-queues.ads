@@ -38,6 +38,7 @@ package SGE.Queues is
       Cores, Slots          : Natural;
       Network               : Resources.Network;
       SSD, GPU_Present      : Boolean;
+      Exclusive             : Boolean;
       GPU                   : Resources.GPU_Model;
       Model                 : Resources.CPU_Model;
       Runtime               : Unbounded_String;
