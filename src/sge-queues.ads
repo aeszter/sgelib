@@ -33,18 +33,19 @@ package SGE.Queues is
 
 
    function New_Queue (Used, Reserved, Total : Natural;
-      State, Q_Type         : String;
-      Memory                : String;
-      Cores, Slots          : Natural;
-      Network               : Resources.Network;
-      SSD, GPU_Present      : Boolean;
-      Exclusive             : Boolean;
-      GPU                   : Resources.GPU_Model;
-      Model                 : Resources.CPU_Model;
-      Runtime               : Unbounded_String;
-      Name                  : Unbounded_String;
-      Long_Name             : String
-     )
+                       State, Q_Type         : String;
+                       Memory                : String;
+                       Cores, Slots          : Natural;
+                       Network               : Resources.Network;
+                       SSD, GPU_Present      : Boolean;
+                       Exclusive             : Boolean;
+                       Sequence_Number       : Natural;
+                       GPU                   : Resources.GPU_Model;
+                       Model                 : Resources.CPU_Model;
+                       Runtime               : Unbounded_String;
+                       Name                  : Unbounded_String;
+                       Long_Name             : String
+                      )
                        return Queue;
    procedure Set_Host_Name (Q : in out Queue; Long_Name : String);
    procedure Decompose_Long_Name (Long_Name : String; Queue : out Unbounded_String; Host : out Host_Name);

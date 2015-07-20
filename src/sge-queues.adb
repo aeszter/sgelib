@@ -100,6 +100,7 @@ package body SGE.Queues is
             Cores                 : Natural := 0;
             SSD, GPU_Present      : Boolean := False;
             Supports_Exclusive    : Boolean := False;
+            Sequence              : Natural := 0;
             Network               : Resources.Network := none;
             Model, GPU, Queue_Name : Unbounded_String := Null_Unbounded_String;
             Long_Queue_Name       : Unbounded_String := Null_Unbounded_String;
@@ -152,7 +153,9 @@ package body SGE.Queues is
                   elsif Value (A) = "gpu" then
                      GPU_Present := True;
                   elsif Value (A) = "exclusive" then
-                        Supports_Exclusive := True;
+                     Supports_Exclusive := True;
+                  elsif Value (A) = "seq_no" then
+                     Sequence := Integer (large'Value (Value (First_Child (N))));
                   end if;
                elsif Name (N) = "name" then
                   Long_Queue_Name := To_Unbounded_String (Value (First_Child (N)));
@@ -170,7 +173,8 @@ package body SGE.Queues is
                                     SSD      => SSD,
                                     GPU      => To_GPU (GPU),
                                     GPU_Present => GPU_Present,
-                                    Exclusive => Supports_Exclusive,
+                                    Exclusive   => Supports_Exclusive,
+                                    Sequence_Number => Sequence,
                                     Runtime  => Runtime,
                                     Name     => Queue_Name,
                                     Long_Name => To_String (Long_Queue_Name),
@@ -199,18 +203,19 @@ package body SGE.Queues is
 
    function New_Queue
      (Used, Reserved, Total : Natural;
-      State, Q_Type         : String;
-      Memory                : String;
-      Cores, Slots          : Natural;
-      Network               : Resources.Network;
-      SSD, GPU_Present      : Boolean;
-      Exclusive             : Boolean;
-      GPU                   : Resources.GPU_Model;
-      Model                 : Resources.CPU_Model;
-      Runtime               : Unbounded_String;
-      Name                  : Unbounded_String;
-      Long_Name             : String
-     )
+                       State, Q_Type         : String;
+                       Memory                : String;
+                       Cores, Slots          : Natural;
+                       Network               : Resources.Network;
+                       SSD, GPU_Present      : Boolean;
+                       Exclusive             : Boolean;
+                       Sequence_Number       : Natural;
+                       GPU                   : Resources.GPU_Model;
+                       Model                 : Resources.CPU_Model;
+                       Runtime               : Unbounded_String;
+                       Name                  : Unbounded_String;
+                       Long_Name             : String
+                      )
       return Queue
    is
       Q : Queue;
@@ -218,6 +223,7 @@ package body SGE.Queues is
       Q.Used     := Used;
       Q.Reserved := Reserved;
       Q.Total    := Total;
+      Q.Sequence := Sequence_Number;
       Set_Host_Name (Q, Long_Name);
       for Pos in State'Range loop
          case State (Pos) is
