@@ -261,7 +261,7 @@ package body SGE.Partitions is
 
    function Get_Model (P : Partition) return String is
    begin
-      return Get_Model (P.Properties)'Img;
+      return To_String (Get_Model (P.Properties));
    end Get_Model;
 
    function Get_GPU (P : Partition) return String is

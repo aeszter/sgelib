@@ -126,7 +126,7 @@ package body SGE.Host_Properties is
 
    procedure Set_Model (Props : in out Set_Of_Properties; Model : String) is
    begin
-      Props.Model := CPU_Model'Value (Model);
+      Props.Model := To_Model (Model);
    end Set_Model;
 
    procedure Set_Model (Props : in out Set_Of_Properties; Model : CPU_Model) is

@@ -62,7 +62,7 @@ package body SGE.Hosts is
 
    function Get_Model (H : Host) return String is
    begin
-      return Get_Model (H.Properties)'Img;
+      return To_String (Get_Model (H.Properties));
    end Get_Model;
 
    function Get_GPU (H : Host) return String is
