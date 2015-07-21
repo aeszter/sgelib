@@ -10,6 +10,8 @@ package SGE.Queues is
 
    procedure Sort;
    --  Sort the queue list by resources
+   procedure Sort_By_Sequence;
+   --  Sort by sequence number
    procedure Rewind;
    --  rewind the queue list, i.e. point the memory pointer at the first queue
    function Empty return Boolean;
@@ -22,33 +24,39 @@ package SGE.Queues is
    --  is there a next queue? If At_End returns False, Next will return a Queue
    function Current return Queue;
    --  retrieve the current queue without changing the memory pointer
+   procedure Update_Current (Process : not null access procedure (Q : in out Queue));
    procedure Append_List (Input_Nodes : Node_List);
    procedure Iterate (Process : not null access procedure (Q : Queue));
    procedure Iterate (Process : not null access procedure (Q : Queue);
                       Selector : not null access function (Q : Queue) return Boolean);
+   procedure Occupy_Slots  (Q : in out Queue; How_Many : Natural);
+
 
    function New_Queue (Used, Reserved, Total : Natural;
-      State, Q_Type         : String;
-      Memory                : String;
-      Cores, Slots          : Natural;
-      Network               : Resources.Network;
-      SSD, GPU_Present      : Boolean;
-      GPU                   : Resources.GPU_Model;
-      Model                 : Resources.CPU_Model;
-      Runtime               : Unbounded_String;
-      Name                  : Unbounded_String;
-      Long_Name             : Unbounded_String
-     )
+                       State, Q_Type         : String;
+                       Memory                : String;
+                       Cores, Slots          : Natural;
+                       Network               : Resources.Network;
+                       SSD, GPU_Present      : Boolean;
+                       Exclusive             : Boolean;
+                       Sequence_Number       : Natural;
+                       GPU                   : Resources.GPU_Model;
+                       Model                 : Resources.CPU_Model;
+                       Runtime               : Unbounded_String;
+                       Name                  : Unbounded_String;
+                       Long_Name             : String
+                      )
                        return Queue;
-
+   procedure Set_Host_Name (Q : in out Queue; Long_Name : String);
+   procedure Decompose_Long_Name (Long_Name : String; Queue : out Unbounded_String; Host : out Host_Name);
 
    function Precedes_By_Resources (Left, Right : Queue) return Boolean;
+   function Precedes_By_Sequence (Left, Right : Queue) return Boolean;
 
    function Get_Properties (Q : Queue) return Set_Of_Properties;
    function Get_Name (Q : Queue) return Unbounded_String;
    function Get_Name (Q : Queue) return String;
-   function Get_Long_Name (Q : Queue) return String;
-   function Get_Host_Name (Q : Queue) return String;
+   function Get_Host_Name (Q : Queue) return Host_Properties.Host_Name;
    function Get_Slot_Count (Q : Queue) return Natural;
    function Get_Used_Slots (Q : Queue) return Natural;
    function Get_Reserved_Slots (Q : Queue) return Natural;
@@ -76,7 +84,9 @@ private
 
    type Queue is record
       Used, Reserved, Total : Natural;
-      Name, Long_Name       : Unbounded_String;
+      Sequence              : Natural := 0;
+      Name                  : Unbounded_String;
+      Host                  : Host_Properties.Host_Name;
       Properties            : Set_Of_Properties;
       State                 : State_Array := (others => False);
       Q_Type                : Type_Array := (others => False);
@@ -86,6 +96,8 @@ private
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Queue);
    package Sorting_By_Resources is
      new Queue_Lists.Generic_Sorting ("<" => Precedes_By_Resources);
+   package Sorting_By_Sequence is
+      new Queue_Lists.Generic_Sorting ("<" => Precedes_By_Sequence);
 
    List : Queue_Lists.List;
    List_Cursor : Queue_Lists.Cursor := Queue_Lists.No_Element;

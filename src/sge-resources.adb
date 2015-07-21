@@ -12,6 +12,11 @@ with Ada.Strings.Maps.Constants;
 
 package body SGE.Resources is
 
+   function Contains (Container : Hashed_List; Key : String) return Boolean is
+   begin
+      return Contains (Container, To_Unbounded_String (Key));
+   end Contains;
+
    overriding function Copy (Source : Hashed_List) return Hashed_List is
    begin
       return (Resource_Lists.Copy (Resource_Lists.Map (Source)) with
@@ -195,6 +200,8 @@ package body SGE.Resources is
          return abudhabi;
       elsif Equal_Case_Insensitive (S, "westmere") then
          return westmere;
+      elsif Equal_Case_Insensitive (S, "haswell") then
+         return haswell;
       else
          raise Constraint_Error with "Unknown CPU model: " & S;
       end if;

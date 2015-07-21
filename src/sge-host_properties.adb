@@ -1,10 +1,42 @@
 with SGE.Parser; use SGE.Parser;
 with Ada.Exceptions; use Ada.Exceptions;
 with SGE.Utils;
+with Ada.Strings.Fixed;
 
 
 package body SGE.Host_Properties is
 
+   overriding function "<" (Left, Right : Host_Name) return Boolean is
+   begin
+      return Names."<" (Names.Bounded_String (Left), Names.Bounded_String (Right));
+   end "<";
+
+   pragma Inline ("<");
+   overriding function "=" (Left, Right : Host_Name) return Boolean is
+   begin
+      return Names."=" (Names.Bounded_String (Left), Names.Bounded_String (Right));
+   end "=";
+
+   pragma Inline ("=");
+
+   function To_Host_Name (S : String) return Host_Name is
+      Separator : constant Natural := Ada.Strings.Fixed.Index (Source => S,
+                                                                Pattern => ".");
+      Short_Name : constant String := (if Separator = 0 then S
+                                       else S (S'First .. Separator - 1));
+   begin
+      return Host_Name (Names.To_Bounded_String (Source => Short_Name));
+   end To_Host_Name;
+
+   function Value (Host : Host_Name) return String is
+   begin
+      return Names.To_String (Names.Bounded_String (Host));
+   end Value;
+
+   function Has_Exclusive (Props : Set_Of_Properties) return Boolean is
+   begin
+      return Props.Exclusive;
+   end Has_Exclusive;
 
    function Has_SSD (Props : Set_Of_Properties) return Boolean is
    begin
@@ -94,7 +126,7 @@ package body SGE.Host_Properties is
 
    procedure Set_Model (Props : in out Set_Of_Properties; Model : String) is
    begin
-      Props.Model := CPU_Model'Value (Model);
+      Props.Model := To_Model (Model);
    end Set_Model;
 
    procedure Set_Model (Props : in out Set_Of_Properties; Model : CPU_Model) is
@@ -106,6 +138,11 @@ package body SGE.Host_Properties is
    begin
       Props.Runtime := Runtime;
    end Set_Runtime;
+
+   procedure Set_Exclusive (Props : in out Set_Of_Properties) is
+   begin
+      Props.Exclusive := True;
+   end Set_Exclusive;
 
    procedure Set_SSD (Props : in out Set_Of_Properties) is
    begin
@@ -309,5 +346,13 @@ package body SGE.Host_Properties is
         & ",rt=>" & To_String (Props.Runtime)
       & ")";
    end To_String;
+
+   function Get_Runtime (Props : Set_Of_Properties) return Natural is
+   begin
+      return Integer'Value (To_String (Props.Runtime));
+   exception
+      when Constraint_Error -- Value is not a number of seconds
+         => return Unformat_Duration (To_String (Props.Runtime));
+   end Get_Runtime;
 
 end SGE.Host_Properties;

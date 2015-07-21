@@ -53,7 +53,7 @@ package SGE.Hosts is
    function Get_Free_Slots (H : Host) return Natural;
    function Get_Reserved_Slots (H : Host) return Natural;
    function Get_Used_Slots (H : Host) return Natural;
-   function Get_Name (H : Host) return String;
+   function Get_Name (H : Host) return Host_Name;
    function Has_Unreachable_Queue (H : Host) return Boolean;
    function Get_Network (H : Host) return String;
    function Get_Model (H : Host) return String;
@@ -66,6 +66,7 @@ package SGE.Hosts is
    function Has_Slaves (J : Job) return Boolean;
    function Get_Slaves (J : Job) return Natural;
    function Get_ID (J  : Job) return Positive;
+   function Get_Full_ID (J : Job) return String;
    function Get_Start_Time (J  : Job) return Ada.Calendar.Time;
 
    function Get_State (Q : Queue_Pointer) return String;
@@ -141,7 +142,7 @@ private
 
 
    type Host is record
-      Name       : Unbounded_String;
+      Name       : Host_Name;
       Jobs       : Job_List;
       Properties : Set_Of_Properties;
       Load       : SGE.Host_Properties.Load;

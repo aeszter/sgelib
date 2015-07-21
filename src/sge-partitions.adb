@@ -93,47 +93,47 @@ package body SGE.Partitions is
 
          begin
             --  Update totals
-            P.Total_Slots.Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+            P.Total_Slots.Include (Key      => Get_Host_Name (Q),
                                    New_Item => Get_Slot_Count (Q));
-            P.Total_Hosts.Include (Host_Names.To_Bounded_String (Get_Host_Name (Q)));
-            List.Summary (total).Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+            P.Total_Hosts.Include (Get_Host_Name (Q));
+            List.Summary (total).Include (Key      => Get_Host_Name (Q),
                                    New_Item => Get_Slot_Count (Q));
             if Is_Offline (Q) then
-               P.Offline_Slots.Include (Key => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+               P.Offline_Slots.Include (Key => Get_Host_Name (Q),
                                    New_Item => Get_Slot_Count (Q));
-               P.Offline_Hosts.Include (Host_Names.To_Bounded_String (Get_Host_Name (Q)));
-               List.Summary (offline).Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+               P.Offline_Hosts.Include (Get_Host_Name (Q));
+               List.Summary (offline).Include (Key      => Get_Host_Name (Q),
                                                New_Item => Get_Slot_Count (Q));
             elsif Is_Disabled (Q) then
-               P.Disabled_Slots.Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+               P.Disabled_Slots.Include (Key      => Get_Host_Name (Q),
                                                New_Item => Get_Slot_Count (Q));
-               P.Disabled_Hosts.Include (Host_Names.To_Bounded_String (Get_Host_Name (Q)));
-               List.Summary (disabled).Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+               P.Disabled_Hosts.Include (Get_Host_Name (Q));
+               List.Summary (disabled).Include (Key      => Get_Host_Name (Q),
                                                 New_Item => Get_Slot_Count (Q));
             elsif Is_Suspended (Q) then
                P.Suspended_Slots := P.Suspended_Slots + Get_Slot_Count (Q);
             else
                if Get_Used_Slots (Q) > 0 then
-                  P.Used_Hosts.Include (Host_Names.To_Bounded_String (Get_Host_Name (Q)));
+                  P.Used_Hosts.Include (Get_Host_Name (Q));
                   P.Used_Slots := P.Used_Slots + Get_Used_Slots (Q);
-                  List.Summary (used).Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+                  List.Summary (used).Include (Key      => Get_Host_Name (Q),
                                                New_Item => Get_Used_Slots (Q));
                end if;
                if Get_Reserved_Slots (Q) > 0 then
-                  P.Reserved_Hosts.Include (Host_Names.To_Bounded_String (Get_Host_Name (Q)));
+                  P.Reserved_Hosts.Include (Get_Host_Name (Q));
                   P.Reserved_Slots := P.Reserved_Slots + Get_Reserved_Slots (Q);
-                  List.Summary (reserved).Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+                  List.Summary (reserved).Include (Key      => Get_Host_Name (Q),
                                                    New_Item => Get_Reserved_Slots (Q));
                end if;
-               P.Available_Slots.Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+               P.Available_Slots.Include (Key      => Get_Host_Name (Q),
                                                New_Item => Get_Free_Slots (Q));
                if Get_Reserved_Slots (Q) = 0 and then
                  Get_Used_Slots (Q) = 0 and then
                  Get_Free_Slots (Q) = Get_Slot_Count (Q)
                then
-                  P.Available_Hosts.Include (Host_Names.To_Bounded_String (Get_Host_Name (Q)));
+                  P.Available_Hosts.Include (Get_Host_Name (Q));
                end if;
-               List.Summary (available).Include (Key      => Host_Names.To_Bounded_String (Get_Host_Name (Q)),
+               List.Summary (available).Include (Key      => Get_Host_Name (Q),
                                                  New_Item => Get_Free_Slots (Q));
             end if;
          exception
@@ -261,7 +261,7 @@ package body SGE.Partitions is
 
    function Get_Model (P : Partition) return String is
    begin
-      return Get_Model (P.Properties)'Img;
+      return To_String (Get_Model (P.Properties));
    end Get_Model;
 
    function Get_GPU (P : Partition) return String is

@@ -7,10 +7,29 @@ with Ada.Exceptions; use Ada.Exceptions;
 package body SGE.Queues is
    use Queue_Lists;
 
+   procedure Occupy_Slots (Q : in out Queue; How_Many : Natural) is
+   begin
+      if How_Many > Q.Total - Q.Used - Q.Reserved then
+         raise Constraint_Error with "Not enough free slots";
+      end if;
+      Q.Used := Q.Used + How_Many;
+   end Occupy_Slots;
+
+   procedure Update_Current (Process : not null access procedure (Q : in out Queue)) is
+   begin
+      List.Update_Element (List_Cursor, Process);
+   end Update_Current;
+
+
    procedure Sort is
    begin
       Sorting_By_Resources.Sort (List);
    end Sort;
+
+   procedure Sort_By_Sequence is
+   begin
+      Sorting_By_Sequence.Sort (List);
+   end Sort_By_Sequence;
 
    procedure Rewind is
    begin
@@ -80,6 +99,8 @@ package body SGE.Queues is
             Mem, Runtime          : Unbounded_String;
             Cores                 : Natural := 0;
             SSD, GPU_Present      : Boolean := False;
+            Supports_Exclusive    : Boolean := False;
+            Sequence              : Natural := 0;
             Network               : Resources.Network := none;
             Model, GPU, Queue_Name : Unbounded_String := Null_Unbounded_String;
             Long_Queue_Name       : Unbounded_String := Null_Unbounded_String;
@@ -131,6 +152,10 @@ package body SGE.Queues is
                      GPU := To_Unbounded_String (Value (First_Child (N)));
                   elsif Value (A) = "gpu" then
                      GPU_Present := True;
+                  elsif Value (A) = "exclusive" then
+                     Supports_Exclusive := True;
+                  elsif Value (A) = "seq_no" then
+                     Sequence := Integer (large'Value (Value (First_Child (N))));
                   end if;
                elsif Name (N) = "name" then
                   Long_Queue_Name := To_Unbounded_String (Value (First_Child (N)));
@@ -148,9 +173,11 @@ package body SGE.Queues is
                                     SSD      => SSD,
                                     GPU      => To_GPU (GPU),
                                     GPU_Present => GPU_Present,
+                                    Exclusive   => Supports_Exclusive,
+                                    Sequence_Number => Sequence,
                                     Runtime  => Runtime,
                                     Name     => Queue_Name,
-                                    Long_Name => Long_Queue_Name,
+                                    Long_Name => To_String (Long_Queue_Name),
                                     State     => To_String (State),
                                     Q_Type => To_String (Q_Type)
                                    ));
@@ -176,17 +203,19 @@ package body SGE.Queues is
 
    function New_Queue
      (Used, Reserved, Total : Natural;
-      State, Q_Type         : String;
-      Memory                : String;
-      Cores, Slots          : Natural;
-      Network               : Resources.Network;
-      SSD, GPU_Present      : Boolean;
-      GPU                   : Resources.GPU_Model;
-      Model                 : Resources.CPU_Model;
-      Runtime               : Unbounded_String;
-      Name                  : Unbounded_String;
-      Long_Name             : Unbounded_String
-     )
+                       State, Q_Type         : String;
+                       Memory                : String;
+                       Cores, Slots          : Natural;
+                       Network               : Resources.Network;
+                       SSD, GPU_Present      : Boolean;
+                       Exclusive             : Boolean;
+                       Sequence_Number       : Natural;
+                       GPU                   : Resources.GPU_Model;
+                       Model                 : Resources.CPU_Model;
+                       Runtime               : Unbounded_String;
+                       Name                  : Unbounded_String;
+                       Long_Name             : String
+                      )
       return Queue
    is
       Q : Queue;
@@ -194,7 +223,8 @@ package body SGE.Queues is
       Q.Used     := Used;
       Q.Reserved := Reserved;
       Q.Total    := Total;
-      Q.Long_Name := Long_Name;
+      Q.Sequence := Sequence_Number;
+      Set_Host_Name (Q, Long_Name);
       for Pos in State'Range loop
          case State (Pos) is
             when 'a' => Q.State (alarm) := True;
@@ -221,7 +251,9 @@ package body SGE.Queues is
       Set_Network (Q.Properties, Network);
       Set_Model (Q.Properties, Model);
       Set_Runtime (Q.Properties, Runtime);
-      Q.Name     := Name;
+      if Name /= Null_Unbounded_String then
+         Q.Name     := Name;
+      end if;
       if Cores = 0 then
          Set_Cores (Q.Properties, Q.Total);
       else
@@ -235,6 +267,9 @@ package body SGE.Queues is
       if GPU_Present then
          Set_GPU (Q.Properties);
       end if;
+      if Exclusive then
+         Set_Exclusive (Q.Properties);
+      end if;
 
       return Q;
    end New_Queue;
@@ -247,6 +282,11 @@ package body SGE.Queues is
    begin
       return Left.Properties < Right.Properties;
    end Precedes_By_Resources;
+
+   function Precedes_By_Sequence (Left, Right : Queue) return Boolean is
+   begin
+      return Left.Sequence < Right.Sequence;
+   end Precedes_By_Sequence;
 
 
    function Get_Slot_Count (Q : Queue) return Natural is
@@ -302,21 +342,17 @@ package body SGE.Queues is
       return To_String (Q.Name);
    end Get_Name;
 
-   function Get_Long_Name (Q : Queue) return String is
+   function Get_Host_Name (Q : Queue) return Host_Name is
    begin
-      return To_String (Q.Long_Name);
-   end Get_Long_Name;
-
-   function Get_Host_Name (Q : Queue) return String is
-      Src : String := To_String (Q.Long_Name);
-      Start : Positive := Index (Source  => Src,
-                                 Pattern => "@");
-      Stop  : Positive := Index (Source  => Src,
-                                    From => Start,
-                                 Pattern => ".");
-   begin
-      return Src (Start .. Stop);
+      return Q.Host;
    end Get_Host_Name;
+
+   procedure Set_Host_Name (Q : in out Queue; Long_Name : String) is
+   begin
+      Decompose_Long_Name (Long_Name => Long_Name,
+                           Queue     => Q.Name,
+                           Host      => Q.Host);
+   end Set_Host_Name;
 
    function Has_Error (Q : Queue) return Boolean is
    begin
@@ -373,6 +409,15 @@ package body SGE.Queues is
       return Type_String;
    end Get_Type;
 
-
+   procedure Decompose_Long_Name (Long_Name : String; Queue : out Unbounded_String; Host : out Host_Name) is
+      Start : Positive := Index (Source  => Long_Name,
+                                 Pattern => "@");
+      Stop  : Positive := Index (Source  => Long_Name,
+                                    From => Start,
+                                 Pattern => ".");
+   begin
+      Host := To_Host_Name (Long_Name (Start + 1 .. Stop - 1));
+      Queue := To_Unbounded_String (Long_Name (Long_Name'First .. Start - 1));
+   end Decompose_Long_Name;
 
 end SGE.Queues;

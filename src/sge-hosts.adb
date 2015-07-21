@@ -4,6 +4,7 @@ with Ada.Strings.Bounded; use Ada.Strings.Bounded;
 with Calendar.Conversions;
 with Interfaces.C;
 with SGE.Utils;
+with Ada.Strings.Fixed;
 
 
 package body SGE.Hosts is
@@ -49,9 +50,9 @@ package body SGE.Hosts is
       return Element (Q).Reserved;
    end Get_Reserved_Slots;
 
-   function Get_Name (H : Host) return String is
+   function Get_Name (H : Host) return Host_Name is
    begin
-      return To_String (H.Name);
+      return H.Name;
    end Get_Name;
 
    function Get_Network (H : Host) return String is
@@ -61,7 +62,7 @@ package body SGE.Hosts is
 
    function Get_Model (H : Host) return String is
    begin
-      return Get_Model (H.Properties)'Img;
+      return To_String (Get_Model (H.Properties));
    end Get_Model;
 
    function Get_GPU (H : Host) return String is
@@ -386,7 +387,7 @@ package body SGE.Hosts is
          begin
             N := Item (Host_Nodes, I - 1);
             A := Get_Attr (N, "name");
-            H.Name := To_Unbounded_String (Value (A));
+            H.Name := To_Host_Name (Value (A));
             if Value (A) /= "global" then
                Value_Nodes := Child_Nodes (N);
                Host_Attributes :
@@ -778,5 +779,18 @@ package body SGE.Hosts is
       H.Queues.Iterate (Wrapper'Access);
    end Iterate_Queues;
 
+   function Get_Full_ID (J : Job) return String is
+      use Ada.Strings.Fixed;
+      use Ada.Strings;
+
+      Main : constant String := Trim (J.ID'Img, Left);
+      Suffix : constant String := Trim (J.Task_ID'Img, Left);
+   begin
+      if J.Task_ID = 0 then
+         return Main;
+      else
+         return Main & "." & Suffix;
+      end if;
+   end Get_Full_ID;
 
 end SGE.Hosts;
