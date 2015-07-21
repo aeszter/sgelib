@@ -200,6 +200,8 @@ package body SGE.Resources is
          return abudhabi;
       elsif Equal_Case_Insensitive (S, "westmere") then
          return westmere;
+      elsif Equal_Case_Insensitive (S, "haswell") then
+         return haswell;
       else
          raise Constraint_Error with "Unknown CPU model: " & S;
       end if;
