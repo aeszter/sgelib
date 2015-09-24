@@ -96,7 +96,7 @@ package body SGE.Queues is
             Used, Reserved, Total : Natural := 0;
             Slots                 : Natural := 0;
             State, Q_Type         : Unbounded_String;
-            Mem, Runtime          : Unbounded_String;
+            Mem, Runtime, PE      : Unbounded_String;
             Cores                 : Natural := 0;
             SSD, GPU_Present      : Boolean := False;
             Supports_Exclusive    : Boolean := False;
@@ -156,6 +156,8 @@ package body SGE.Queues is
                      Supports_Exclusive := True;
                   elsif Value (A) = "seq_no" then
                      Sequence := Integer (large'Value (Value (First_Child (N))));
+                  elsif Value (A) = "pe_name" then
+                     PE := To_Unbounded_String (Value (First_Child (N)));
                   end if;
                elsif Name (N) = "name" then
                   Long_Queue_Name := To_Unbounded_String (Value (First_Child (N)));
@@ -175,7 +177,8 @@ package body SGE.Queues is
                                     GPU_Present => GPU_Present,
                                     Exclusive   => Supports_Exclusive,
                                     Sequence_Number => Sequence,
-                                    Runtime  => Runtime,
+                                    Runtime         => Runtime,
+                                    PE        => PE,
                                     Name     => Queue_Name,
                                     Long_Name => To_String (Long_Queue_Name),
                                     State     => To_String (State),
@@ -213,6 +216,7 @@ package body SGE.Queues is
                        GPU                   : Resources.GPU_Model;
                        Model                 : Resources.CPU_Model;
                        Runtime               : Unbounded_String;
+                       PE                    : Unbounded_String;
                        Name                  : Unbounded_String;
                        Long_Name             : String
                       )
@@ -251,6 +255,7 @@ package body SGE.Queues is
       Set_Network (Q.Properties, Network);
       Set_Model (Q.Properties, Model);
       Set_Runtime (Q.Properties, Runtime);
+      Set_PE (Q.Properties, PE);
       if Name /= Null_Unbounded_String then
          Q.Name     := Name;
       end if;

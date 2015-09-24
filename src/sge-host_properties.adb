@@ -76,6 +76,11 @@ package body SGE.Host_Properties is
       return Props.Memory;
    end Get_Memory;
 
+   function Get_PE (Props : Set_Of_Properties) return String is
+   begin
+      return To_String (Props.PE);
+   end Get_PE;
+
    ---------------
    -- Get_Cores --
    ---------------
@@ -138,6 +143,11 @@ package body SGE.Host_Properties is
    begin
       Props.Runtime := Runtime;
    end Set_Runtime;
+
+   procedure Set_PE (Props : in out Set_Of_Properties; PE : Unbounded_String) is
+   begin
+      Props.PE := PE;
+   end Set_PE;
 
    procedure Set_Exclusive (Props : in out Set_Of_Properties) is
    begin

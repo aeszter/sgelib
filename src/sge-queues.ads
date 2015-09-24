@@ -43,6 +43,7 @@ package SGE.Queues is
                        GPU                   : Resources.GPU_Model;
                        Model                 : Resources.CPU_Model;
                        Runtime               : Unbounded_String;
+                       PE                    : Unbounded_String;
                        Name                  : Unbounded_String;
                        Long_Name             : String
                       )
