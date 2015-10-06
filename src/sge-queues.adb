@@ -237,6 +237,7 @@ package body SGE.Queues is
             when 'u' => Q.State (unreachable) := True;
             when 'o' => Q.State (old) := True;
             when 'S' => Q.State (suspended) := True;
+            when 'D' => Q.State (calendar_disabled) := True;
             when others => raise Constraint_Error
                  with "Queue State has an unknown character: " & State (Pos);
          end case;
@@ -322,7 +323,8 @@ package body SGE.Queues is
 
    function Is_Disabled (Q : Queue) return Boolean is
    begin
-      return Has_Disabled (Q) and then not Has_Unreachable (Q);
+      return (Has_Disabled (Q) or else Has_Calendar_Disabled (Q))
+        and then not Has_Unreachable (Q);
    end Is_Disabled;
 
    function Is_Suspended (Q : Queue) return Boolean is
@@ -368,6 +370,11 @@ package body SGE.Queues is
    begin
       return Q.State (disabled);
    end Has_Disabled;
+
+   function Has_Calendar_Disabled (Q : Queue) return Boolean is
+   begin
+      return Q.State (calendar_disabled);
+   end Has_Calendar_Disabled;
 
    function Has_Unreachable (Q : Queue) return Boolean is
    begin
