@@ -81,7 +81,7 @@ package body SGE.Utils is
 
    function To_String (User : User_Name) return String is
    begin
-      return String (User);
+      return Ada.Strings.Fixed.Trim (String (User), Ada.Strings.Right);
    end To_String;
 
    function To_Time (Time_String : String) return Ada.Calendar.Time is
@@ -136,5 +136,41 @@ package body SGE.Utils is
    begin
       return User_Is_In_List (User, Implicit_Trust ("-sm"));
    end User_Is_Manager;
+
+   function Get_User_Tickets (User : String) return Long_Integer is
+      use SGE.Spread_Sheets;
+
+      Exit_Status : Natural;
+      Result : Spread_Sheet;
+   begin
+      if User = "" then
+         return 0;
+      end if;
+      SGE.Parser.Setup_No_XML (Command     => Trust_As_Command ("qconf"),
+                               Subpath     => Implicit_Trust ("/bin/linux-x64/"),
+                               Selector    => Implicit_Trust ("-suser ") & Sanitise (User),
+                               Output      => Result,
+                               Exit_Status => Exit_Status);
+      if Exit_Status /= 0 then
+         return 0;
+      end if;
+      Result.Rewind;
+      while not Result.At_End loop
+         declare
+            Line : String := Result.Current;
+            Sep  : Natural := Ada.Strings.Fixed.Index (Line, " ");
+            Key  : String := Line (Line'First .. Sep - 1);
+            Value : String := Line (Sep + 1 .. Line'Last);
+         begin
+            if Key = "oticket" then
+               return Long_Integer'Value (Value);
+            else
+               Result.Next; -- line separator
+               Result.Next;
+            end if;
+         end;
+      end loop;
+      return 0;
+   end Get_User_Tickets;
 
 end SGE.Utils;

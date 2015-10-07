@@ -11,7 +11,6 @@ with SGE.Taint; use SGE.Taint;
 package body SGE.Parser is
 
    Reader : DOM.Readers.Tree_Reader;
-   Table  : Spread_Sheets.Spread_Sheet;
    -----------
    -- Setup --
    -----------
@@ -49,6 +48,7 @@ package body SGE.Parser is
                           Output : out Spread_Sheets.Spread_Sheet;
                            Exit_Status : out Natural) is
       SGE_Command : Plain_Pipe_Stream;
+      Table  : Spread_Sheets.Spread_Sheet;
    begin
       SGE_Command.Execute (Command => Trust_As_Command (sgeroot & Value (Subpath) & Value (Command)),
                            Arguments => Selector,

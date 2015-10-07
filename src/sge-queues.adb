@@ -96,7 +96,7 @@ package body SGE.Queues is
             Used, Reserved, Total : Natural := 0;
             Slots                 : Natural := 0;
             State, Q_Type         : Unbounded_String;
-            Mem, Runtime          : Unbounded_String;
+            Mem, Runtime, PE      : Unbounded_String;
             Cores                 : Natural := 0;
             SSD, GPU_Present      : Boolean := False;
             Supports_Exclusive    : Boolean := False;
@@ -156,6 +156,8 @@ package body SGE.Queues is
                      Supports_Exclusive := True;
                   elsif Value (A) = "seq_no" then
                      Sequence := Integer (large'Value (Value (First_Child (N))));
+                  elsif Value (A) = "pe_name" then
+                     PE := To_Unbounded_String (Value (First_Child (N)));
                   end if;
                elsif Name (N) = "name" then
                   Long_Queue_Name := To_Unbounded_String (Value (First_Child (N)));
@@ -175,7 +177,8 @@ package body SGE.Queues is
                                     GPU_Present => GPU_Present,
                                     Exclusive   => Supports_Exclusive,
                                     Sequence_Number => Sequence,
-                                    Runtime  => Runtime,
+                                    Runtime         => Runtime,
+                                    PE        => PE,
                                     Name     => Queue_Name,
                                     Long_Name => To_String (Long_Queue_Name),
                                     State     => To_String (State),
@@ -213,6 +216,7 @@ package body SGE.Queues is
                        GPU                   : Resources.GPU_Model;
                        Model                 : Resources.CPU_Model;
                        Runtime               : Unbounded_String;
+                       PE                    : Unbounded_String;
                        Name                  : Unbounded_String;
                        Long_Name             : String
                       )
@@ -233,6 +237,7 @@ package body SGE.Queues is
             when 'u' => Q.State (unreachable) := True;
             when 'o' => Q.State (old) := True;
             when 'S' => Q.State (suspended) := True;
+            when 'D' => Q.State (calendar_disabled) := True;
             when others => raise Constraint_Error
                  with "Queue State has an unknown character: " & State (Pos);
          end case;
@@ -251,6 +256,7 @@ package body SGE.Queues is
       Set_Network (Q.Properties, Network);
       Set_Model (Q.Properties, Model);
       Set_Runtime (Q.Properties, Runtime);
+      Set_PE (Q.Properties, PE);
       if Name /= Null_Unbounded_String then
          Q.Name     := Name;
       end if;
@@ -317,7 +323,8 @@ package body SGE.Queues is
 
    function Is_Disabled (Q : Queue) return Boolean is
    begin
-      return Has_Disabled (Q) and then not Has_Unreachable (Q);
+      return (Has_Disabled (Q) or else Has_Calendar_Disabled (Q))
+        and then not Has_Unreachable (Q);
    end Is_Disabled;
 
    function Is_Suspended (Q : Queue) return Boolean is
@@ -363,6 +370,11 @@ package body SGE.Queues is
    begin
       return Q.State (disabled);
    end Has_Disabled;
+
+   function Has_Calendar_Disabled (Q : Queue) return Boolean is
+   begin
+      return Q.State (calendar_disabled);
+   end Has_Calendar_Disabled;
 
    function Has_Unreachable (Q : Queue) return Boolean is
    begin

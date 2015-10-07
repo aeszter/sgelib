@@ -7,7 +7,7 @@ with POSIX; use POSIX;
 with Ada.Calendar;
 
 package SGE.Utils is
-   Version : String := "v0.20";
+   Version : String := "v0.21";
    type Tri_State is (False, True, Undecided);
    type User_Name is new String (1 .. 8);
 
@@ -57,5 +57,6 @@ package SGE.Utils is
    function To_Time (Time_String : String) return Ada.Calendar.Time;
    function User_Is_Manager (User : String) return Boolean;
    function User_Is_Operator (User : String) return Boolean;
+   function Get_User_Tickets (User : String) return Long_Integer;
 
 end SGE.Utils;

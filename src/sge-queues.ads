@@ -43,6 +43,7 @@ package SGE.Queues is
                        GPU                   : Resources.GPU_Model;
                        Model                 : Resources.CPU_Model;
                        Runtime               : Unbounded_String;
+                       PE                    : Unbounded_String;
                        Name                  : Unbounded_String;
                        Long_Name             : String
                       )
@@ -68,6 +69,7 @@ package SGE.Queues is
 
    function Has_Error (Q : Queue) return Boolean;
    function Has_Disabled (Q : Queue) return Boolean;
+   function Has_Calendar_Disabled (Q : Queue) return Boolean;
    function Has_Unreachable (Q : Queue) return Boolean;
    function Has_Suspended (Q : Queue) return Boolean;
    function Has_Old_Config (Q : Queue) return Boolean;
@@ -77,7 +79,7 @@ package SGE.Queues is
 
 private
 
-   type State_Flag is (alarm, disabled, error, unreachable, old, suspended);
+   type State_Flag is (alarm, disabled, error, unreachable, old, suspended, calendar_disabled);
    type Type_Flag is (B, I, P);
    type State_Array is array (State_Flag) of Boolean;
    type Type_Array is array (Type_Flag) of Boolean;
