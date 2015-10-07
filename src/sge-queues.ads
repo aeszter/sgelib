@@ -31,6 +31,7 @@ package SGE.Queues is
                       Selector : not null access function (Q : Queue) return Boolean);
    procedure Occupy_Slots  (Q : in out Queue; How_Many : Natural);
 
+   function Count return Natural;
 
    function New_Queue (Used, Reserved, Total : Natural;
                        State, Q_Type         : String;

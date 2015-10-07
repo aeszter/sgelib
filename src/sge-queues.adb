@@ -62,6 +62,11 @@ package body SGE.Queues is
       return Queue_Lists.Element (List_Cursor);
    end Current;
 
+   function Count return Natural is
+   begin
+      return Natural (List.Length);
+   end Count;
+
    procedure Iterate (Process : not null access procedure (Q : Queue)) is
       procedure Wrapper (Position : Queue_Lists.Cursor) is
       begin
