@@ -9,12 +9,32 @@ with SGE.Utils; use SGE.Utils;
 with SGE.Context;
 with Ada.Strings.Bounded;
 with SGE.Loggers; use SGE.Loggers;
+with SGE.Containers;
+with Ada.Iterator_Interfaces;
 
 package SGE.Jobs is
    Other_Error : exception; -- generic error
    Too_Many_Jobs_Error : exception; -- Operation usupported if Length (List) > 1
    Missing_Tag_Error : exception; -- an expected XML tag was not found
 
+   type Job is new Logger with private;
+
+   type List is new SGE.Containers.Container with private
+     with Default_Iterator => Iterate,
+     Iterator_Element => Job'Class;
+   type Cursor is private;
+
+   function Has_Element (Position : Cursor) return Boolean;
+
+   package List_Iterator_Interfaces is
+     new Ada.Iterator_Interfaces (Cursor, Has_Element);
+
+   overriding function Length (Collection : List) return Natural;
+   overriding function Is_Empty (Collection : List) return Boolean;
+   overriding procedure Clear (Collection : in out List);
+
+   function Iterate (Container : List) return
+     List_Iterator_Interfaces.Reversible_Iterator'Class;
 
    type State_Flag is (deletion, Error, hold, running, Restarted, suspended,
                        Q_Suspended, transfering, Threshold, waiting);
@@ -30,14 +50,12 @@ package SGE.Jobs is
    type Balancer_Support is array (Balancer_Capability) of Boolean;
 
 
-   type Job is new Logger with private;
-
    function To_Abbrev (Flag : State_Flag) return String;
    function To_String (Flag : State_Flag) return String;
 
-   function Count return Natural;
-   function Count (Predicate : not null access function (J : Job) return Boolean)
-      return Natural;
+   function Count (Collection : List;
+                   Predicate  : not null access function (J : Job'class) return Boolean)
+                   return Natural;
 
    function To_String (Capability : Balancer_Capability) return String;
    function To_Memory (Amount : Usage_Integer) return String;
@@ -132,7 +150,7 @@ package SGE.Jobs is
    -- Get_Summary --
    --  Purpose: Count the number of jobs per state from the List
    -----------------
-   procedure Get_Summary (Tasks, Slots : out State_Count);
+   procedure Get_Summary (Collection : List; Tasks, Slots : out State_Count);
 
 
    -------------
@@ -175,7 +193,8 @@ package SGE.Jobs is
    --  accordingly
    -----------------
 
-   procedure Append_List (Nodes : Node_List);
+   procedure Append (Collection : in out List; Nodes : Node_List);
+   procedure Append (Collection : in out List; J : Job'class);
 
    -----------------
    -- Update_Messages --
@@ -202,8 +221,8 @@ package SGE.Jobs is
    --  Set created with Create_Overlay
    -------------------
 
-   procedure Apply_Overlay;
-   procedure Update_Quota;
+   procedure Apply_Overlay (Collection : List);
+   procedure Update_Quota (Collection : List);
 
 
    -----------------
@@ -211,15 +230,17 @@ package SGE.Jobs is
    --  Purpose: Remove Jobs not matching certain criteria
    -----------------
 
-   procedure Prune_List (Keep : not null access function (J : Job) return Boolean);
-   procedure Prune_List (PE, Queue, Hard_Requests,
+   procedure Prune (Collection : in out List;
+                    Keep       : not null access function (J : Job'Class) return Boolean);
+   procedure Prune_List (Collection : in out List;
+                         PE, Queue, Hard_Requests,
                          Soft_Requests,
                          Slot_Number, Slot_Ranges : Unbounded_String);
 
-   procedure Prune_List_By_Slots (Slots : String);
+   procedure Prune_By_Slots (Slots : String);
    --  outdated. move functionality to Append_List. Does GPS notice this?
 
-   procedure Sort_By (Field : String; Direction : String);
+   procedure Sort_By (Collection : in out List; Field : String; Direction : String);
    function Precedes_By_Name (Left, Right : Job) return Boolean;
    function Precedes_By_Number (Left, Right : Job) return Boolean;
    function Precedes_By_Owner (Left, Right : Job) return Boolean;
@@ -243,34 +264,21 @@ package SGE.Jobs is
 
    function Same (Left, Right : Job) return Boolean;
 
-   procedure Update_Status;
+   procedure Update_Status (Collection : in out List);
    --  Purpose: Update all jobs' status
    procedure Search_Queues;
    --  Look for slots occupied by a job
 
-   procedure Sort;
+   procedure Sort (Collection : in out List);
    --  Sort the job list by resources
-   procedure Rewind;
-   --  rewind the job list, i.e. point the memory pointer at the first job
-   function Empty return Boolean;
-   --  is the job list empty?
-   function Next return Job;
-   --  advance the memory pointer and retrieve the current job
-   --  if the memory pointer points at the last element, or is No_Element, then
-   --  a Constraint_Error is propagated
-   function At_End return Boolean;
-   --  is there a next job? If At_End returns False, Next will return a Job
-   function Current return Job;
-   --  retrieve the current job without changing the memory pointer
 
-   function Find_Job (ID : Natural) return Job;
+   function Find (Collection : List; ID : Natural) return Job'class;
 
 
    -------------
    -- Iterate --
    -------------
 
-   procedure Iterate (Process : not null access procedure (J : Job));
    procedure Iterate_Predecessors (J       : Job;
                                    Process : not null access procedure (ID : Natural));
    procedure Iterate_Predecessor_Requests (J : Job; Process : not null access procedure (S : String));
@@ -294,7 +302,7 @@ private
    package Job_Names is new Ada.Strings.Bounded.Generic_Bounded_Length (Max => Max_Name_Length);
    subtype Job_Name is Job_Names.Bounded_String;
 
-   procedure Update_Status (J : in out Job);
+   procedure Update_Status (J : in out Job'Class);
    --  Purpose: Read the job's status from an appropriate source
    --  (such as a qstat -u call)
 
@@ -378,13 +386,6 @@ private
                                       "<"          => "<",
                                       "="          => Same);
 
-   function Find_Job (ID : Natural) return Job_Lists.Cursor;
-   --  if the job list contains a job with the given ID, return a cursor
-   --  pointing there;
-   --  otherwise, return No_Element
-
-
-
    package Sorting_By_Name is
      new Job_Lists.Generic_Sorting
        ("<" => Precedes_By_Name);
@@ -429,8 +430,11 @@ private
       new Job_Lists.Generic_Sorting ("<" => Precedes_By_Resources);
 
 
-   List : Job_Lists.List;
+   type List is new SGE.Containers.Container with record
+      Data : Job_Lists.List;
+   end record;
+
    Overlay : Job_Maps.Map;
-   List_Cursor : Job_Lists.Cursor := Job_Lists.No_Element;
+   type Cursor is new Job_Lists.Cursor;
 
 end SGE.Jobs;
