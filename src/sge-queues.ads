@@ -20,6 +20,7 @@ package SGE.Queues is
      new Ada.Iterator_Interfaces (Cursor, Has_Element);
 
    overriding function Length (Collection : List) return Natural;
+   overriding function Is_Empty (Collection:List) return Boolean;
    overriding procedure Clear (Collection : in out List);
 
    procedure Append_List (Storage : in out List; Input_Nodes : Node_List);
