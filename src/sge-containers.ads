@@ -5,6 +5,7 @@ package SGE.Containers is
 
    function Length (Collection:Container) return Natural is abstract;
    procedure Clear (Collection : in out Container) is abstract;
+   function Is_Empty (Collection: Container) return Boolean is abstract;
 
 
 
