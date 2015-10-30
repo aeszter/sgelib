@@ -19,29 +19,12 @@ package SGE.Jobs is
 
    type Job is new Logger with private;
 
-   type List is new SGE.Containers.Container with private
-     with Default_Iterator => Iterate,
-     Iterator_Element => Job'Class,
-   variable_indexing => reference;
-   type Cursor is private;
-   type Reference_Type (Element : not null access Job'class) is private
-     with
-     Implicit_Dereference => Element;
-
-   function Has_Element (Position : Cursor) return Boolean;
-
-   package List_Iterator_Interfaces is
-     new Ada.Iterator_Interfaces (Cursor, Has_Element);
+   package Containers is new SGE.Containers (Element_Type => Job'class);
+   type List is new Containers.Container with private;
 
    overriding function Length (Collection : List) return Natural;
    overriding function Is_Empty (Collection : List) return Boolean;
    overriding procedure Clear (Collection : in out List);
-
-   function Iterate (Container : List) return
-     List_Iterator_Interfaces.Reversible_Iterator'Class;
-   function Reference (Collection : aliased in out List;
-                       Position   : Cursor)
-                       return Reference_Type;
 
    type State_Flag is (deletion, Error, hold, running, Restarted, suspended,
                        Q_Suspended, transfering, Threshold, waiting);
