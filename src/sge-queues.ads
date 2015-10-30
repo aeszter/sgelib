@@ -11,8 +11,12 @@ package SGE.Queues is
    type Queue is tagged private;
    type List is new SGE.Containers.Container with private
      with Default_Iterator => Iterate,
-     Iterator_Element => Queue'Class;
-      type Cursor is private;
+     Iterator_Element => Queue'Class,
+      variable_indexing => reference;
+   type Cursor is private;
+   type Reference_Type (Element : not null access Queue'class) is private
+     with
+     Implicit_Dereference => Element;
 
    function Has_Element (Position : Cursor) return Boolean;
 
@@ -26,6 +30,10 @@ package SGE.Queues is
    procedure Append_List (Storage : in out List; Input_Nodes : Node_List);
    function Iterate (Container : List) return
      List_Iterator_Interfaces.Reversible_Iterator'Class;
+   function Reference (Collection : aliased in out List;
+                       Position   : Cursor)
+                       return Reference_Type;
+
    function New_Queue (List : Node_List) return Queue;
    procedure Occupy_Slots  (Q : in out Queue; How_Many : Natural);
 
@@ -89,6 +97,7 @@ private
    type Iterator is new Limited_Controlled and
      List_Iterator_Interfaces.Reversible_Iterator with
       null record;
+   type Reference_Type (Element : not null access Queue'class) is null record;
 
    overriding function First (Object : Iterator) return Cursor;
    overriding function Last  (Object : Iterator) return Cursor;
