@@ -8,18 +8,6 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 package body SGE.Queues is
    use Queue_Lists;
 
-   procedure Clear is
-   begin
-   end;
-
-   function Length return Natural is
-   begin
-   end;
-
-   function Is_Empty return Boolean is
-   begin
-      end;
-
    procedure Occupy_Slots (Q : in out Queue; How_Many : Natural) is
    begin
       if How_Many > Q.Total - Q.Used - Q.Reserved then
