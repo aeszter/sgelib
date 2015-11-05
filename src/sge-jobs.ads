@@ -1,3 +1,5 @@
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Ordered_Maps;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Calendar; use Ada.Calendar;
 with SGE.Resources;
@@ -9,8 +11,6 @@ with Ada.Strings.Bounded;
 with SGE.Loggers; use SGE.Loggers;
 with SGE.Containers;
 with Ada.Iterator_Interfaces;
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-with Ada.Containers.Indefinite_Ordered_Maps;
 
 package SGE.Jobs is
    Other_Error : exception; -- generic error
@@ -21,12 +21,8 @@ package SGE.Jobs is
 
    type List is new SGE.Containers.Container with private
      with Default_Iterator => Iterate,
-     Iterator_Element => Job'Class,
-   variable_indexing => reference;
+     Iterator_Element => Job'Class;
    type Cursor is private;
-   type Reference_Type (Element : not null access Job'class) is private
-     with
-     Implicit_Dereference => Element;
 
    function Has_Element (Position : Cursor) return Boolean;
 
@@ -39,9 +35,6 @@ package SGE.Jobs is
 
    function Iterate (Container : List) return
      List_Iterator_Interfaces.Reversible_Iterator'Class;
-   function Reference (Collection : aliased in out List;
-                       Position   : Cursor)
-                       return Reference_Type;
 
    type State_Flag is (deletion, Error, hold, running, Restarted, suspended,
                        Q_Suspended, transfering, Threshold, waiting);
@@ -213,7 +206,7 @@ package SGE.Jobs is
    --  Raise: Too_Many_Jobs_Error if there is more than one entry in the List.
    -----------------
 
-   procedure Update_Messages (Collection : in out List; Nodes : Node_List);
+   procedure Update_Messages (Nodes : Node_List);
 
    --------------------
    -- Create_Overlay --
@@ -228,8 +221,8 @@ package SGE.Jobs is
    --  Set created with Create_Overlay
    -------------------
 
-   procedure Apply_Overlay (Collection : in out List);
-   procedure Update_Quota (Collection : in out List);
+   procedure Apply_Overlay (Collection : List);
+   procedure Update_Quota (Collection : List);
 
 
    -----------------
@@ -244,32 +237,32 @@ package SGE.Jobs is
                          Soft_Requests,
                          Slot_Number, Slot_Ranges : Unbounded_String);
 
-   procedure Prune_By_Slots (Collection : in out List; Slots : String);
+   procedure Prune_By_Slots (Slots : String);
    --  outdated. move functionality to Append_List. Does GPS notice this?
 
    procedure Sort_By (Collection : in out List; Field : String; Direction : String);
-   function Precedes_By_Name (Left, Right : Job'class) return Boolean;
-   function Precedes_By_Number (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Owner (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Priority (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Submission_Time (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Slots (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_State (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_CPU_Used (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Memory_Used (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_IO_Used (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Override (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Share (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Functional (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Urgency (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Waiting_Contrib (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Resource_Contrib (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_Posix_Priority (Left, Right : Job'Class) return Boolean;
-   function Precedes_By_End (Left, Right : Job'Class) return Boolean;
+   function Precedes_By_Name (Left, Right : Job) return Boolean;
+   function Precedes_By_Number (Left, Right : Job) return Boolean;
+   function Precedes_By_Owner (Left, Right : Job) return Boolean;
+   function Precedes_By_Priority (Left, Right : Job) return Boolean;
+   function Precedes_By_Submission_Time (Left, Right : Job) return Boolean;
+   function Precedes_By_Slots (Left, Right : Job) return Boolean;
+   function Precedes_By_State (Left, Right : Job) return Boolean;
+   function Precedes_By_CPU_Used (Left, Right : Job) return Boolean;
+   function Precedes_By_Memory_Used (Left, Right : Job) return Boolean;
+   function Precedes_By_IO_Used (Left, Right : Job) return Boolean;
+   function Precedes_By_Override (Left, Right : Job) return Boolean;
+   function Precedes_By_Share (Left, Right : Job) return Boolean;
+   function Precedes_By_Functional (Left, Right : Job) return Boolean;
+   function Precedes_By_Urgency (Left, Right : Job) return Boolean;
+   function Precedes_By_Waiting_Contrib (Left, Right : Job) return Boolean;
+   function Precedes_By_Resource_Contrib (Left, Right : Job) return Boolean;
+   function Precedes_By_Posix_Priority (Left, Right : Job) return Boolean;
+   function Precedes_By_End (Left, Right : Job) return Boolean;
 
-   function Precedes_By_Resources (Left, Right : Job'Class) return Boolean;
+   function Precedes_By_Resources (Left, Right : Job) return Boolean;
 
-   function Same (Left, Right : Job'Class) return Boolean;
+   function Same (Left, Right : Job) return Boolean;
 
    procedure Update_Status (Collection : in out List);
    --  Purpose: Update all jobs' status
@@ -385,12 +378,11 @@ private
    end record;
 
    package Job_Lists is
-     new Ada.Containers.indefinite_Doubly_Linked_Lists (Element_Type => Job'Class,
-                                             "="          => Same);
+     new Ada.Containers.Doubly_Linked_Lists (Element_Type => Job, "=" => Same);
 
    package Job_Maps is
-     new Ada.Containers.indefinite_Ordered_Maps (Key_Type     => Integer,
-                                      Element_Type => Job'Class,
+     new Ada.Containers.Ordered_Maps (Key_Type     => Integer,
+                                      Element_Type => Job,
                                       "<"          => "<",
                                       "="          => Same);
 
@@ -444,6 +436,5 @@ private
 
    Overlay : Job_Maps.Map;
    type Cursor is new Job_Lists.Cursor;
-   type Reference_Type (Element : not null access Job'class) is null record;
 
 end SGE.Jobs;

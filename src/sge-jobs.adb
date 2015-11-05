@@ -23,7 +23,7 @@ package body SGE.Jobs is
 
    procedure Parse_JAT_Message_List (Message_List : Node; J : in out Job);
    procedure Determine_Balancer_Support (J : in out Job'class);
-   procedure Update_State_Array (J : in out Job'class);
+   procedure Update_State_Array (J : in out Job);
 
 
    procedure Parse_JAT_Task_List
@@ -65,11 +65,12 @@ package body SGE.Jobs is
       Counter : Natural := 0;
 
    begin
-      for J of Collection loop
-         if Predicate (J) then
+--      for J of Collection loop
+--         if Predicate (J) then
             Counter := Counter + 1;
-         end if;
-      end loop;
+--         end if;
+--      end loop;
+      pragma Compile_Time_Warning (True, "unimplmentd");
       return Counter;
    end Count;
 
@@ -261,7 +262,7 @@ package body SGE.Jobs is
       end if;
    end Determine_Balancer_Support;
 
-   procedure Update_State_Array (J : in out Job'class) is
+   procedure Update_State_Array (J : in out Job) is
       Flag : State_Flag;
       Skip : Boolean;
    begin
@@ -730,12 +731,12 @@ package body SGE.Jobs is
       Message : Unbounded_String;
       Message_Nodes : Node_List;
 
-      procedure Store_Message (Item : in out Job'class) is
+      procedure Store_Message (Item : in out Job) is
       begin
          Add_Message (Item, Number, Message);
       end Store_Message;
    begin
-      if Length (Collection) = 1 then
+      if Length (List) = 1 then
          Elements :
          for Index in 1 .. Length (Nodes) loop
             if Name (Item (Nodes, Index - 1)) = "element" then
@@ -749,11 +750,11 @@ package body SGE.Jobs is
                      Message := To_Unbounded_String (Value (First_Child (MES_Part)));
                   end if;
                end loop MES_Parts;
-               Collection.Data.Update_Element (Position => Collection.Data.First,
-                                               Process  => Store_Message'Access);
+               List.Update_Element (Position => List.First,
+                                    Process  => Store_Message'Access);
             end if;
          end loop Elements;
-      elsif not Is_Empty (Collection) then
+      elsif not Is_Empty (List) then
          raise Too_Many_Jobs_Error;
       end if;
    end Update_Messages;
@@ -1670,7 +1671,7 @@ package body SGE.Jobs is
    --  If neither a < b nor a > b, then a and b belong to the same Bunch.
    ------------------------
 
-   function Precedes_By_Resources (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Resources (Left, Right : Job) return Boolean is
    begin
       if Supports_Balancer (Left) and then not Supports_Balancer (Right) then
          return True;
@@ -1714,7 +1715,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    ------------------------
 
-   function Precedes_By_Name (Left, Right : Job'class) return Boolean is
+   function Precedes_By_Name (Left, Right : Job) return Boolean is
    begin
       return Left.Full_Name < Right.Full_Name;
    end Precedes_By_Name;
@@ -1728,7 +1729,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Number (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Number (Left, Right : Job) return Boolean is
    begin
       return Left.Number < Right.Number;
    end Precedes_By_Number;
@@ -1742,7 +1743,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Owner (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Owner (Left, Right : Job) return Boolean is
    begin
       return Left.Owner < Right.Owner;
    end Precedes_By_Owner;
@@ -1756,7 +1757,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Priority (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Priority (Left, Right : Job) return Boolean is
    begin
       return Left.Priority < Right.Priority;
    end Precedes_By_Priority;
@@ -1770,7 +1771,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Submission_Time (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Submission_Time (Left, Right : Job) return Boolean is
    begin
       return Left.Submission_Time < Right.Submission_Time;
    end Precedes_By_Submission_Time;
@@ -1785,7 +1786,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Slots (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Slots (Left, Right : Job) return Boolean is
    begin
       return Integer'Value (To_String (Left.Slot_Number)) < Integer'Value (To_String (Right.Slot_Number));
    end Precedes_By_Slots;
@@ -1799,7 +1800,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_State (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_State (Left, Right : Job) return Boolean is
    begin
       return Left.State_Array < Right.State_Array;
    end Precedes_By_State;
@@ -1813,7 +1814,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_CPU_Used (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_CPU_Used (Left, Right : Job) return Boolean is
    begin
       return Left.CPU < Right.CPU;
    end Precedes_By_CPU_Used;
@@ -1827,7 +1828,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Memory_Used (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Memory_Used (Left, Right : Job) return Boolean is
    begin
       return Left.Mem < Right.Mem;
    end Precedes_By_Memory_Used;
@@ -1841,7 +1842,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_IO_Used (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_IO_Used (Left, Right : Job) return Boolean is
    begin
       return Left.IO < Right.IO;
    end Precedes_By_IO_Used;
@@ -1855,7 +1856,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Override (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Override (Left, Right : Job) return Boolean is
    begin
       return Left.Override_Tickets < Right.Override_Tickets;
    end Precedes_By_Override;
@@ -1869,7 +1870,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Share (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Share (Left, Right : Job) return Boolean is
    begin
       return Left.Share_Tickets < Right.Share_Tickets;
    end Precedes_By_Share;
@@ -1883,7 +1884,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Functional (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Functional (Left, Right : Job) return Boolean is
    begin
       return Left.Functional_Tickets < Right.Functional_Tickets;
    end Precedes_By_Functional;
@@ -1897,7 +1898,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Urgency (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Urgency (Left, Right : Job) return Boolean is
    begin
       return Left.Urgency < Right.Urgency;
    end Precedes_By_Urgency;
@@ -1911,7 +1912,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Waiting_Contrib (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Waiting_Contrib (Left, Right : Job) return Boolean is
    begin
       return Left.Waiting_Contrib < Right.Waiting_Contrib;
    end Precedes_By_Waiting_Contrib;
@@ -1925,7 +1926,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Resource_Contrib (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Resource_Contrib (Left, Right : Job) return Boolean is
    begin
       return Left.Resource_Contrib < Right.Resource_Contrib;
    end Precedes_By_Resource_Contrib;
@@ -1939,7 +1940,7 @@ package body SGE.Jobs is
    --  Description: This implements the "<" operator for package Generic_Sorting
    --------------------------
 
-   function Precedes_By_Posix_Priority (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_Posix_Priority (Left, Right : Job) return Boolean is
    begin
       return Left.Posix_Priority < Right.Posix_Priority;
    end Precedes_By_Posix_Priority;
@@ -1948,7 +1949,7 @@ package body SGE.Jobs is
    -- Precedes_By_End --
    ---------------------
 
-   function Precedes_By_End (Left, Right : Job'Class) return Boolean is
+   function Precedes_By_End (Left, Right : Job) return Boolean is
    begin
       return End_Time (Left) < End_Time (Right);
    exception
@@ -1968,7 +1969,7 @@ package body SGE.Jobs is
    ------------------------
 
 
-   function Same (Left, Right : Job'Class) return Boolean is
+   function Same (Left, Right : Job) return Boolean is
    begin
       if Left.Number = 0 then
          return False;
@@ -1999,8 +2000,8 @@ package body SGE.Jobs is
       end loop;
    end Create_Overlay;
 
-   procedure Apply_Overlay (Collection : in out List) is
-      Update : Job'class;
+   procedure Apply_Overlay (Collection : List) is
+      Update : Job;
    begin
       for J of Collection loop
          Update := Overlay.Element (J.Number);
@@ -2012,7 +2013,7 @@ package body SGE.Jobs is
       end loop;
    end Apply_Overlay;
 
-   procedure Update_Quota  (Collection : in out List) is
+   procedure Update_Quota  (Collection : List) is
    begin
       for J of Collection loop
          J.RQS_Reached := SGE.Quota.Get_Headroom (User => J.Owner,
