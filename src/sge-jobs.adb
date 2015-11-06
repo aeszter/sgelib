@@ -43,15 +43,13 @@ package body SGE.Jobs is
    procedure Extract_Generic_Range (Range_Nodes    : Node_List;
                                     Min, Step, Max : out Natural);
 
-   -------------
-   --  accessors
-   -------------
-   function Count return Natural is
+   procedure Clear (Collection : in out List) is
    begin
-      return Natural (List.Length);
-   end Count;
+      Collection.Container.Clear;
+   end Clear;
 
-   function Count (Predicate : not null access function (J : Job) return Boolean)
+   function Count (Collection : List;
+                   Predicate : not null access function (J : Job) return Boolean)
                    return Natural is
 
       Counter : Natural := 0;
@@ -63,7 +61,7 @@ package body SGE.Jobs is
       end Wrapper;
 
    begin
-      List.Iterate (Wrapper'Access);
+      Collection.Container.Iterate (Wrapper'Access);
       return Counter;
    end Count;
 
@@ -243,6 +241,11 @@ package body SGE.Jobs is
          J.Balancer (Any) := True;
       end if;
    end Determine_Balancer_Support;
+
+   function Length (Collection : List) return Natural is
+   begin
+      return Natural (Collection.Container.Length);
+   end Length;
 
    procedure Update_State_Array (J : in out Job) is
       Flag : State_Flag;
@@ -479,8 +482,8 @@ package body SGE.Jobs is
    --  list-related
    ----------------
 
-   function Find_Job (ID : Natural) return Job_Lists.Cursor is
-      Pos : Job_Lists.Cursor := List.First;
+   function Find_Job (Collection : List; ID : Natural) return Job_Lists.Cursor is
+      Pos : Job_Lists.Cursor := Collection.Container.First;
       The_Job : Job;
    begin
       while Pos /= Job_Lists.No_Element loop
@@ -493,53 +496,23 @@ package body SGE.Jobs is
       return Job_Lists.No_Element;
    end Find_Job;
 
-   function Find_Job (ID : Natural) return Job is
+   function Find_Job (Collection : List; ID : Natural) return Job is
    begin
-      return Element (Find_Job (ID));
+      return Element (Find_Job (Collection, ID));
    end Find_Job;
 
-   procedure Sort is
+   procedure Sort (Collection : in out List) is
    begin
-      Sorting_By_Resources.Sort (List);
+      Sorting_By_Resources.Sort (Collection.Container);
    end Sort;
 
-   procedure Rewind is
+   function Empty (Collection : List) return Boolean is
    begin
-      List_Cursor := List.First;
-   end Rewind;
-
-   function Empty return Boolean is
-   begin
-      return List.Is_Empty;
+      return Collection.Container.Is_Empty;
    end Empty;
 
-   function Next return Job is
-   begin
-      Next (List_Cursor);
-      return Job_Lists.Element (List_Cursor);
-   end Next;
-
-   function At_End return Boolean is
-   begin
-      if List_Cursor = Job_Lists.No_Element or else
-        List_Cursor = List.Last
-      then
-         return True;
-      end if;
-      return False;
-   end At_End;
-
-   function Current return Job is
-   begin
-      return Job_Lists.Element (List_Cursor);
-   end Current;
-
-
-   -----------------
-   -- Get_Summary --
-   -----------------
-
-   procedure Get_Summary (Tasks, Slots : out State_Count) is
+   procedure Get_Summary (Collection   : List;
+                          Tasks, Slots : out State_Count) is
 
       procedure Count (Position : Job_Lists.Cursor) is
          State_Array : State := Job_Lists.Element (Position).State_Array;
@@ -558,7 +531,7 @@ package body SGE.Jobs is
          Tasks (S) := 0;
          Slots (S) := 0;
       end loop;
-      List.Iterate (Process => Count'Access);
+      Collection.Container.Iterate (Process => Count'Access);
    end Get_Summary;
 
    function Get_Last_Migration (J : Job) return Time is
@@ -728,18 +701,18 @@ package body SGE.Jobs is
    -- Append_List --
    -----------------
 
-   procedure Append_List (Nodes : Node_List) is
+   procedure Append (Collection : in out List; Nodes : Node_List) is
       N : Node;
    begin
       for Index in 1 .. Length (Nodes) loop
          N := Item (Nodes, Index - 1);
          if Name (N) /= "#text" then
-            List.Append (New_Job (Child_Nodes (N)));
+            Collection.Container.Append (New_Job (Child_Nodes (N)));
          end if;
       end loop;
-   end Append_List;
+   end Append;
 
-   procedure Update_Messages (Nodes : Node_List) is
+   procedure Update_Messages (Collection : in out List; Nodes : Node_List) is
       MES_Part : Node;
       Number : Natural;
       Message : Unbounded_String;
@@ -750,7 +723,7 @@ package body SGE.Jobs is
          Add_Message (Item, Number, Message);
       end Store_Message;
    begin
-      if Length (List) = 1 then
+      if Length (Collection) = 1 then
          Elements :
          for Index in 1 .. Length (Nodes) loop
             if Name (Item (Nodes, Index - 1)) = "element" then
@@ -764,26 +737,27 @@ package body SGE.Jobs is
                      Message := To_Unbounded_String (Value (First_Child (MES_Part)));
                   end if;
                end loop MES_Parts;
-               List.Update_Element (Position => List.First,
-                                    Process  => Store_Message'Access);
+               Collection.Container.Update_Element (Position => Collection.Container.First,
+                                                    Process  => Store_Message'Access);
             end if;
          end loop Elements;
-      elsif not Is_Empty (List) then
+      elsif not Is_Empty (Collection.Container) then
          raise Too_Many_Jobs_Error;
       end if;
    end Update_Messages;
 
 
-   procedure Prune_List (PE, Queue, Hard_Requests,
-                         Soft_Requests,
-                         Slot_Number, Slot_Ranges : Unbounded_String) is
+   procedure Prune (Collection : in out List;
+                    PE, Queue, Hard_Requests,
+                    Soft_Requests,
+                    Slot_Number, Slot_Ranges : Unbounded_String) is
       --  FIXME: implement in terms of the new kernel-based Prune_List below
+      Position : Job_Lists.Cursor := Collection.Container.First;
       J : Job;
       Pruned_List : Job_Lists.List;
    begin
-      Rewind;
-      J := Current;
-      loop
+      while Has_Element (Position) loop
+         J := Element (Position);
          if J.PE = PE and then
            J.Queue = Queue and then
            J.Hard.Hash = Hard_Requests and then
@@ -804,41 +778,41 @@ package body SGE.Jobs is
                end if;
             end if;
          end if;
-         exit when At_End;
-         J := Next;
+         Next (Position);
       end loop;
-      List.Clear;
-      List.Splice (Source => Pruned_List, Before => List.First);
-   end Prune_List;
+      Clear (Collection);
+      Collection.Container.Splice (Source => Pruned_List,
+                                   Before => Collection.Container.First);
+   end Prune;
 
-   procedure Prune_List (Keep : not null access function (J : Job) return Boolean) is
-      J : Job;
+   procedure Prune (Collection : in out List;
+                    Keep       : not null access function (J : Job) return Boolean) is
       Pruned_List : Job_Lists.List;
-   begin
-      Rewind;
-      J := Current;
-      loop
+      procedure Selector (J : Job) is
+      begin
          if Keep (J) then
             Pruned_List.Append (J);
          end if;
-         exit when At_End;
-         J := Next;
-      end loop;
-      List.Clear;
-      List.Splice (Source => Pruned_List, Before => List.First);
-   end Prune_List;
+      end Selector;
+
+   begin
+      Iterate (Collection, Selector'Access);
+      Clear (Collection);
+      Collection.Container.Splice (Source => Pruned_List,
+                                   Before => Collection.Container.First);
+   end Prune;
 
    -------------------
    -- Update_Status --
    -------------------
 
-   procedure Update_Status is
+   procedure Update_Status (Collection : in out List) is
       Pos : Job_Lists.Cursor;
    begin
-      Pos := List.First;
+      Pos := Collection.Container.First;
       while Pos /= Job_Lists.No_Element loop
-         List.Update_Element (Position => Pos,
-                              Process  => Update_Status'Access);
+         Collection.Container.Update_Element (Position => Pos,
+                                              Process  => Update_Status'Access);
          Next (Pos);
       end loop;
    end Update_Status;
@@ -891,7 +865,7 @@ package body SGE.Jobs is
    -- Search_Queues --
    -------------------
 
-   procedure Search_Queues is
+   procedure Search_Queues (Collection : in out List) is
       SGE_Out                : Tree;
       Job_Nodes, Value_Nodes : Node_List;
       Job_Node, Value_Node   : Node;
@@ -921,7 +895,7 @@ package body SGE.Jobs is
                            Index => I);
          A := Get_Attr (Job_Node, "name");
          Number_Found := Integer'Value (Value (A));
-         Pos := Find_Job (ID => Number_Found);
+         Pos := Find_Job (Collection => Collection, ID => Number_Found);
          --  in theory, this scaling is less than ideal:
          --  O(number of jobs in Job_List times number of jobs returned by qhost)
          --  however, in the present implementation, there is only one job in the list,
@@ -944,8 +918,8 @@ package body SGE.Jobs is
             if not Found then
                raise Missing_Tag_Error with "no qinstance_name";
             end if;
-            List.Update_Element (Position => Pos,
-                                 Process  => Record_Queue'Access);
+            Collection.Container.Update_Element (Position => Pos,
+                                                 Process  => Record_Queue'Access);
          end if;
       end loop;
       Parser.Free;
@@ -1614,9 +1588,9 @@ package body SGE.Jobs is
    ----------------
 
 
-   procedure Prune_List_By_Slots (Slots : String) is
+   procedure Prune_By_Slots (Collection : in out List; Slots : String) is
       Temp : Job_Lists.List;
-      Pos  : Job_Lists.Cursor := List.First;
+      Pos  : Job_Lists.Cursor := Collection.Container.First;
       J    : Job;
 
    begin
@@ -1628,8 +1602,8 @@ package body SGE.Jobs is
          end if;
          Next (Pos);
       end loop;
-      List := Temp;
-   end Prune_List_By_Slots;
+      Collection.Container := Temp;
+   end Prune_By_Slots;
 
    ------------------
    -- Sort_By      --
@@ -1637,53 +1611,54 @@ package body SGE.Jobs is
    --  Parameter Field: Title of the column to sort by
    ------------------
 
-   procedure Sort_By (Field : String; Direction : String) is
+   procedure Sort_By (Collection : in out List;
+                      Field      : String; Direction : String) is
    begin
       if Field = "Number" or else Field = "ID" then
-         Sorting_By_Number.Sort (List);
+         Sorting_By_Number.Sort (Collection.Container);
       elsif Field = "Name" then
-         Sorting_By_Name.Sort (List);
+         Sorting_By_Name.Sort (Collection.Container);
       elsif Field = "Owner" then
-         Sorting_By_Owner.Sort (List);
+         Sorting_By_Owner.Sort (Collection.Container);
       elsif Field = "Priority" then
-         Sorting_By_Priority.Sort (List);
+         Sorting_By_Priority.Sort (Collection.Container);
       elsif Field = "Submitted" then
-         Sorting_By_Submission_Time.Sort (List);
+         Sorting_By_Submission_Time.Sort (Collection.Container);
       elsif Field = "Slots" then
-         Sorting_By_Slots.Sort (List);
+         Sorting_By_Slots.Sort (Collection.Container);
       elsif Field = "State" then
-         Sorting_By_State.Sort (List);
+         Sorting_By_State.Sort (Collection.Container);
       elsif Field = "CPU" then
-         Sorting_By_CPU_Used.Sort (List);
+         Sorting_By_CPU_Used.Sort (Collection.Container);
       elsif Field = "Memory" then
-         Sorting_By_Memory_Used.Sort (List);
+         Sorting_By_Memory_Used.Sort (Collection.Container);
       elsif Field = "IO" then
-         Sorting_By_IO_Used.Sort (List);
+         Sorting_By_IO_Used.Sort (Collection.Container);
       elsif Field = "Priority" then
-         Sorting_By_Priority.Sort (List);
+         Sorting_By_Priority.Sort (Collection.Container);
       elsif Field = "O" then
-         Sorting_By_Override.Sort (List);
+         Sorting_By_Override.Sort (Collection.Container);
       elsif Field = "S" then
-         Sorting_By_Share.Sort (List);
+         Sorting_By_Share.Sort (Collection.Container);
       elsif Field = "F" then
-         Sorting_By_Functional.Sort (List);
+         Sorting_By_Functional.Sort (Collection.Container);
       elsif Field = "Urgency" then
-         Sorting_By_Urgency.Sort (List);
+         Sorting_By_Urgency.Sort (Collection.Container);
       elsif Field = "Resource" then
-         Sorting_By_Resource_Contrib.Sort (List);
+         Sorting_By_Resource_Contrib.Sort (Collection.Container);
       elsif Field = "Waiting" then
-         Sorting_By_Waiting_Contrib.Sort (List);
+         Sorting_By_Waiting_Contrib.Sort (Collection.Container);
       elsif Field = "Custom" then
-         Sorting_By_Posix_Priority.Sort (List);
+         Sorting_By_Posix_Priority.Sort (Collection.Container);
       elsif Field = "Ends In" or else
         Field = "Ends At"
       then
-         Sorting_By_End.Sort (List);
+         Sorting_By_End.Sort (Collection.Container);
       else
          raise Constraint_Error with "Sorting by " & Field & " unimplemented";
       end if;
       if Direction = "dec" then
-         List.Reverse_Elements;
+         Collection.Container.Reverse_Elements;
       end if;
    end Sort_By;
 
@@ -2038,43 +2013,45 @@ package body SGE.Jobs is
       Determine_Balancer_Support (J);
    end Update_Job_From_Overlay;
 
-   procedure Apply_Overlay_Entry (Position : Job_Lists.Cursor) is
-   begin
-      List.Update_Element (Position => Position,
-                           Process  => Update_Job_From_Overlay'Access);
-   end Apply_Overlay_Entry;
+   procedure Apply_Overlay (Collection : in out List) is
 
-   procedure Apply_Overlay is
+      procedure Apply_Overlay_Entry (Position : Job_Lists.Cursor) is
+      begin
+         Collection.Container.Update_Element (Position => Position,
+                                              Process  => Update_Job_From_Overlay'Access);
+      end Apply_Overlay_Entry;
+
    begin
-      List.Iterate (Apply_Overlay_Entry'Access);
+      Collection.Container.Iterate (Apply_Overlay_Entry'Access);
    end Apply_Overlay;
 
-   procedure Update_Quota_For_Job (J : in out Job) is
-   begin
-      J.RQS_Reached := SGE.Quota.Get_Headroom (User => J.Owner,
-                                               Resource => "slots",
-                                               PEs  => J.PE /= Null_Unbounded_String) < Get_Maximum_Slots (J);
-   end Update_Quota_For_Job;
+   procedure Update_Quota (Collection : in out List) is
+      procedure Update_Quota_For_Job (J : in out Job) is
+      begin
+         J.RQS_Reached := SGE.Quota.Get_Headroom (User => J.Owner,
+                                                  Resource => "slots",
+                                                  PEs  => J.PE /= Null_Unbounded_String) < Get_Maximum_Slots (J);
+      end Update_Quota_For_Job;
 
-   procedure Quota_For_Job (Position : Job_Lists.Cursor) is
-   begin
-      List.Update_Element (Position => Position,
-                           Process  => Update_Quota_For_Job'Access);
-   end Quota_For_Job;
+      procedure Quota_For_Job (Position : Job_Lists.Cursor) is
+      begin
+         Collection.Container.Update_Element (Position => Position,
+                                              Process  => Update_Quota_For_Job'Access);
+      end Quota_For_Job;
 
-   procedure Update_Quota is
    begin
-      List.Iterate (Quota_For_Job'Access);
+      Collection.Container.Iterate (Quota_For_Job'Access);
    end Update_Quota;
 
-   procedure Iterate (Process : not null access procedure (J : Job)) is
+   procedure Iterate (Collection : List;
+                      Process    : not null access procedure (J : Job)) is
       procedure Wrapper (Position : Job_Lists.Cursor) is
       begin
          Process (Element (Position));
       end Wrapper;
 
    begin
-      List.Iterate (Wrapper'Access);
+      Collection.Container.Iterate (Wrapper'Access);
    end Iterate;
 
    procedure Iterate_Predecessors (J       : Job;

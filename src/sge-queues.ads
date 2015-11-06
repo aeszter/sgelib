@@ -1,7 +1,6 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with SGE.Host_Properties; use SGE.Host_Properties;
 with SGE.Parser; use SGE.Parser;
-with SGE.Containers; use SGE.Containers;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Iterator_Interfaces;
 with Ada.Finalization; use Ada.Finalization;
@@ -9,22 +8,13 @@ with Ada.Finalization; use Ada.Finalization;
 package SGE.Queues is
 
    type Queue is tagged private;
-   type List is new SGE.Containers.Container with private
-     with Default_Iterator => Iterate,
-     Iterator_Element => Queue'Class;
-      type Cursor is private;
+   type List is private;
 
-   function Has_Element (Position : Cursor) return Boolean;
 
-   package List_Iterator_Interfaces is
-     new Ada.Iterator_Interfaces (Cursor, Has_Element);
+   function Length (Collection : List) return Natural;
+   procedure Clear (Collection : in out List);
 
-   overriding function Length (Collection : List) return Natural;
-   overriding procedure Clear (Collection : in out List);
-
-   procedure Append_List (Storage : in out List; Input_Nodes : Node_List);
-   function Iterate (Container : List) return
-     List_Iterator_Interfaces.Reversible_Iterator'Class;
+   procedure Append_List (Container : in out List; Input_Nodes : Node_List);
    function New_Queue (List : Node_List) return Queue;
    procedure Occupy_Slots  (Q : in out Queue; How_Many : Natural);
 
@@ -84,24 +74,7 @@ private
    package Sorting_By_Sequence is
       new Queue_Lists.Generic_Sorting ("<" => Precedes_By_Sequence);
 
-   type Cursor is new Queue_Lists.Cursor;
-   type Iterator is new Limited_Controlled and
-     List_Iterator_Interfaces.Reversible_Iterator with
-      null record;
-
-   overriding function First (Object : Iterator) return Cursor;
-   overriding function Last  (Object : Iterator) return Cursor;
-
-   overriding function Next
-     (Object   : Iterator;
-      Position : Cursor) return Cursor;
-
-   overriding function Previous
-     (Object   : Iterator;
-      Position : Cursor) return Cursor;
 
 
-   type List is new Container with record
-      Data : Queue_Lists.List;
-   end record;
+   type List is new Queue_Lists.List with null record;
 end SGE.Queues;
