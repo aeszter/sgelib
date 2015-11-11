@@ -1,18 +1,24 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with SGE.Host_Properties; use SGE.Host_Properties;
 with SGE.Parser; use SGE.Parser;
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-with Ada.Iterator_Interfaces;
 with Ada.Finalization; use Ada.Finalization;
+with Ada.Containers.Doubly_Linked_Lists;
 
 package SGE.Queues is
 
    type Queue is tagged private;
    type List is private;
+   type Cursor is private;
 
 
    function Length (Collection : List) return Natural;
    procedure Clear (Collection : in out List);
+   procedure Iterate (Collection : List;
+                      Process    : not null access procedure (Q : Queue));
+   procedure Next (Position : in out Cursor);
+   function Has_Element (Position : Cursor) return Boolean;
+   function First (Collection : List) return Cursor;
+   function Element (Position : Cursor) return Queue;
 
    procedure Append_List (Container : in out List; Input_Nodes : Node_List);
    function New_Queue (List : Node_List) return Queue;
@@ -21,8 +27,8 @@ package SGE.Queues is
    procedure Set_Host_Name (Q : in out Queue; Long_Name : String);
    procedure Decompose_Long_Name (Long_Name : String; Queue : out Unbounded_String; Host : out Host_Name);
 
-   function Precedes_By_Resources (Left, Right : Queue'Class) return Boolean;
-   function Precedes_By_Sequence (Left, Right : Queue'Class) return Boolean;
+   function Precedes_By_Resources (Left, Right : Queue) return Boolean;
+   function Precedes_By_Sequence (Left, Right : Queue) return Boolean;
 
    procedure Sort (What : in out List);
    procedure Sort_By_Sequence (What : in out List);
@@ -67,7 +73,7 @@ private
    end record;
 
    package Queue_Lists is
-     new Ada.Containers.indefinite_Doubly_Linked_Lists (Element_Type => Queue'Class);
+     new Ada.Containers.Doubly_Linked_Lists (Element_Type => Queue);
 
    package Sorting_By_Resources is
      new Queue_Lists.Generic_Sorting ("<" => Precedes_By_Resources);
@@ -77,4 +83,5 @@ private
 
 
    type List is new Queue_Lists.List with null record;
+   type Cursor is new Queue_Lists.Cursor;
 end SGE.Queues;

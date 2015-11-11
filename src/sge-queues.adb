@@ -8,6 +8,42 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 package body SGE.Queues is
    use Queue_Lists;
 
+   function First (Collection : List) return Cursor is
+   begin
+      return First (Queue_Lists.List (Collection));
+   end First;
+
+   overriding function Element (Position : Cursor) return Queue is
+   begin
+      return Element (Queue_Lists.Cursor (Position));
+   end Element;
+
+   function Length (Collection : List) return Natural is
+   begin
+      return Integer (Length (Queue_Lists.List (Collection)));
+   end Length;
+
+   overriding procedure Clear (Collection : in out List) is
+   begin
+      Clear (Queue_Lists.List (Collection));
+   end Clear;
+
+   procedure Iterate (Collection : List;
+                      Process    : not null access procedure (Q : Queue)) is
+      procedure Wrapper (Position : Cursor) is
+      begin
+         Process (Element (Position));
+      end Wrapper;
+
+   begin
+      Queue_Lists.Iterate (Queue_Lists.List (Collection), Wrapper'Access);
+   end Iterate;
+
+   overriding procedure Next (Position : in out Cursor) is
+   begin
+      Next (Queue_Lists.Cursor (Position));
+   end Next;
+
    procedure Occupy_Slots (Q : in out Queue; How_Many : Natural) is
    begin
       if How_Many > Q.Total - Q.Used - Q.Reserved then
@@ -16,13 +52,13 @@ package body SGE.Queues is
       Q.Used := Q.Used + How_Many;
    end Occupy_Slots;
 
-   procedure Append_List (Storage : in out List; Input_Nodes : Node_List) is
+   procedure Append_List (Container : in out List; Input_Nodes : Node_List) is
    begin
       for Index in 1 .. Length (Input_Nodes) loop
          declare
             Queue_Nodes : Node_List := Child_Nodes (Item (Input_Nodes, Index - 1));
          begin
-            Storage.Data.Append (New_Queue (Queue_Nodes));
+            Append (Queue_Lists.List (Container), New_Queue (Queue_Nodes));
          exception
             when E : others =>
                Loggers.Record_Error ("Queue suppressed: " & Exception_Message (E));
@@ -140,12 +176,12 @@ package body SGE.Queues is
    -- Precedes_By_Resources --
    ---------------------------
 
-   function Precedes_By_Resources (Left, Right : Queue'Class) return Boolean is
+   function Precedes_By_Resources (Left, Right : Queue) return Boolean is
    begin
       return Left.Properties < Right.Properties;
    end Precedes_By_Resources;
 
-   function Precedes_By_Sequence (Left, Right : Queue'Class) return Boolean is
+   function Precedes_By_Sequence (Left, Right : Queue) return Boolean is
    begin
       return Left.Sequence < Right.Sequence;
    end Precedes_By_Sequence;
@@ -288,25 +324,19 @@ package body SGE.Queues is
       Queue := To_Unbounded_String (Long_Name (Long_Name'First .. Start - 1));
    end Decompose_Long_Name;
 
-   function Has_Element (Position : Cursor) return Boolean is
+   overriding function Has_Element (Position : Cursor) return Boolean is
    begin
-      return Has_Element (Position);
+      return Has_Element (Queue_Lists.Cursor (Position));
    end Has_Element;
-
-   function Iterate (Container : List) return
-     List_Iterator_Interfaces.Reversible_Iterator'Class is
-   begin
-      return Container.Data.Iterate;
-   end Iterate;
 
    procedure Sort (What : in out List) is
    begin
-      Sorting_By_Resources.Sort (What.Data);
+      Sorting_By_Resources.Sort (Queue_Lists.List (What));
    end Sort;
 
    procedure Sort_By_Sequence (What : in out List) is
    begin
-      Sorting_By_Sequence.Sort (What.Data);
+      Sorting_By_Sequence.Sort (Queue_Lists.List (What));
    end Sort_By_Sequence;
 
 end SGE.Queues;
