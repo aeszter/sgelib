@@ -1,7 +1,6 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with SGE.Host_Properties; use SGE.Host_Properties;
 with SGE.Parser; use SGE.Parser;
-with Ada.Finalization; use Ada.Finalization;
 with Ada.Containers.Doubly_Linked_Lists;
 
 package SGE.Queues is

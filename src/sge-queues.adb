@@ -30,13 +30,14 @@ package body SGE.Queues is
 
    procedure Iterate (Collection : List;
                       Process    : not null access procedure (Q : Queue)) is
-      procedure Wrapper (Position : Cursor) is
+      procedure Wrapper (Position : Queue_Lists.Cursor) is
       begin
          Process (Element (Position));
       end Wrapper;
 
    begin
-      Queue_Lists.Iterate (Queue_Lists.List (Collection), Wrapper'Access);
+      Queue_Lists.Iterate (Container => Queue_Lists.List (Collection),
+                           Process   => Wrapper'Access);
    end Iterate;
 
    overriding procedure Next (Position : in out Cursor) is
