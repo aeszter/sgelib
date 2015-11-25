@@ -249,6 +249,8 @@ package body SGE.Resources is
          return gtx980;
       elsif Equal_Case_Insensitive (S, "gtxtitan") then
          return gtxtitan;
+      elsif Equal_Case_Insensitive (S, "gtx980ti") then
+         return gtx980ti;
       else
          raise Constraint_Error with "Unknown GPU " & S;
       end if;
