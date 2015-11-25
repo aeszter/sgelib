@@ -17,7 +17,7 @@ package SGE.Resources is
    type CPU_Model is (none, italy, woodcrest, clovertown, harpertown, magnycours, interlagos, abudhabi, sandybridge, ivybridge, westmere, haswell);
 
    pragma Compile_Time_Warning (True, "hardcoded config");
-   type GPU_Model is (none, gtx580, gtx680, gtx770, gtx780, gtx780ti, gtx980, gtxtitan);
+   type GPU_Model is (none, gtx580, gtx680, gtx770, gtx780, gtx780ti, gtx980, gtx980ti, gtxtitan);
    pragma Compile_Time_Warning (True, "hardcoded config");
    type Gigs is delta 0.001 digits 7;
 
