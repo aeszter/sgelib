@@ -32,8 +32,15 @@ package SGE.Jobs is
 
    type Job is new Logger with private;
    type List is private;
+   type Cursor is private;
    procedure Clear (Collection : in out List);
    function Length (Collection : List) return Natural;
+   function Is_Sorted (Collection : List) return Boolean;
+
+   function First (Collection : List) return Cursor;
+   procedure Next (Position : in out Cursor);
+   function Has_Element (Position : Cursor) return Boolean;
+   function Element (Position : Cursor) return Job;
 
    function To_Abbrev (Flag : State_Flag) return String;
    function To_String (Flag : State_Flag) return String;
@@ -432,6 +439,7 @@ private
    type List is  record
       Container : Job_Lists.List;
    end record;
+   type Cursor is new Job_Lists.Cursor;
    Overlay : Job_Maps.Map;
 
 end SGE.Jobs;

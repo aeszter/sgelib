@@ -2176,4 +2176,29 @@ package body SGE.Jobs is
       --  FIXME: can we use and store the message number seperately?
    end Add_Message;
 
+   function Is_Sorted (Collection : List) return Boolean is
+   begin
+      return Sorting_By_Resources.Is_Sorted (Collection.Container);
+   end Is_Sorted;
+
+   function First (Collection : List) return Cursor is
+   begin
+      return Jobs.Cursor (Collection.Container.First);
+   end First;
+
+   overriding procedure Next (Position : in out Cursor) is
+   begin
+      Next (Job_Lists.Cursor (Position));
+   end Next;
+
+   overriding function Has_Element (Position : Cursor) return Boolean is
+   begin
+      return Has_Element (Job_Lists.Cursor (Position));
+   end Has_Element;
+
+   overriding function Element (Position : Cursor) return Job is
+   begin
+      return Job_Lists.Element (Job_Lists.Cursor (Position));
+   end Element;
+
 end SGE.Jobs;
