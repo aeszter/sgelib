@@ -18,6 +18,7 @@ package SGE.Queues is
    function Has_Element (Position : Cursor) return Boolean;
    function First (Collection : List) return Cursor;
    function Element (Position : Cursor) return Queue;
+   function Is_Sorted (Collection : List) return Boolean;
 
    procedure Append_List (Container : in out List; Input_Nodes : Node_List);
    function New_Queue (List : Node_List) return Queue;

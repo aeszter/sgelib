@@ -23,6 +23,11 @@ package body SGE.Queues is
       return Integer (Length (Queue_Lists.List (Collection)));
    end Length;
 
+   function Is_Sorted (Collection : List) return Boolean is
+   begin
+      return Sorting_By_Resources.Is_Sorted (Queue_Lists.List (Collection));
+   end Is_Sorted;
+
    overriding procedure Clear (Collection : in out List) is
    begin
       Clear (Queue_Lists.List (Collection));
