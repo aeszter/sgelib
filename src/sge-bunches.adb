@@ -14,24 +14,25 @@ package body SGE.Bunches is
    -- Build_List --
    ----------------
 
-   procedure Build_List is
+   procedure Initialize (Job_List : SGE.Jobs.List;
+                         Bunch_List : out List) is
       B : Bunch;
       J : Job;
+      Position : SGE.Jobs.Cursor;
    begin
-      Jobs.Sort;
-      Jobs.Rewind;
-
-      if Jobs.Empty then
+      if Empty (Job_List) then
          Ada.Text_IO.Put_Line ("<i>No jobs found</i>");
       else
-         J := Jobs.Current;
+         Position := SGE.Jobs. First (Job_List);
          --  Create Bunch according to first Job
-         B := New_Bunch (J);
-         loop
+         B := New_Bunch (SGE.Jobs.Element (Position));
+         Next (Position);
+         while Has_Element (Position) loop
+            J := SGE.Jobs.Element (Position);
             --  New Bunch?
             if B /= J then
                --  Yes. Store previous one.
-               List.Append (B);
+               Bunch_List.Append (B);
                B := New_Bunch (J);
             end if;
 
@@ -47,19 +48,18 @@ package body SGE.Bunches is
             else
                B.Waiting := B.Waiting + Get_Task_Count (J);
             end if;
-            exit when Jobs.At_End;
             --  Advance
-            J := Jobs.Next;
+            Next (Position);
          end loop;
          --  That's it. Store final bunch.
-         List.Append (B);
+         Bunch_List.Append (B);
       end if;
    exception
       when E : Constraint_Error
          => raise Other_Error with "Unable to build bunch while examining job"
                         & Get_ID (J)
                        & ": " & Ada.Exceptions.Exception_Message (E);
-   end Build_List;
+   end Initialize;
 
    function Get_CPU_Slot_Numbers (B : Bunch) return String is
    begin
@@ -153,13 +153,13 @@ package body SGE.Bunches is
                    Left.Queue = Get_Queue (Right));
    end "=";
 
-   procedure Iterate (Process : access procedure (B : Bunch)) is
+   procedure Iterate (Collection : List; Process : access procedure (B : Bunch)) is
       procedure Wrapper (Pos : Bunch_Lists.Cursor) is
       begin
          Process (Bunch_Lists.Element (Pos));
       end Wrapper;
    begin
-      Bunch_Lists.Iterate (List, Wrapper'Access);
+      Bunch_Lists.Iterate (Bunch_Lists.List (Collection), Wrapper'Access);
    end Iterate;
 
    function Has_Error (B : Bunch) return Boolean is

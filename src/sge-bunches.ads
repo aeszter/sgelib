@@ -9,8 +9,11 @@ package SGE.Bunches is
    Other_Error : exception;
 
    type Bunch is private;
+   type List is private;
 
-   procedure Build_List;
+   procedure Initialize (Job_List : SGE.Jobs.List;
+                         Bunch_List : out List)
+   with Pre => SGE.Jobs.Is_Sorted (Job_List);
 
    function New_Bunch (J : Job) return Bunch;
 
@@ -18,7 +21,7 @@ package SGE.Bunches is
    function "=" (Left : Job; Right : Bunch) return Boolean;
    --  return True if a given Job belongs to a certain Bunch
 
-   procedure Iterate (Process : access procedure (B : Bunch));
+   procedure Iterate (Collection : List; Process : access procedure (B : Bunch));
 
    function Has_Error (B : Bunch) return Boolean;
    function Has_Waiting (B : Bunch) return Boolean;
@@ -57,5 +60,5 @@ private
    package Bunch_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Bunch);
 
-   List : Bunch_Lists.List;
+   type List is new Bunch_Lists.List with null record;
 end SGE.Bunches;
