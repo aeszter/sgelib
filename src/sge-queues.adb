@@ -147,13 +147,13 @@ package body SGE.Queues is
             elsif Value (A) = "slots" then
                Set_Slots (Q.Properties, Integer (large'Value (Value (First_Child (N)))));
             elsif Value (A) = "cpu_model" then
-               Set_Model (Q.Properties, To_Model (Value (First_Child (N))));
+               Set_Model (Q.Properties, To_CPU (Value (First_Child (N))));
             elsif Value (A) = "qname" then
                Q.Name := To_Unbounded_String (Value (First_Child (N)));
             elsif Value (A) = "ssd"  then
                Set_SSD (Q.Properties); -- consumable, so do not check numerical value
             elsif Value (A) = "gpu_model"  then
-               Set_GPU (Q.Properties, Value (First_Child (N)));
+               Set_GPU (Q.Properties, To_GPU (Value (First_Child (N))));
             elsif Value (A) = "gpu" then
                Set_GPU (Q.Properties);
             elsif Value (A) = "exclusive" then

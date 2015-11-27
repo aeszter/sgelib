@@ -38,18 +38,18 @@ package SGE.Host_Properties is
                          S     : String);
    procedure Set_Cores (Props : in out Set_Of_Properties; Cores : Positive);
    procedure Set_Network (Props : in out Set_Of_Properties; Net : Network);
-   procedure Set_Model (Props : in out Set_Of_Properties; Model : String);
    procedure Set_Model (Props : in out Set_Of_Properties; Model : CPU_Model);
    procedure Set_Runtime (Props : in out Set_Of_Properties; Runtime : Unbounded_String);
    procedure Set_PE (Props : in out Set_Of_Properties; PE : Unbounded_String);
    procedure Set_SSD (Props : in out Set_Of_Properties);
    procedure Set_GPU (Props : in out Set_Of_Properties; Model : GPU_Model);
-   procedure Set_GPU (Props : in out Set_Of_Properties; Model : String);
    procedure Set_GPU (Props : in out Set_Of_Properties);
    procedure Set_Exclusive (Props : in out Set_Of_Properties);
 
    procedure Init (Props : out Set_Of_Properties;
-                   Net, Memory, Cores, Model, SSD, GPU : String);
+                   Net, Memory, Cores, SSD : String;
+                   Model                   : CPU_Model;
+                   GPU                     : GPU_Model);
 
    function "<" (Left, Right : Set_Of_Properties) return Boolean;
    overriding function "=" (Left, Right : Set_Of_Properties) return Boolean;
@@ -71,8 +71,8 @@ package SGE.Host_Properties is
 private
    type Set_Of_Properties is record
       Network               : Resources.Network := none;
-      Model                 : Resources.CPU_Model := none;
-      GPU                   : Resources.GPU_Model := none;
+      Model                 : Resources.CPU_Model := No_CPU;
+      GPU                   : Resources.GPU_Model := No_GPU;
       GPU_present           : Boolean := False;
       Exclusive             : Boolean := False;
       Memory                : Resources.Gigs := 0.0;

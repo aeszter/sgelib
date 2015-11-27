@@ -260,14 +260,14 @@ package body SGE.Partitions is
       return Get_Network (P.Properties)'Img;
    end Get_Network;
 
-   function Get_Model (P : Partition) return String is
+   function Get_Model (P : Partition) return SGE.Resources.CPU_Model is
    begin
-      return To_String (Get_Model (P.Properties));
+      return Get_Model (P.Properties);
    end Get_Model;
 
-   function Get_GPU (P : Partition) return String is
+   function Get_GPU (P : Partition) return SGE.Resources.GPU_Model is
    begin
-      return Get_GPU (P.Properties)'Img;
+      return Get_GPU (P.Properties);
    end Get_GPU;
 
    function Get_Memory (P : Partition) return String is

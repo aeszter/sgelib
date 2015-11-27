@@ -56,8 +56,8 @@ package SGE.Hosts is
    function Get_Name (H : Host) return Host_Name;
    function Has_Unreachable_Queue (H : Host) return Boolean;
    function Get_Network (H : Host) return String;
-   function Get_Model (H : Host) return String;
-   function Get_GPU (H : Host) return String;
+   function Get_Model (H : Host) return SGE.Resources.CPU_Model;
+   function Get_GPU (H : Host) return SGE.Resources.GPU_Model;
    function Get_Cores (H : Host) return Positive;
    function Get_Memory (H : Host) return String;
    function Queue_Count (H : Host) return Natural;

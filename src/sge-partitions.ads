@@ -5,6 +5,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with SGE.Queues; use SGE.Queues;
 with SGE.Host_Properties; use SGE.Host_Properties;
 with SGE.Loggers; use SGE.Loggers;
+with SGE.Resources;
 
 package SGE.Partitions is
 
@@ -42,8 +43,8 @@ package SGE.Partitions is
    function Get_Network (P : Partition) return String;
    function Get_Runtime (P : Partition) return String;
    function Get_Cores (P : Partition) return Natural;
-   function Get_Model (P : Partition) return String;
-   function Get_GPU (P : Partition) return String;
+   function Get_Model (P : Partition) return SGE.Resources.CPU_Model;
+   function Get_GPU (P : Partition) return SGE.Resources.GPU_Model;
    function Get_Memory (P : Partition) return String;
    function Has_GPU (P : Partition) return Boolean;
    function Has_SSD (P : Partition) return Boolean;
