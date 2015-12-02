@@ -165,6 +165,8 @@ package body SGE.Queues is
             end if;
          elsif Name (N) = "name" then
             Set_Host_Name (Q, Value (First_Child (N)));
+         elsif Name (N) = "message" then
+            Loggers.Record_Error (Value (First_Child (N)));
          end if;
       end loop;
 
