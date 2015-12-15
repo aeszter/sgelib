@@ -2,13 +2,11 @@ with Ada.Calendar; use Ada.Calendar;
 with Ada.Calendar.Formatting; use Ada.Calendar.Formatting;
 with Ada.Real_Time;
 with Ada.Strings; use Ada.Strings;
-with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Containers; use Ada.Containers;
 with SGE.Resources; use SGE.Resources.Resource_Lists;
 with SGE.Utils; use SGE.Utils; use SGE.Utils.Hash_Strings;
 with Ada.Strings.Fixed;
-with Ada.Strings.Maps.Constants;
 
 package body SGE.Resources is
 
@@ -163,110 +161,6 @@ package body SGE.Resources is
    begin
       return Left.Hash_Value < Right.Hash_Value;
    end Precedes;
-
-   --------------
-   -- To_Model --
-   --------------
-
-   function To_Model (S : String) return CPU_Model is
-   begin
-      if S = "" then
-         return none;
-      elsif Ada.Strings.Equal_Case_Insensitive (S, "italy") then
-         return italy;
-      elsif Equal_Case_Insensitive (S, "woodcrest") then
-         return woodcrest;
-      elsif Equal_Case_Insensitive (S, "clovertown") then
-         return clovertown;
-      elsif Equal_Case_Insensitive (S, "harpertown") then
-         return harpertown;
-      elsif Equal_Case_Insensitive (S, "magny-cours") or else
-        Equal_Case_Insensitive (S, "magnycours")
-      then
-         return magnycours;
-      elsif Equal_Case_Insensitive (S, "interlagos") then
-         return interlagos;
-      elsif Equal_Case_Insensitive (S, "ivy-bridge") or else
-        Equal_Case_Insensitive (S, "ivybridge")
-      then
-         return ivybridge;
-      elsif S = "sandy-bridge" or else
-        Equal_Case_Insensitive (S, "sandybridge")
-      then
-         return sandybridge;
-      elsif S = "abu-dhabi" or else
-        Equal_Case_Insensitive (S, "abudhabi")
-      then
-         return abudhabi;
-      elsif Equal_Case_Insensitive (S, "westmere") then
-         return westmere;
-      elsif Equal_Case_Insensitive (S, "haswell") then
-         return haswell;
-      else
-         raise Constraint_Error with "Unknown CPU model: " & S;
-      end if;
-   end To_Model;
-
-   function To_Model (S : Unbounded_String) return CPU_Model is
-   begin
-      return To_Model (To_String (S));
-   end To_Model;
-
-   function To_String (Model : CPU_Model) return String is
-   begin
-      case Model is
-         when sandybridge =>
-            return "sandy-bridge";
-         when ivybridge =>
-            return "ivy-bridge";
-            when magnycours =>
-            return "magny-cours";
-         when abudhabi =>
-            return "abu-dhabi";
-         when others =>
-            return Ada.Strings.Fixed.Translate (Source  => Model'Img,
-                                                Mapping => Ada.Strings.Maps.Constants.Lower_Case_Map);
-      end case;
-   end To_String;
-
-   function To_GPU (S : String) return GPU_Model is
-   begin
-      if S = "" or else
-        Equal_Case_Insensitive (S, "none")
-      then
-         return none;
-      elsif Equal_Case_Insensitive (S, "gtx580") then
-         return gtx580;
-      elsif Equal_Case_Insensitive (S, "gtx680") then
-         return gtx680;
-      elsif Equal_Case_Insensitive (S, "gtx770") then
-         return gtx770;
-      elsif Equal_Case_Insensitive (S, "gtx780") then
-         return gtx780;
-      elsif Equal_Case_Insensitive (S, "gtx780ti") then
-         return gtx780ti;
-      elsif Equal_Case_Insensitive (S, "gtx980") then
-         return gtx980;
-      elsif Equal_Case_Insensitive (S, "gtxtitan") then
-         return gtxtitan;
-      elsif Equal_Case_Insensitive (S, "gtx980ti") then
-         return gtx980ti;
-      else
-         raise Constraint_Error with "Unknown GPU " & S;
-      end if;
-   end To_GPU;
-
-   function To_GPU (S : Unbounded_String) return GPU_Model is
-   begin
-      return To_GPU (To_String (S));
-   end To_GPU;
-
-   function To_String (GPU : GPU_Model) return String is
-   begin
-      return Ada.Strings.Fixed.Translate (Source  => GPU'Img,
-                                          Mapping => Ada.Strings.Maps.Constants.Lower_Case_Map);
-   end To_String;
-
 
    ----------------
    -- To_Network --
@@ -461,5 +355,26 @@ package body SGE.Resources is
       end if;
       return Seconds;
    end Unformat_Duration;
+
+   function To_CPU (S : String) return CPU_Model is
+   begin
+      return To_Bounded_String (S);
+   end To_CPU;
+
+   function To_GPU (S : String) return GPU_Model is
+   begin
+      return To_Bounded_String (S);
+   end To_GPU;
+
+   overriding function To_String (CPU : CPU_Model) return String is
+   begin
+      return Strings.To_String (Strings.Bounded_String (CPU));
+   end To_String;
+
+   overriding function To_String (GPU : GPU_Model) return String is
+   begin
+      return Strings.To_String (Strings.Bounded_String (GPU));
+   end To_String;
+
 
 end SGE.Resources;

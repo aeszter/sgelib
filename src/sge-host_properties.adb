@@ -45,8 +45,8 @@ package body SGE.Host_Properties is
 
    function Has_GPU (Props : Set_Of_Properties) return Boolean is
    begin
-      if (Props.GPU = none and then Props.GPU_present)
-        or else (Props.GPU /= none and then not Props.GPU_present)
+      if (Props.GPU = No_GPU and then Props.GPU_present)
+        or else (Props.GPU /= No_GPU and then not Props.GPU_present)
       then
          raise SGE.Utils.Operator_Error with "inconsistent GPU config";
       end if;
@@ -129,11 +129,6 @@ package body SGE.Host_Properties is
       Props.Network := Net;
    end Set_Network;
 
-   procedure Set_Model (Props : in out Set_Of_Properties; Model : String) is
-   begin
-      Props.Model := To_Model (Model);
-   end Set_Model;
-
    procedure Set_Model (Props : in out Set_Of_Properties; Model : CPU_Model) is
    begin
       Props.Model := Model;
@@ -164,18 +159,15 @@ package body SGE.Host_Properties is
       Props.GPU := Model;
    end Set_GPU;
 
-   procedure Set_GPU (Props : in out Set_Of_Properties; Model : String) is
-   begin
-      Props.GPU := To_GPU (Model);
-   end Set_GPU;
-
    procedure Set_GPU (Props : in out Set_Of_Properties) is
    begin
       Props.GPU_present := True;
    end Set_GPU;
 
    procedure Init (Props : out Set_Of_Properties;
-                   Net, Memory, Cores, Model, SSD, GPU : String) is
+                   Net, Memory, Cores, SSD : String;
+                   Model                   : CPU_Model;
+                   GPU : GPU_Model) is
    begin
       Set_Network (Props, Network'Value (Net));
       Set_Memory (Props, Memory);
@@ -270,7 +262,7 @@ package body SGE.Host_Properties is
       if Left.Network /= Right.Network then
          return Left.Network'Img & "/=" & Right.Network'Img;
       elsif Left.Model /= Right.Model then
-         return Left.Model'Img & "/=" & Right.Model'Img;
+         return To_String (Left.Model) & "/=" & To_String (Right.Model);
       elsif Left.Memory /= Right.Memory then
          return Left.Memory'Img & "/=" & Right.Memory'Img;
       elsif Left.Cores /= Right.Cores then
@@ -280,7 +272,7 @@ package body SGE.Host_Properties is
       elsif Left.SSD /= Right.SSD then
          return "SSD: " & Left.SSD'Img & "/=" & Right.SSD'Img;
       elsif Left.GPU /= Right.GPU then
-         return "GPU: " & Left.GPU'Img & "/=" & Right.GPU'Img;
+         return "GPU: " & To_String (Left.GPU) & "/=" & To_String (Right.GPU);
       else
          return "matching properties";
       end if;
@@ -326,7 +318,7 @@ package body SGE.Host_Properties is
             Props.Network := ibswitch;
          end if;
       elsif Value (A) = "cpu_model" then
-         Props.Model := To_Model (Value (First_Child (N)));
+         Props.Model := To_CPU (Value (First_Child (N)));
       elsif Value (A) = "mem_total" then
          Props.Memory := To_Gigs (Value (First_Child (N)));
       elsif Value (A) = "slots" then
@@ -350,7 +342,7 @@ package body SGE.Host_Properties is
    function To_String (Props : Set_Of_Properties) return String is
    begin
       return "(net=>" & Props.Network'Img
-        & ",model=>" & Props.Model'Img
+        & ",model=>" & To_String (Props.Model)
         & ",mem=>" & Props.Memory'Img
         & ",cores=>" & Props.Cores'Img
         & ",rt=>" & To_String (Props.Runtime)

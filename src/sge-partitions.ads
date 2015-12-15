@@ -5,6 +5,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with SGE.Queues; use SGE.Queues;
 with SGE.Host_Properties; use SGE.Host_Properties;
 with SGE.Loggers; use SGE.Loggers;
+with SGE.Resources;
 
 package SGE.Partitions is
 
@@ -19,6 +20,8 @@ package SGE.Partitions is
    type Countable_Map is new Countable_Maps.Map with null record;
 
    type Partition is new Logger with private;
+   type Summarized_List is private;
+
    function Sum (Over : Countable_Map) return Natural;
 
    procedure Iterate_Available_Slots (P       : Partition;
@@ -40,8 +43,8 @@ package SGE.Partitions is
    function Get_Network (P : Partition) return String;
    function Get_Runtime (P : Partition) return String;
    function Get_Cores (P : Partition) return Natural;
-   function Get_Model (P : Partition) return String;
-   function Get_GPU (P : Partition) return String;
+   function Get_Model (P : Partition) return SGE.Resources.CPU_Model;
+   function Get_GPU (P : Partition) return SGE.Resources.GPU_Model;
    function Get_Memory (P : Partition) return String;
    function Has_GPU (P : Partition) return Boolean;
    function Has_SSD (P : Partition) return Boolean;
@@ -52,7 +55,7 @@ package SGE.Partitions is
    type State_Count is array (State) of Countable_Map;
 
    procedure Iterate_Summary (Process : not null access procedure (Item : State));
-   function Get_Summary (From : State) return Natural;
+   function Get_Summary (List : Summarized_List; From : State) return Natural;
 
 
    overriding procedure Include
@@ -63,8 +66,11 @@ package SGE.Partitions is
 
    function To_String (Source : State) return String;
 
-   procedure Build_List;
-   procedure Iterate (Process : not null access procedure (P : Partition));
+   procedure Initialize (Queue_List : Queues.List;
+                         Partition_List : out Summarized_List)
+     with Pre => Queues.Is_Sorted (Queue_List);
+
+   procedure Iterate (Collection : Summarized_List; Process : not null access procedure (P : Partition));
    function New_Partition (Q : Queue) return Partition;
 
    function "=" (Left : Partition; Right : Queue) return Boolean;
@@ -98,7 +104,5 @@ private
    end record;
 
    overriding function Copy (Source : Summarized_List) return Summarized_List;
-
-   List : Summarized_List;
 
 end SGE.Partitions;

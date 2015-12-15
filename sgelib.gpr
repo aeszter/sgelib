@@ -1,26 +1,17 @@
-with "florist";
+with "/sw/cluster/florist15/share/gpr/florist.gpr";
 with "xmlada";
 
 project SGElib is
 
    type Xmlada_Kind_Type is
       ("static", "relocatable");
-   Library_Type : Xmlada_Kind_Type := external ("LIBRARY_TYPE");
 
-   case Library_Type is
-
-      when "static" =>
          for Main use ();
          for Object_Dir use "obj";
          for Source_Dirs use ("src", "../tools/adacgi-1.6");
          for Languages use ("Ada");
          for Library_Interface use ("src/hosts.ads", "src/jobs.ads", "src/parser.ads", "src/partitions.ads");
 
-      when "relocatable" =>
-         for Main use ("hello.adb");
-         for Object_Dir use "./obj";
-         for Source_Dirs use ("./src", "../tools/adacgi-1.6");
-   end case;
 
    package Ide is
       for Vcs_Kind use "Git";
@@ -32,27 +23,15 @@ project SGElib is
 
    package Compiler is
 
-      case Library_Type is
+      for Default_Switches ("ada") use ("-gnaty3bBcxtSOnaihelkr", "-gnato", "-fstack-check", "-g", "-gnatf", "-gnatwum", "-gnat12");
 
-         when "static" =>
-            for Default_Switches ("ada") use ("-gnaty3bBcxtSOnaihelkr", "-gnato", "-fstack-check", "-g", "-gnatf", "-gnatwum", "-gnat12");
-
-         when "relocatable" =>
-            for Default_Switches ("ada") use ("-gnato", "-fstack-check", "-g", "-gnat05", "-ftest-coverage", "-fprofile-arcs", "-gnatf");
-      end case;
    end Compiler;
 
    package Linker is
 
-      case Library_Type is
+      for Default_Switches ("ada") use ("-g", "-lc");
+      for Linker_Options use ();
 
-         when "static" =>
-            for Default_Switches ("ada") use ("-g", "-lc");
-            for Linker_Options use ();
-
-         when "relocatable" =>
-            for Default_Switches ("ada") use ("-g", "-fprofile-generate");
-      end case;
    end Linker;
 
 end SGElib;

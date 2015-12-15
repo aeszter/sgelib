@@ -43,8 +43,8 @@ package body SGE.Partitions is
                                  Key       : Host_Name;
                                  New_Item  : Natural) is
       use Countable_Maps;
-      Previous : Cursor := Find (Container => Container,
-                                 Key       => Key);
+      Previous : Countable_Maps.Cursor := Find (Container => Container,
+                                                Key       => Key);
       procedure Take_Maximum (Key : Host_Name; Element : in out Natural) is
          pragma Unreferenced (Key);
       begin
@@ -73,21 +73,23 @@ package body SGE.Partitions is
    --  Side Effect: Q_List is sorted by resources.
    -------------------
 
-   procedure Build_List is
+   procedure Initialize (Queue_List : Queues.List;
+                         Partition_List : out Summarized_List) is
       P : Partition;
       Q : Queue;
+      Position : Queues.Cursor;
    begin
-      Queues.Sort;
-      Queues.Rewind;
-
-      Q := Queues.Current;
+      Partition_List.Clear;
+      Position :=  First (Queue_List);
       --  Create Partition according to first Queue
-      P := New_Partition (Q);
-      loop
+      P := New_Partition (Element (Position));
+      Next (Position);
+      while Has_Element (Position) loop
+         Q := Element (Position);
          --  New Partition?
          if P /= Q then
             --  Yes. Store previous one.
-            List.Append (P);
+            Partition_List.Append (P);
             P := New_Partition (Q);
          end if;
 
@@ -96,19 +98,19 @@ package body SGE.Partitions is
             P.Total_Slots.Include (Key      => Get_Host_Name (Q),
                                    New_Item => Get_Slot_Count (Q));
             P.Total_Hosts.Include (Get_Host_Name (Q));
-            List.Summary (total).Include (Key      => Get_Host_Name (Q),
-                                   New_Item => Get_Slot_Count (Q));
+            Partition_List.Summary (total).Include (Key      => Get_Host_Name (Q),
+                                                    New_Item => Get_Slot_Count (Q));
             if Is_Offline (Q) then
                P.Offline_Slots.Include (Key => Get_Host_Name (Q),
                                    New_Item => Get_Slot_Count (Q));
                P.Offline_Hosts.Include (Get_Host_Name (Q));
-               List.Summary (offline).Include (Key      => Get_Host_Name (Q),
-                                               New_Item => Get_Slot_Count (Q));
+               Partition_List.Summary (offline).Include (Key      => Get_Host_Name (Q),
+                                                         New_Item => Get_Slot_Count (Q));
             elsif Is_Disabled (Q) then
                P.Disabled_Slots.Include (Key      => Get_Host_Name (Q),
                                                New_Item => Get_Slot_Count (Q));
                P.Disabled_Hosts.Include (Get_Host_Name (Q));
-               List.Summary (disabled).Include (Key      => Get_Host_Name (Q),
+               Partition_List.Summary (disabled).Include (Key      => Get_Host_Name (Q),
                                                 New_Item => Get_Slot_Count (Q));
             elsif Is_Suspended (Q) then
                P.Suspended_Slots := P.Suspended_Slots + Get_Slot_Count (Q);
@@ -116,13 +118,13 @@ package body SGE.Partitions is
                if Get_Used_Slots (Q) > 0 then
                   P.Used_Hosts.Include (Get_Host_Name (Q));
                   P.Used_Slots := P.Used_Slots + Get_Used_Slots (Q);
-                  List.Summary (used).Include (Key      => Get_Host_Name (Q),
+                  Partition_List.Summary (used).Include (Key      => Get_Host_Name (Q),
                                                New_Item => Get_Used_Slots (Q));
                end if;
                if Get_Reserved_Slots (Q) > 0 then
                   P.Reserved_Hosts.Include (Get_Host_Name (Q));
                   P.Reserved_Slots := P.Reserved_Slots + Get_Reserved_Slots (Q);
-                  List.Summary (reserved).Include (Key      => Get_Host_Name (Q),
+                  Partition_List.Summary (reserved).Include (Key      => Get_Host_Name (Q),
                                                    New_Item => Get_Reserved_Slots (Q));
                end if;
                P.Available_Slots.Include (Key      => Get_Host_Name (Q),
@@ -133,20 +135,19 @@ package body SGE.Partitions is
                then
                   P.Available_Hosts.Include (Get_Host_Name (Q));
                end if;
-               List.Summary (available).Include (Key      => Get_Host_Name (Q),
+               Partition_List.Summary (available).Include (Key      => Get_Host_Name (Q),
                                                  New_Item => Get_Free_Slots (Q));
             end if;
          exception
             when E : Constraint_Error =>
                Record_Error (P, "Warning" & Exception_Message (E));
          end;
-         exit when Queues.At_End;
          --  Advance
-         Q := Queues.Next;
+         Next (Position);
       end loop;
       --  That's it. Store final partition.
-      List.Append (P);
-   end Build_List;
+      Partition_List.Append (P);
+   end Initialize;
 
    -------------------
    -- New_Partition --
@@ -179,14 +180,14 @@ package body SGE.Partitions is
       end case;
    end To_String;
 
-   procedure Iterate (Process : not null access procedure (P : Partition)) is
+   procedure Iterate (Collection : Summarized_List; Process : not null access procedure (P : Partition)) is
       procedure Wrapper (Position : Partition_Lists.Cursor) is
       begin
          Process (Partition_Lists.Element (Position));
       end Wrapper;
 
    begin
-      List.Iterate (Wrapper'Access);
+      Iterate (Collection, Wrapper'Access);
    end Iterate;
 
    function Get_Available_Hosts (P : Partition) return Natural is
@@ -259,14 +260,14 @@ package body SGE.Partitions is
       return Get_Network (P.Properties)'Img;
    end Get_Network;
 
-   function Get_Model (P : Partition) return String is
+   function Get_Model (P : Partition) return SGE.Resources.CPU_Model is
    begin
-      return To_String (Get_Model (P.Properties));
+      return Get_Model (P.Properties);
    end Get_Model;
 
-   function Get_GPU (P : Partition) return String is
+   function Get_GPU (P : Partition) return SGE.Resources.GPU_Model is
    begin
-      return Get_GPU (P.Properties)'Img;
+      return Get_GPU (P.Properties);
    end Get_GPU;
 
    function Get_Memory (P : Partition) return String is
@@ -304,7 +305,7 @@ package body SGE.Partitions is
       null;
    end Iterate_Summary;
 
-   function Get_Summary (From : State) return Natural is
+   function Get_Summary (List : Summarized_List; From : State) return Natural is
    begin
       return Sum (List.Summary (From));
    end Get_Summary;

@@ -31,13 +31,24 @@ package SGE.Jobs is
 
 
    type Job is new Logger with private;
+   type List is private;
+   type Cursor is private;
+   procedure Clear (Collection : in out List);
+   function Length (Collection : List) return Natural;
+   function Is_Sorted (Collection : List) return Boolean;
+
+   function First (Collection : List) return Cursor;
+   procedure Next (Position : in out Cursor);
+   function Has_Element (Position : Cursor) return Boolean;
+   function Element (Position : Cursor) return Job;
 
    function To_Abbrev (Flag : State_Flag) return String;
    function To_String (Flag : State_Flag) return String;
 
-   function Count return Natural;
-   function Count (Predicate : not null access function (J : Job) return Boolean)
-      return Natural;
+--   function Count (Collection : List) return Natural;
+   function Count (Collection : List;
+                   Predicate : not null access function (J : Job) return Boolean)
+                   return Natural;
 
    function To_String (Capability : Balancer_Capability) return String;
    function To_Memory (Amount : Usage_Integer) return String;
@@ -132,7 +143,8 @@ package SGE.Jobs is
    -- Get_Summary --
    --  Purpose: Count the number of jobs per state from the List
    -----------------
-   procedure Get_Summary (Tasks, Slots : out State_Count);
+   procedure Get_Summary (Collection   : List;
+                          Tasks, Slots : out State_Count);
 
 
    -------------
@@ -175,7 +187,8 @@ package SGE.Jobs is
    --  accordingly
    -----------------
 
-   procedure Append_List (Nodes : Node_List);
+   procedure Append (Collection : in out List; Nodes : Node_List) with
+     Post => not Empty (Collection);
 
    -----------------
    -- Update_Messages --
@@ -187,7 +200,7 @@ package SGE.Jobs is
    --  Raise: Too_Many_Jobs_Error if there is more than one entry in the List.
    -----------------
 
-   procedure Update_Messages (Nodes : Node_List);
+   procedure Update_Messages (Collection : in out List; Nodes : Node_List);
 
    --------------------
    -- Create_Overlay --
@@ -202,8 +215,8 @@ package SGE.Jobs is
    --  Set created with Create_Overlay
    -------------------
 
-   procedure Apply_Overlay;
-   procedure Update_Quota;
+   procedure Apply_Overlay (Collection : in out List);
+   procedure Update_Quota (Collection : in out List);
 
 
    -----------------
@@ -211,15 +224,18 @@ package SGE.Jobs is
    --  Purpose: Remove Jobs not matching certain criteria
    -----------------
 
-   procedure Prune_List (Keep : not null access function (J : Job) return Boolean);
-   procedure Prune_List (PE, Queue, Hard_Requests,
-                         Soft_Requests,
-                         Slot_Number, Slot_Ranges : Unbounded_String);
+   procedure Prune (Collection : in out List;
+                    Keep       : not null access function (J : Job) return Boolean);
+   procedure Prune (Collection : in out List;
+                    PE, Queue, Hard_Requests,
+                    Soft_Requests,
+                    Slot_Number, Slot_Ranges : Unbounded_String);
 
-   procedure Prune_List_By_Slots (Slots : String);
+   procedure Prune_By_Slots (Collection : in out List; Slots : String);
    --  outdated. move functionality to Append_List. Does GPS notice this?
 
-   procedure Sort_By (Field : String; Direction : String);
+   procedure Sort_By (Collection : in out List;
+                      Field      : String; Direction : String);
    function Precedes_By_Name (Left, Right : Job) return Boolean;
    function Precedes_By_Number (Left, Right : Job) return Boolean;
    function Precedes_By_Owner (Left, Right : Job) return Boolean;
@@ -243,34 +259,25 @@ package SGE.Jobs is
 
    function Same (Left, Right : Job) return Boolean;
 
-   procedure Update_Status;
+   procedure Update_Status (Collection : in out List);
    --  Purpose: Update all jobs' status
-   procedure Search_Queues;
+   procedure Search_Queues (Collection : in out List);
    --  Look for slots occupied by a job
 
-   procedure Sort;
+   procedure Sort (Collection : in out List);
    --  Sort the job list by resources
-   procedure Rewind;
-   --  rewind the job list, i.e. point the memory pointer at the first job
-   function Empty return Boolean;
+   function Empty (Collection : List) return Boolean;
    --  is the job list empty?
-   function Next return Job;
-   --  advance the memory pointer and retrieve the current job
-   --  if the memory pointer points at the last element, or is No_Element, then
-   --  a Constraint_Error is propagated
-   function At_End return Boolean;
-   --  is there a next job? If At_End returns False, Next will return a Job
-   function Current return Job;
-   --  retrieve the current job without changing the memory pointer
 
-   function Find_Job (ID : Natural) return Job;
+   function Find_Job (Collection : List; ID : Natural) return Job;
 
 
    -------------
    -- Iterate --
    -------------
 
-   procedure Iterate (Process : not null access procedure (J : Job));
+   procedure Iterate (Collection : List;
+                      Process    : not null access procedure (J : Job));
    procedure Iterate_Predecessors (J       : Job;
                                    Process : not null access procedure (ID : Natural));
    procedure Iterate_Predecessor_Requests (J : Job; Process : not null access procedure (S : String));
@@ -378,7 +385,7 @@ private
                                       "<"          => "<",
                                       "="          => Same);
 
-   function Find_Job (ID : Natural) return Job_Lists.Cursor;
+   function Find_Job (Collection : List; ID : Natural) return Job_Lists.Cursor;
    --  if the job list contains a job with the given ID, return a cursor
    --  pointing there;
    --  otherwise, return No_Element
@@ -429,8 +436,10 @@ private
       new Job_Lists.Generic_Sorting ("<" => Precedes_By_Resources);
 
 
-   List : Job_Lists.List;
+   type List is  record
+      Container : Job_Lists.List;
+   end record;
+   type Cursor is new Job_Lists.Cursor;
    Overlay : Job_Maps.Map;
-   List_Cursor : Job_Lists.Cursor := Job_Lists.No_Element;
 
 end SGE.Jobs;
