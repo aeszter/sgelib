@@ -76,6 +76,11 @@ package body SGE.Host_Properties is
       return Props.Memory;
    end Get_Memory;
 
+   function Get_GPU_Memory (Props : Set_Of_Properties) return Gigs is
+   begin
+      return Props.GPU_Memory;
+   end Get_GPU_Memory;
+
    function Get_PE (Props : Set_Of_Properties) return String is
    begin
       return To_String (Props.PE);
@@ -191,6 +196,16 @@ package body SGE.Host_Properties is
          Props.Memory := 0.0;
       end if;
    end Set_Memory;
+
+   procedure Set_GPU_Memory (Props : in out Set_Of_Properties;
+                             S     : String) is
+   begin
+      if S /= "" then
+         Props.GPU_Memory := To_Gigs (S);
+      else
+         Props.GPU_Memory := 0.0;
+      end if;
+   end Set_GPU_Memory;
 
    function "<" (Left, Right : Set_Of_Properties) return Boolean is
    begin

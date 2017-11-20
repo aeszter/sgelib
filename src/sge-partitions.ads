@@ -46,6 +46,7 @@ package SGE.Partitions is
    function Get_Model (P : Partition) return SGE.Resources.CPU_Model;
    function Get_GPU (P : Partition) return SGE.Resources.GPU_Model;
    function Get_Memory (P : Partition) return String;
+   function Get_GPU_Memory (P : Partition) return String;
    function Has_GPU (P : Partition) return Boolean;
    function Has_SSD (P : Partition) return Boolean;
    function Get_Name (P : Partition) return String;

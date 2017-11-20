@@ -270,6 +270,15 @@ package body SGE.Partitions is
       return Get_GPU (P.Properties);
    end Get_GPU;
 
+   function Get_GPU_Memory (P : Partition) return String is
+   begin
+      if Has_GPU (P) then
+         return SGE.Resources.To_String (Get_GPU_Memory (P.Properties));
+      else
+         return "";
+      end if;
+   end Get_GPU_Memory;
+
    function Get_Memory (P : Partition) return String is
    begin
       return SGE.Resources.To_String (Get_Memory (P.Properties));
