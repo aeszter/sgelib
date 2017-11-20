@@ -336,6 +336,8 @@ package body SGE.Host_Properties is
          Props.Model := To_CPU (Value (First_Child (N)));
       elsif Value (A) = "mem_total" then
          Props.Memory := To_Gigs (Value (First_Child (N)));
+      elsif Value (A) = "gpu_memory" then
+         Props.GPU_Memory := To_Gigs (Value (First_Child (N)));
       elsif Value (A) = "slots" then
          Props.Available_Slots := Integer (Fixed'Value (Value (First_Child (N))));
       elsif Value (A) = "gpu_model" then
