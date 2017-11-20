@@ -127,6 +127,8 @@ package body SGE.Queues is
             A := Get_Attr (N, "name");
             if Value (A) = "mem_total" then
                Set_Memory (Q.Properties, Value (First_Child (N)));
+            elsif Value (A) = "gpu_memory" then
+               Set_GPU_Memory (Q.Properties, Value (First_Child (N)));
             elsif Value (A) = "num_proc" then
                Set_Cores (Q.Properties, Integer'Value (Value (First_Child (N))));
             elsif Value (A) = "infiniband" and then
