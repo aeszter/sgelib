@@ -2,6 +2,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Exceptions; use Ada.Exceptions;
 with SGE.Queues;
 with SGE.Resources; use SGE.Resources;
+with SGE.Utils;
 
 package body SGE.Partitions is
 
@@ -277,6 +278,9 @@ package body SGE.Partitions is
       else
          return "";
       end if;
+   exception
+      when E : SGE.Utils.Operator_Error =>
+         return Exception_Message (E);
    end Get_GPU_Memory;
 
    function Get_Memory (P : Partition) return String is
