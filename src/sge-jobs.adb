@@ -397,6 +397,11 @@ package body SGE.Jobs is
       return J.Priority;
    end Get_Priority;
 
+   function Get_Project (J : Job) return String is
+   begin
+      return To_String (J.Project);
+   end Get_Project;
+
    function Get_Override_Tickets (J : Job) return Natural is
    begin
       return J.Override_Tickets;
@@ -1053,7 +1058,7 @@ package body SGE.Jobs is
                if Length (Child_Nodes (C)) > 0 then
                   J.Project := To_Unbounded_String (Value (First_Child (C)));
                else
-                  J.Project := To_Unbounded_String ("none");
+                  J.Project := Null_Unbounded_String;
                end if;
             elsif Node_Name  = "JB_ar" then
                J.Job_Advance_Reservation := To_Unbounded_String (Value (First_Child (C)));
