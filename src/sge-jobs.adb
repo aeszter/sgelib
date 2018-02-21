@@ -397,6 +397,11 @@ package body SGE.Jobs is
       return J.Priority;
    end Get_Priority;
 
+   function Get_Project (J : Job) return String is
+   begin
+      return To_String (J.Project);
+   end Get_Project;
+
    function Get_Override_Tickets (J : Job) return Natural is
    begin
       return J.Override_Tickets;
@@ -701,13 +706,16 @@ package body SGE.Jobs is
    -- Append_List --
    -----------------
 
-   procedure Append (Collection : in out List; Nodes : Node_List) is
+   procedure Append (Collection     : in out List;
+                     Nodes          : Node_List;
+                     Fix_Posix_Prio : Boolean) is
       N : Node;
    begin
       for Index in 1 .. Length (Nodes) loop
          N := Item (Nodes, Index - 1);
          if Name (N) /= "#text" then
-            Collection.Container.Append (New_Job (Child_Nodes (N)));
+            Collection.Container.Append (New_Job (Child_Nodes (N),
+                                                  Fix_Posix_Prio));
          end if;
       end loop;
    end Append;
@@ -929,7 +937,7 @@ package body SGE.Jobs is
    -- New_Job --
    -------------
 
-   function New_Job (List : Node_List) return Job is
+   function New_Job (List : Node_List; Fix_Posix_Prio : Boolean) return Job is
       J           : Job;
    begin
       J.Merge_Std_Err := Undecided;
@@ -937,7 +945,7 @@ package body SGE.Jobs is
       J.Mem := 0.0;
       J.IO := 0.0;
       J.CPU := 0.0;
-      Update_Job (J => J, List => List);
+      Update_Job (J => J, List => List, Fix_Posix_Prio => Fix_Posix_Prio);
       Determine_Balancer_Support (J);
       return J;
    end New_Job;
@@ -946,7 +954,9 @@ package body SGE.Jobs is
    -- Update_Job --
    ----------------
 
-   procedure Update_Job (J : in out Job; List : Node_List) is
+   procedure Update_Job (J              : in out Job;
+                         List           : Node_List;
+                         Fix_Posix_Prio : Boolean) is
       A           : Attr;
       Inserted    : Boolean;
       Inserted_At : Resource_Lists.Cursor;
@@ -957,6 +967,7 @@ package body SGE.Jobs is
          declare
             C : Node := Item (List, Index);
             Node_Name : String := Name (C);
+            Raw_Priority : Integer;
          begin
             if Node_Name = "JB_job_number" then
                J.Number := Integer'Value (Value (First_Child (C)));
@@ -1006,7 +1017,11 @@ package body SGE.Jobs is
             elsif Node_Name  = "JB_nurg" then
                J.Urgency := Fixed'Value (Value (First_Child (C)));
             elsif Node_Name  = "JB_priority" then
-               J.Posix_Priority := Posix_Priority_Type'Value (Value (First_Child (C)));
+               Raw_Priority := Integer'Value (Value (First_Child (C)));
+               if Fix_Posix_Prio then
+                  Raw_Priority := Raw_Priority - 1_024;
+               end if;
+               J.Posix_Priority := Posix_Priority_Type (Raw_Priority);
             elsif Node_Name  = "hard_req_queue" then
                J.Queue := To_Unbounded_String (Value (First_Child (C)));
             elsif Node_Name  = "full_job_name" then
@@ -1053,7 +1068,7 @@ package body SGE.Jobs is
                if Length (Child_Nodes (C)) > 0 then
                   J.Project := To_Unbounded_String (Value (First_Child (C)));
                else
-                  J.Project := To_Unbounded_String ("none");
+                  J.Project := Null_Unbounded_String;
                end if;
             elsif Node_Name  = "JB_ar" then
                J.Job_Advance_Reservation := To_Unbounded_String (Value (First_Child (C)));
@@ -1996,7 +2011,7 @@ package body SGE.Jobs is
       for Index in 1 .. Length (Nodes) loop
          N := Item (Nodes, Index - 1);
          if Name (N) /= "#text" then
-            J := New_Job (Child_Nodes (N));
+            J := New_Job (Child_Nodes (N), True);
             Overlay.Insert (New_Item => J,
                             Key      => J.Number);
          end if;

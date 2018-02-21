@@ -125,6 +125,7 @@ package SGE.Jobs is
    function Get_Extended_Slots (J : Job) return String;
    function Get_Reduced_Runtime (J : Job) return String;
    function Get_Priority (J : Job) return Utils.Fixed;
+   function Get_Project (J : Job) return String;
    function Get_Override_Tickets (J : Job) return Natural;
    function Get_Share_Tickets (J : Job) return Natural;
    function Get_Functional_Tickets (J : Job) return Natural;
@@ -155,7 +156,7 @@ package SGE.Jobs is
    --  Returns: The newly created job
    -------------
 
-   function New_Job (List : Node_List) return Job;
+   function New_Job (List : Node_List; Fix_Posix_Prio : Boolean) return Job;
 
    ----------------
    -- Update_Job --
@@ -163,7 +164,9 @@ package SGE.Jobs is
    --  Parameter J: The job to update
    --  Parameter List: A list of XML nodes containing information about the job
    ----------------
-   procedure Update_Job (J : in out Job; List : Node_List);
+   procedure Update_Job (J              : in out Job;
+                         List           : Node_List;
+                         Fix_Posix_Prio : Boolean);
    procedure Extract_Resource_List (J              : in out Job;
                                     Resource_Nodes : Node_List;
                                     Soft           : Boolean := False);
@@ -187,7 +190,9 @@ package SGE.Jobs is
    --  accordingly
    -----------------
 
-   procedure Append (Collection : in out List; Nodes : Node_List) with
+   procedure Append (Collection     : in out List;
+                     Nodes          : Node_List;
+                     Fix_Posix_Prio : Boolean) with
      Post => not Empty (Collection);
 
    -----------------
