@@ -26,7 +26,6 @@ package body SGE.Bunches is
          Position := SGE.Jobs. First (Job_List);
          --  Create Bunch according to first Job
          B := New_Bunch (SGE.Jobs.Element (Position));
-         Next (Position);
          while Has_Element (Position) loop
             J := SGE.Jobs.Element (Position);
             --  New Bunch?
