@@ -84,7 +84,6 @@ package body SGE.Partitions is
       Position :=  First (Queue_List);
       --  Create Partition according to first Queue
       P := New_Partition (Element (Position));
-      Next (Position);
       while Has_Element (Position) loop
          Q := Element (Position);
          --  New Partition?
