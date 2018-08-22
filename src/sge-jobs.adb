@@ -525,8 +525,13 @@ package body SGE.Jobs is
       begin
          for Flag in State_Array'Range loop
             if State_Array (Flag) then
-               Tasks (Flag) := Tasks (Flag) + 1;
-               Slots (Flag) := Slots (Flag) + Slot_Number;
+               if Flag = waiting and then State_Array (hold) then
+                  null; -- we see a job as either waiting or held
+                        --  but not both, see Bug #2478
+               else
+                  Tasks (Flag) := Tasks (Flag) + 1;
+                  Slots (Flag) := Slots (Flag) + Slot_Number;
+               end if;
             end if;
          end loop;
       end Count;
