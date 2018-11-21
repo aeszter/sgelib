@@ -25,6 +25,7 @@ package SGE.Host_Properties is
    function Get_Cores (Props : Set_Of_Properties) return Positive;
    function Get_Network (Props : Set_Of_Properties) return Network;
    function Get_Model (Props : Set_Of_Properties) return CPU_Model;
+   function Get_Queue (Props : Set_Of_Properties) return String;
    function Get_GPU (Props : Set_Of_Properties) return GPU_Model;
    function Get_Runtime (Props : Set_Of_Properties) return String;
    function Get_Runtime (Props : Set_Of_Properties) return Natural;
@@ -42,6 +43,7 @@ package SGE.Host_Properties is
    procedure Set_Cores (Props : in out Set_Of_Properties; Cores : Positive);
    procedure Set_Network (Props : in out Set_Of_Properties; Net : Network);
    procedure Set_Model (Props : in out Set_Of_Properties; Model : CPU_Model);
+   procedure Set_Queue (Props : in out Set_Of_Properties; Queue : String);
    procedure Set_Runtime (Props : in out Set_Of_Properties; Runtime : Unbounded_String);
    procedure Set_PE (Props : in out Set_Of_Properties; PE : Unbounded_String);
    procedure Set_SSD (Props : in out Set_Of_Properties);
@@ -51,6 +53,7 @@ package SGE.Host_Properties is
 
    procedure Init (Props : out Set_Of_Properties;
                    Net, Memory, Cores, SSD : String;
+                   Queue                   : String;
                    Model                   : CPU_Model;
                    GPU                     : GPU_Model);
 
@@ -82,6 +85,7 @@ private
       GPU_Memory            : Resources.Gigs := 0.0;
       Cores                 : Positive := 1;
       Runtime               : Unbounded_String;
+      Queue_Name            : Unbounded_String;
       PE                    : Unbounded_String;
       SSD                   : Boolean := False;
       Load_One, Load_Five   : Load := 0.0;

@@ -58,9 +58,11 @@ package body SGE.Host_Properties is
    begin
       return Props.Load_One;
    end Get_Load_One;
-   -----------------
-   -- Get_Runtime --
-   -----------------
+
+   function Get_Queue (Props : Set_Of_Properties) return String is
+   begin
+      return To_String (Props.Queue_Name);
+   end Get_Queue;
 
    function Get_Runtime (Props : Set_Of_Properties) return String is
    begin
@@ -171,8 +173,9 @@ package body SGE.Host_Properties is
 
    procedure Init (Props : out Set_Of_Properties;
                    Net, Memory, Cores, SSD : String;
+                   Queue                   : String;
                    Model                   : CPU_Model;
-                   GPU : GPU_Model) is
+                   GPU                     : GPU_Model) is
    begin
       Set_Network (Props, Network'Value (Net));
       Set_Memory (Props, Memory);
@@ -182,6 +185,8 @@ package body SGE.Host_Properties is
                  Model => Model);
       Set_GPU (Props => Props,
                Model => GPU);
+      Set_Queue (Props => Props,
+                 Queue => Queue);
       if SSD = "TRUE" then
          Set_SSD (Props => Props);
       end if;
@@ -207,6 +212,11 @@ package body SGE.Host_Properties is
       end if;
    end Set_GPU_Memory;
 
+   procedure Set_Queue (Props : in out Set_Of_Properties; Queue : String) is
+   begin
+      Props.Queue_Name := To_Unbounded_String (Queue);
+   end Set_Queue;
+
    function "<" (Left, Right : Set_Of_Properties) return Boolean is
    begin
       if Left.Network < Right.Network then
@@ -228,6 +238,10 @@ package body SGE.Host_Properties is
       elsif Left.Runtime < Right.Runtime then
          return True;
       elsif Left.Runtime > Right.Runtime then
+         return False;
+      elsif Left.Queue_Name < Right.Queue_Name then
+         return True;
+      elsif Left.Queue_Name > Right.Queue_Name then
          return False;
       elsif Left.SSD < Right.SSD then
          return True;
@@ -256,6 +270,8 @@ package body SGE.Host_Properties is
       elsif Left.Cores /= Right.Cores then
          return False;
       elsif Left.Runtime /= Right.Runtime then
+         return False;
+      elsif Left.Queue_Name /= Right.Queue_Name then
          return False;
       elsif Left.SSD /= Right.SSD then
          return False;
