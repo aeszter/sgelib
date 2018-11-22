@@ -422,7 +422,7 @@ package body SGE.Hosts is
    --          fulfill the given requirements
    ----------------
 
-   procedure Prune_List (Requirements : Set_Of_Properties) is
+   procedure Prune_List (Requirements : Set_Of_Properties; Queue_Name : String) is
       Temp      : Host_Lists.List;
       Pos       : Host_Lists.Cursor := Host_List.First;
       H         : Host;
@@ -431,7 +431,7 @@ package body SGE.Hosts is
          exit when Pos = Host_Lists.No_Element;
          H := Host_Lists.Element (Pos);
          if H.Properties = Requirements and then
-           H.Queues.Contains (To_Unbounded_String (Get_Queue (Requirements)))
+           H.Queues.Contains (To_Unbounded_String (Queue_Name))
          then
             Temp.Append (H);
          end if;
