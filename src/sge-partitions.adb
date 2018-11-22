@@ -72,7 +72,6 @@ package body SGE.Partitions is
    --  Purpose: Build a partition list from a queue list.
    --           This totals all slots (available, used, reserved, ...) for the
    --           for all matching queues.
-   --  Side Effect: Q_List is sorted by resources.
    -------------------
 
    procedure Initialize (Queue_List : Queues.List;
