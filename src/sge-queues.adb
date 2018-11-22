@@ -188,7 +188,13 @@ package body SGE.Queues is
 
    function Precedes_By_Resources (Left, Right : Queue) return Boolean is
    begin
-      return Left.Properties < Right.Properties;
+      if Left.Total < Right.Total then
+         return True;
+      elsif Left.Total > Right.Total then
+         return False;
+      else
+         return Left.Properties < Right.Properties;
+      end if;
    end Precedes_By_Resources;
 
    function Precedes_By_Sequence (Left, Right : Queue) return Boolean is

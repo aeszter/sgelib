@@ -29,6 +29,7 @@ package SGE.Partitions is
    function Get_Properties (P : Partition) return Set_Of_Properties;
    function Get_Available_Hosts (P : Partition) return Natural;
    function Get_Available_Slots (P : Partition) return Natural;
+   function Get_Slots (P : Partition) return Positive;
    function Get_Offline_Hosts (P : Partition) return Natural;
    function Get_Offline_Slots (P : Partition) return Natural;
    function Get_Suspended_Slots (P : Partition) return Natural;
@@ -82,7 +83,8 @@ private
       Used_Slots,
       Reserved_Slots,
       Suspended_Slots : Natural := 0;
-      Total_Slots     : Countable_Map;
+      Total_Slots     : Positive := 1;
+      Total_Queues    : Natural := 0;
       Available_Hosts,
       Total_Hosts,
       Offline_Hosts,
