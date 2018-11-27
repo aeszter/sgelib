@@ -17,7 +17,7 @@ package SGE.Hosts is
 
 
    procedure Append_List (Host_Nodes : Node_List);
-   procedure Prune_List (Requirements : Set_Of_Properties; Queue_Name : String);
+   procedure Prune_List (Requirements : Set_Of_Properties; Slots : Positive);
 
    procedure Iterate (Process : access procedure (H : Host));
    procedure Iterate (Process : access procedure (H : Host);
@@ -54,6 +54,7 @@ package SGE.Hosts is
    function Get_Reserved_Slots (H : Host) return Natural;
    function Get_Used_Slots (H : Host) return Natural;
    function Get_Name (H : Host) return Host_Name;
+   function Has_Queue (H : Host; Slots : Positive) return Boolean;
    function Has_Unreachable_Queue (H : Host) return Boolean;
    function Get_Network (H : Host) return String;
    function Get_Model (H : Host) return SGE.Resources.CPU_Model;
