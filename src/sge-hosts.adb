@@ -80,6 +80,20 @@ package body SGE.Hosts is
       return J.Master;
    end Is_Master;
 
+   function Has_Queue (H : Host; Slots : Positive) return Boolean is
+      Position : Queue_Maps.Cursor := H.Queues.First;
+      Q        : Queue;
+   begin
+      while Position /= Queue_Maps.No_Element loop
+         Q := Element (Position);
+         if Q.Slots = Slots then
+            return True;
+         end if;
+         Next (Position);
+      end loop;
+      return False;
+   end Has_Queue;
+
    function Has_Slaves (J : Job) return Boolean is
    begin
       return J.Slaves > 0;
@@ -422,7 +436,7 @@ package body SGE.Hosts is
    --          fulfill the given requirements
    ----------------
 
-   procedure Prune_List (Requirements : Set_Of_Properties; Queue_Name : String) is
+   procedure Prune_List (Requirements : Set_Of_Properties; Slots : Positive) is
       Temp      : Host_Lists.List;
       Pos       : Host_Lists.Cursor := Host_List.First;
       H         : Host;
@@ -431,7 +445,7 @@ package body SGE.Hosts is
          exit when Pos = Host_Lists.No_Element;
          H := Host_Lists.Element (Pos);
          if H.Properties = Requirements and then
-           H.Queues.Contains (To_Unbounded_String (Queue_Name))
+           Has_Queue (H, Slots)
          then
             Temp.Append (H);
          end if;

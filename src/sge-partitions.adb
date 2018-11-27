@@ -13,7 +13,8 @@ package body SGE.Partitions is
 
    function "=" (Left : Partition; Right : Queue) return Boolean is
    begin
-      return Left.Properties = Get_Properties (Right);
+      return Left.Properties = Get_Properties (Right)
+      and then Left.Total_Slots = Get_Slot_Count (Right);
    end "=";
 
    function "=" (Left : Queue; Right : Partition) return Boolean is
@@ -71,7 +72,6 @@ package body SGE.Partitions is
    --  Purpose: Build a partition list from a queue list.
    --           This totals all slots (available, used, reserved, ...) for the
    --           for all matching queues.
-   --  Side Effect: Q_List is sorted by resources.
    -------------------
 
    procedure Initialize (Queue_List : Queues.List;
@@ -95,9 +95,8 @@ package body SGE.Partitions is
 
          begin
             --  Update totals
-            P.Total_Slots.Include (Key      => Get_Host_Name (Q),
-                                   New_Item => Get_Slot_Count (Q));
             P.Total_Hosts.Include (Get_Host_Name (Q));
+            P.Total_Queues := P.Total_Queues + 1;
             Partition_List.Summary (total).Include (Key      => Get_Host_Name (Q),
                                                     New_Item => Get_Slot_Count (Q));
             if Is_Offline (Q) then
@@ -156,8 +155,10 @@ package body SGE.Partitions is
    function New_Partition (Q : Queue) return Partition is
       P : Partition;
    begin
-      P.Properties := Get_Properties (Q);
-      P.Name      := Get_Name (Q);
+      P.Properties   := Get_Properties (Q);
+      P.Name         := Get_Name (Q);
+      P.Total_Slots  := Get_Slot_Count (Q);
+      P.Total_Queues := 0;
       return P;
    end New_Partition;
 
@@ -217,7 +218,7 @@ package body SGE.Partitions is
 
    function Get_Total_Slots (P : Partition) return Natural is
    begin
-      return Sum (P.Total_Slots);
+      return P.Total_Slots * P.Total_Queues;
    end Get_Total_Slots;
 
    function Get_Total_Hosts (P : Partition) return Natural is
@@ -244,6 +245,11 @@ package body SGE.Partitions is
    begin
       return Natural (P.Reserved_Hosts.Length);
    end Get_Reserved_Hosts;
+
+   function Get_Slots (P : Partition) return Positive is
+   begin
+      return P.Total_Slots;
+   end Get_Slots;
 
    function Get_Disabled_Slots (P : Partition) return Natural is
    begin
