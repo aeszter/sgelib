@@ -706,6 +706,20 @@ package body SGE.Jobs is
       return End_Time (J) - Ada.Calendar.Clock;
    end Remaining_Time;
 
+   function Walltime (J : Job) return Duration is
+   begin
+--      return Ada.Real_Time.To_Duration (Ada.Real_Time.Seconds (
+--                                        J.Hard.Numerical ("h_rt")));
+--  This does not work because qstat -urg does not return resource info
+      if J.Is_Running then
+         return Ada.Calendar.Clock - J.Submission_Time;
+      else
+         return Duration (0);
+      end if;
+   exception
+      when Constraint_Error =>
+         return Duration (0);
+   end Walltime;
 
    -----------------
    -- Append_List --
@@ -1644,6 +1658,8 @@ package body SGE.Jobs is
          Sorting_By_Priority.Sort (Collection.Container);
       elsif Field = "Submitted" then
          Sorting_By_Submission_Time.Sort (Collection.Container);
+      elsif  Field = "Walltime" then
+         Sorting_By_Walltime.Sort (Collection.Container);
       elsif Field = "Slots" then
          Sorting_By_Slots.Sort (Collection.Container);
       elsif Field = "State" then
@@ -1798,6 +1814,11 @@ package body SGE.Jobs is
    begin
       return Left.Submission_Time < Right.Submission_Time;
    end Precedes_By_Submission_Time;
+
+   function Precedes_By_Walltime (Left, Right : Job) return Boolean is
+   begin
+      return Left.Walltime < Right.Walltime;
+   end Precedes_By_Walltime;
 
    --------------------------
    -- Precedes_By_Slots   --

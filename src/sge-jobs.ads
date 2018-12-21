@@ -63,6 +63,7 @@ package SGE.Jobs is
 
    function End_Time (J : Job) return Time;
    function Remaining_Time (J : Job) return Duration;
+   function Walltime (J : Job) return Duration;
    function Get_Task_Count (J : Job) return Natural;
    function Get_Task_IDs (J : Job) return Ranges.Step_Range_List;
    function Get_ID (J : Job) return String;
@@ -246,6 +247,7 @@ package SGE.Jobs is
    function Precedes_By_Owner (Left, Right : Job) return Boolean;
    function Precedes_By_Priority (Left, Right : Job) return Boolean;
    function Precedes_By_Submission_Time (Left, Right : Job) return Boolean;
+   function Precedes_By_Walltime (Left, Right : Job) return Boolean;
    function Precedes_By_Slots (Left, Right : Job) return Boolean;
    function Precedes_By_State (Left, Right : Job) return Boolean;
    function Precedes_By_CPU_Used (Left, Right : Job) return Boolean;
@@ -410,6 +412,8 @@ private
      new Job_Lists.Generic_Sorting ("<" => Precedes_By_Priority);
    package Sorting_By_Submission_Time is
      new Job_Lists.Generic_Sorting ("<" => Precedes_By_Submission_Time);
+   package Sorting_By_Walltime is
+     new Job_Lists.Generic_Sorting ("<" => Precedes_By_Walltime);
    package Sorting_By_Slots is
      new Job_Lists.Generic_Sorting ("<" => Precedes_By_Slots);
    package Sorting_By_State is
