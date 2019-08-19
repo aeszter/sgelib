@@ -1,4 +1,5 @@
-with "/opt/florist/share/gpr/florist.gpr";
+with "florist";
+--with "/opt/florist/share/gpr/florist.gpr";
 --with "/sw/cluster/florist17/share/gpr/florist.gpr";
 with "xmlada";
 
