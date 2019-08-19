@@ -5,6 +5,7 @@ with Calendar.Conversions;
 with Interfaces.C;
 with SGE.Utils;
 with Ada.Strings.Fixed;
+with SGE.Loggers;
 
 
 package body SGE.Hosts is
@@ -421,6 +422,9 @@ package body SGE.Hosts is
                Update_Used_Slots (H);
                Host_List.Append (H);
             end if;
+         exception
+            when E :
+               others => Loggers.Record_Error (Exception_Message (E) & " host " & To_String (H.Name));
          end;
       end loop Hosts;
    exception
