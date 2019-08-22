@@ -22,7 +22,7 @@ package SGE.Resources is
    type GPU_Model is new Strings.Bounded_String;
    No_GPU : constant GPU_Model := GPU_Model (Strings.To_Bounded_String (""));
 
-   type Gigs is delta 0.001 digits 7;
+   type Gigs is delta 0.001 digits 9;
 
    Resource_Error : exception;
 
