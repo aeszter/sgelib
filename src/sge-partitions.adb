@@ -293,6 +293,11 @@ package body SGE.Partitions is
       return SGE.Resources.To_String (Get_Memory (P.Properties));
    end Get_Memory;
 
+   function Get_Memory ( P: Partition) return SGE.Resources.Gigs is
+   begin
+      return Get_Memory (P.Properties);
+   end Get_Memory;
+
    function Has_GPU (P : Partition) return Boolean is
    begin
       return Has_GPU (P.Properties);
