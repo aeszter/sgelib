@@ -76,6 +76,12 @@ package body SGE.Hosts is
       return Get_Cores (H.Properties);
    end Get_Cores;
 
+   function Get_Kernel_Release (H : Host) return String is
+   begin
+      return Get_Kernel_Release (H.Properties);
+   end Get_Kernel_Release;
+
+
    function Is_Master (J : Job) return Boolean is
    begin
       return J.Master;

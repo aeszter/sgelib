@@ -53,6 +53,10 @@ package body SGE.Host_Properties is
       return Props.GPU_present;
    end Has_GPU;
 
+   function Get_Kernel_Release (Props : Set_Of_Properties) return String is
+   begin
+      return To_String (Props.Kernel_Release);
+   end Get_Kernel_Release;
 
    function Get_Load_One (Props : Set_Of_Properties) return Load is
    begin
@@ -346,6 +350,8 @@ package body SGE.Host_Properties is
          Props.GPU_present := True;
       elsif Value (A) = "ssd" then
          Props.SSD := True;
+      elsif Value (A) = "kernel_version" then
+         Props.Kernel_Release := To_Unbounded_String (Value (First_Child (N)));
       else
          raise Unsupported_Error with Value (A) & " -> " & Value (First_Child (N));
       end if;
