@@ -23,6 +23,7 @@ package SGE.Host_Properties is
    function Get_Memory (Props :  Set_Of_Properties) return Gigs;
    function Get_GPU_Memory (Props :  Set_Of_Properties) return Gigs;
    function Get_Cores (Props : Set_Of_Properties) return Positive;
+   function Get_Kernel_Release (Props : Set_Of_Properties) return String;
    function Get_Network (Props : Set_Of_Properties) return Network;
    function Get_Model (Props : Set_Of_Properties) return CPU_Model;
    function Get_GPU (Props : Set_Of_Properties) return GPU_Model;
@@ -85,6 +86,7 @@ private
       PE                    : Unbounded_String;
       SSD                   : Boolean := False;
       Load_One, Load_Five   : Load := 0.0;
+      Kernel_Release        : Unbounded_String;
       Available_Slots       : Natural := 0;
    end record;
 end SGE.Host_Properties;
