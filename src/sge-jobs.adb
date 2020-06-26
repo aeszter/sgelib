@@ -1770,7 +1770,11 @@ package body SGE.Jobs is
 
    function Precedes_By_Number (Left, Right : Job) return Boolean is
    begin
-      return Left.Number < Right.Number;
+      if Left.Number = Right.Number then
+         return  Min (Left.Task_IDs) <  Min (Right.Task_IDs);
+      else
+         return Left.Number < Right.Number;
+      end if;
    end Precedes_By_Number;
 
    --------------------------
