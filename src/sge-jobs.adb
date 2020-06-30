@@ -899,6 +899,7 @@ package body SGE.Jobs is
       A                      : Attr;
       Pos                    : Job_Lists.Cursor;
       Number_Found           : Natural;
+      The_Task               : Natural;
       The_Queue              : Unbounded_String;
       Found                  : Boolean := False;
 
@@ -906,9 +907,16 @@ package body SGE.Jobs is
          Success : Boolean;
          Where : String_Sets.Cursor;
       begin
-         Element.Detected_Queues.Insert (New_Item => The_Queue,
-                                         Position => Where,
-                                         Inserted => Success);
+         if The_Task = 0 then
+            Element.Detected_Queues.Insert (New_Item => The_Queue,
+                                            Position => Where,
+                                            Inserted => Success);
+         else
+            Element.Detected_Queues.Insert (New_Item => The_Task'Img & ": " &
+                                              The_Queue,
+                                            Position => Where,
+                                            Inserted => Success);
+         end if;
       end Record_Queue;
 
    begin
@@ -931,6 +939,7 @@ package body SGE.Jobs is
          --  point, we should change the job list to a map with the ID as a key
          if Pos /= Job_Lists.No_Element then
             Value_Nodes := Child_Nodes (Job_Node);
+            The_Task := 0;
             for J in 0 .. Length (Value_Nodes) - 1 loop
                Value_Node := Item (List  => Value_Nodes,
                                    Index => J);
@@ -939,6 +948,8 @@ package body SGE.Jobs is
                   if Value (A) = "qinstance_name" then
                      The_Queue := To_Unbounded_String (Value (First_Child (Value_Node)));
                      Found := True;
+                  elsif Value (A) = "taskid" then
+                     The_Task := Integer'Value (Value (First_Child (Value_Node)));
                   end if;
                end if;
             end loop;
