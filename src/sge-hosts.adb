@@ -71,6 +71,11 @@ package body SGE.Hosts is
       return Get_GPU (H.Properties);
    end Get_GPU;
 
+   function Get_GPU_Count (H : Host) return Integer is
+   begin
+      return Get_GPU_Count (H.Properties);
+   end Get_GPU_Count;
+
    function Get_Cores (H : Host) return Positive is
    begin
       return Get_Cores (H.Properties);

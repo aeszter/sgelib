@@ -27,6 +27,7 @@ package SGE.Host_Properties is
    function Get_Network (Props : Set_Of_Properties) return Network;
    function Get_Model (Props : Set_Of_Properties) return CPU_Model;
    function Get_GPU (Props : Set_Of_Properties) return GPU_Model;
+   function Get_GPU_Count (Props : Set_Of_Properties) return Integer;
    function Get_Runtime (Props : Set_Of_Properties) return String;
    function Get_Runtime (Props : Set_Of_Properties) return Natural;
    function Get_PE (Props : Set_Of_Properties) return String;
@@ -46,8 +47,8 @@ package SGE.Host_Properties is
    procedure Set_Runtime (Props : in out Set_Of_Properties; Runtime : Unbounded_String);
    procedure Set_PE (Props : in out Set_Of_Properties; PE : Unbounded_String);
    procedure Set_SSD (Props : in out Set_Of_Properties);
-   procedure Set_GPU (Props : in out Set_Of_Properties; Model : GPU_Model);
-   procedure Set_GPU (Props : in out Set_Of_Properties);
+   procedure Set_GPU_Model (Props : in out Set_Of_Properties; Model : GPU_Model);
+   procedure Set_GPU_Count (Props : in out Set_Of_Properties; Count : Integer);
    procedure Set_Exclusive (Props : in out Set_Of_Properties);
 
    procedure Init (Props : out Set_Of_Properties;
@@ -77,7 +78,7 @@ private
       Network               : Resources.Network := none;
       Model                 : Resources.CPU_Model := No_CPU;
       GPU                   : Resources.GPU_Model := No_GPU;
-      GPU_present           : Boolean := False;
+      GPU_Count             : Integer := 0;
       Exclusive             : Boolean := False;
       Memory                : Resources.Gigs := 0.0;
       GPU_Memory            : Resources.Gigs := 0.0;
