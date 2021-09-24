@@ -191,6 +191,11 @@ package body SGE.Partitions is
       Iterate (Collection, Wrapper'Access);
    end Iterate;
 
+   function Count_GPUs (P : Partition) return Integer is
+   begin
+      return Get_GPU_Count (P.Properties);
+   end Count_GPUs;
+
    function Get_Available_Hosts (P : Partition) return Natural is
    begin
       return Natural (Countable_Sets.Length (P.Available_Hosts));
@@ -293,7 +298,7 @@ package body SGE.Partitions is
       return SGE.Resources.To_String (Get_Memory (P.Properties));
    end Get_Memory;
 
-   function Get_Memory ( P: Partition) return SGE.Resources.Gigs is
+   function Get_Memory (P : Partition) return SGE.Resources.Gigs is
    begin
       return Get_Memory (P.Properties);
    end Get_Memory;

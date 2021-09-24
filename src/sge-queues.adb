@@ -155,9 +155,9 @@ package body SGE.Queues is
             elsif Value (A) = "ssd"  then
                Set_SSD (Q.Properties); -- consumable, so do not check numerical value
             elsif Value (A) = "gpu_model"  then
-               Set_GPU (Q.Properties, To_GPU (Value (First_Child (N))));
+               Set_GPU_Model (Q.Properties, To_GPU (Value (First_Child (N))));
             elsif Value (A) = "gpu" then
-               Set_GPU (Q.Properties);
+               Set_GPU_Count (Q.Properties, Integer'Value (Value (First_Child (N))));
             elsif Value (A) = "exclusive" then
                Set_Exclusive (Q.Properties);
             elsif Value (A) = "seq_no" then

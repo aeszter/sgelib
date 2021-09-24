@@ -45,12 +45,12 @@ package body SGE.Host_Properties is
 
    function Has_GPU (Props : Set_Of_Properties) return Boolean is
    begin
-      if (Props.GPU = No_GPU and then Props.GPU_present)
-        or else (Props.GPU /= No_GPU and then not Props.GPU_present)
+      if (Props.GPU = No_GPU and then Props.GPU_Count > 0)
+        or else (Props.GPU /= No_GPU and then Props.GPU_Count = 0)
       then
          raise SGE.Utils.Operator_Error with "inconsistent GPU config";
       end if;
-      return Props.GPU_present;
+      return Props.GPU_Count > 0;
    end Has_GPU;
 
    function Get_Kernel_Release (Props : Set_Of_Properties) return String is
@@ -113,6 +113,11 @@ package body SGE.Host_Properties is
       return Props.Model;
    end Get_Model;
 
+   function Get_GPU_Count (Props : Set_Of_Properties) return Integer is
+   begin
+      return Props.GPU_Count;
+   end Get_GPU_Count;
+
    function Get_GPU (Props : Set_Of_Properties) return GPU_Model is
    begin
       return Props.GPU;
@@ -163,15 +168,15 @@ package body SGE.Host_Properties is
       Props.SSD := True;
    end Set_SSD;
 
-   procedure Set_GPU (Props : in out Set_Of_Properties; Model : GPU_Model) is
+   procedure Set_GPU_Model (Props : in out Set_Of_Properties; Model : GPU_Model) is
    begin
       Props.GPU := Model;
-   end Set_GPU;
+   end Set_GPU_Model;
 
-   procedure Set_GPU (Props : in out Set_Of_Properties) is
+   procedure Set_GPU_Count (Props : in out Set_Of_Properties; Count : Integer) is
    begin
-      Props.GPU_present := True;
-   end Set_GPU;
+      Props.GPU_Count := Count;
+   end Set_GPU_Count;
 
    procedure Init (Props : out Set_Of_Properties;
                    Net, Memory, Cores, SSD : String;
@@ -184,7 +189,7 @@ package body SGE.Host_Properties is
                  Cores => Positive'Value (Cores));
       Set_Model (Props => Props,
                  Model => Model);
-      Set_GPU (Props => Props,
+      Set_GPU_Model (Props => Props,
                Model => GPU);
       if SSD = "TRUE" then
          Set_SSD (Props => Props);
@@ -347,7 +352,7 @@ package body SGE.Host_Properties is
       elsif Value (A) = "gpu_model" then
          Props.GPU := To_GPU (Value (First_Child (N)));
       elsif Value (A) = "gpu" then
-         Props.GPU_present := True;
+         Props.GPU_Count := Integer (Fixed'Value (Value (First_Child (N))));
       elsif Value (A) = "ssd" then
          Props.SSD := True;
       elsif Value (A) = "kernel_version" then
